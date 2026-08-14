@@ -200,8 +200,13 @@ bbox (no masks at all)        0.070     0.011    0.042      0.000         0.000
    detectron2·mmdetection이 그걸 읽고 고칠 수 있으므로 없앨 수 없다. 이미 stdlib의
    1.3~1.7배다.
 2. **`bb_iou` 내부 루프** — element-wise라 안전. crowded image / `useCats=0`에서 유효.
-3. **accumulate의 정렬** — O365 규모에서는 SIMD보다 stable LSD radix sort가 크다.
-   f64 score를 order-preserving u64로 매핑하면 stable하게 정렬된다.
+3. ~~**accumulate의 정렬**~~ — **기각.** 정렬이 이 단계의 비용이 아니다. 먼저
+   comparator에서 두 번 포인터를 쫓던 것(`matches[i].dt_scores[d]`)을 없애고 score를
+   entry에 인라인으로 실었는데, RF-DETR bbox(150만 detection, accumulate가 최대 항목)에서
+   1.490s → 1.447s로 **노이즈 범주**였다. 그 다음 slice 수를 바꿔 스케일링을 봤더니
+   maxDets 3개가 1개보다 **0.017s** 더 들 뿐이었다 — 재계산도 비용이 아니다.
+   radix sort로 바꿔봐야 가져올 게 없다. (인라인 score는 남겼다. 빨라져서가 아니라
+   `scores_sorted` 버퍼와 그 위를 한 번 더 도는 pass가 통째로 없어져서다.)
 4. **`rle_iou`의 run 병합** — 데이터 의존 분기라 이득이 거의 없다. 스칼라 유지.
    대신 **아예 안 하는** 쪽으로 줄였다(아래).
 
@@ -246,6 +251,26 @@ COCO val2017 + YOLO11m-seg에서 **pair의 63.5%** 에 걸리고(버려지는 �
 계산해 캐시해야 하는데, 지금 rasteriser는 단일 워커라 그리로 옮기면 직렬 구간이 늘어
 병렬 구간이 줄어든 만큼을 까먹는다. **rasteriser를 rayon으로 병렬화하는 것이 선행 조건**이고,
 그게 다음 후보다.
+
+## 무게중심은 이제 평가가 아니라 로딩이다
+
+기본 스레드로 COCO val2017 + YOLO11m-seg 전체를 재면:
+
+| | pycocotools | ufcoco |
+|---|---|---|
+| load (GT + DT) | 1.845s (7%) | 1.880s (**75%**) |
+| evaluate + accumulate + summarize | 24.116s (93%) | 0.574s (25%) |
+| **total** | **25.961s** | **2.454s** |
+
+평가를 **42배** 빠르게 만들고 나니, 사용자가 기다리는 시간의 3/4이 로딩이다. 그리고 그
+로딩의 82%는 파서가 아니라 annotation마다 `PyDict`를 만드는 비용이다(위 SIMD §1).
+**즉 남은 큰 덩어리는 알고리즘이 아니라 drop-in 계약 자체다** — `coco.anns[id]`가 진짜
+dict여야 한다는 것. 그걸 지키는 한 여기가 바닥이고, 깨면 이 프로젝트의 존재 이유가
+없어진다.
+
+한 가지 남은 것: `loadRes`에 **경로를 넘기면** 우리 Rust 로더를 타고(163 MB에서
+0.789s vs stdlib 1.098s), 이미 파싱된 리스트를 넘기면 못 탄다. 대부분의 평가 하네스는
+후자다.
 
 ## 확장 지점
 

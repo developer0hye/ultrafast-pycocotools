@@ -648,7 +648,7 @@ impl Evaluator {
                 // image's list. Sorting inside the (area, maxDets) loops meant
                 // sorting the same data twelve times for a default run, which
                 // on a dense detector is most of the accumulate cost.
-                let mut order: Vec<(u32, u32)> = Vec::new();
+                let mut order: Vec<(f64, u32, u32)> = Vec::new();
                 let mut order_ready = false;
                 for a in 0..a_n {
                     let t = Instant::now();
@@ -785,19 +785,27 @@ impl Evaluator {
     /// Built for the largest maxDets; smaller ones are a subsequence, and
     /// filtering a stably-sorted list leaves it stably sorted, so this runs
     /// once per category rather than once per (area, maxDets).
-    fn build_order(matches: &[Option<ImgMatch>], max_det: usize, order: &mut Vec<(u32, u32)>) {
+    ///
+    /// The score travels with each entry rather than being fetched through
+    /// `matches[i].dt_scores[d]` inside the comparator. Same permutation — same
+    /// values, same comparator, same stable sort — but the comparator reads one
+    /// f64 that is already in the cache line it is sorting, instead of chasing
+    /// two pointers per comparison into per-image vectors scattered across the
+    /// heap. It also makes `scores_sorted` unnecessary: the score is already
+    /// there, in the right order.
+    fn build_order(
+        matches: &[Option<ImgMatch>],
+        max_det: usize,
+        order: &mut Vec<(f64, u32, u32)>,
+    ) {
         order.clear();
         for (i, mm) in matches.iter().enumerate() {
             let Some(mm) = mm else { continue };
             for d in 0..mm.dt_scores.len().min(max_det) {
-                order.push((i as u32, d as u32));
+                order.push((mm.dt_scores[d], i as u32, d as u32));
             }
         }
-        order.sort_by(|x, y| {
-            let sx = matches[x.0 as usize].as_ref().unwrap().dt_scores[x.1 as usize];
-            let sy = matches[y.0 as usize].as_ref().unwrap().dt_scores[y.1 as usize];
-            cmp_desc_score(sx, sy)
-        });
+        order.sort_by(|x, y| cmp_desc_score(x.0, y.0));
     }
 
     /// The body of pycocotools' `accumulate` for one (category, area, maxDet).
@@ -805,7 +813,7 @@ impl Evaluator {
     fn accumulate_slice(
         &self,
         matches: &[Option<ImgMatch>],
-        order: &[(u32, u32)],
+        order: &[(f64, u32, u32)],
         max_det: usize,
         a: usize,
         m: usize,
@@ -830,14 +838,8 @@ impl Evaluator {
         // `d < max_det` is exactly pycocotools' per-image `[0:maxDet]` cut.
         buf.flat.clear();
         buf.flat
-            .extend(order.iter().copied().filter(|&(_, d)| (d as usize) < max_det));
+            .extend(order.iter().copied().filter(|&(_, _, d)| (d as usize) < max_det));
         let nd = buf.flat.len();
-        buf.scores_sorted.clear();
-        buf.scores_sorted.extend(
-            buf.flat
-                .iter()
-                .map(|&(i, d)| matches[i as usize].as_ref().unwrap().dt_scores[d as usize]),
-        );
         buf.pr.clear();
         buf.pr.resize(nd, 0.0);
         buf.rc.clear();
@@ -848,7 +850,7 @@ impl Evaluator {
 
         for t in 0..t_n {
             let (mut tp, mut fp) = (0i64, 0i64);
-            for (n, &(i, d)) in buf.flat.iter().enumerate() {
+            for (n, &(_, i, d)) in buf.flat.iter().enumerate() {
                 let mm = matches[i as usize].as_ref().unwrap();
                 let d_full = mm.dt_scores.len();
                 let idx = t * d_full + d as usize;
@@ -888,7 +890,7 @@ impl Evaluator {
                 let dst = (t * r_n + ri) * a_n * m_n + a * m_n + m;
                 if pi < nd {
                     out.precision[dst] = buf.pr[pi];
-                    out.scores[dst] = buf.scores_sorted[pi];
+                    out.scores[dst] = buf.flat[pi].0;
                 } else {
                     out.precision[dst] = 0.0;
                     out.scores[dst] = 0.0;
@@ -984,8 +986,7 @@ struct MatchScratch {
 
 #[derive(Default)]
 struct AccumBuf {
-    flat: Vec<(u32, u32)>,
-    scores_sorted: Vec<f64>,
+    flat: Vec<(f64, u32, u32)>,
     pr: Vec<f64>,
     rc: Vec<f64>,
 }
