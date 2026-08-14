@@ -21,7 +21,7 @@
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PyString};
-use serde::de::{DeserializeSeed, MapAccess, SeqAccess, Visitor};
+use serde::de::{Deserialize, DeserializeSeed, MapAccess, SeqAccess, Visitor};
 use std::collections::HashMap;
 use std::fmt;
 
@@ -117,6 +117,15 @@ impl<'de, 'a, 'py> Visitor<'de> for Builder<'a, 'py> {
     where
         A: SeqAccess<'de>,
     {
+        // Appended one at a time on purpose. Gathering into a `Vec` first and
+        // handing `PyList::new` the finished length looks strictly better — it
+        // replaces CPython's ~90 growth steps on the 431k-element `annotations`
+        // array with a single right-sized allocation — and it measured *slower*
+        // on every file tried (163 MB: 0.789s -> 0.818s; 269 MB: 1.744s ->
+        // 1.813s). The outer array is one array; the small ones are millions.
+        // Every `bbox` and every `counts` would pay a heap allocation for its
+        // Vec and then a copy out of it, and 862k extra allocations cost more
+        // than 90 reallocations save.
         let list = PyList::empty(self.py);
         while let Some(item) = seq.next_element_seed(Builder {
             py: self.py,
@@ -146,6 +155,36 @@ impl<'de, 'a, 'py> Visitor<'de> for Builder<'a, 'py> {
         }
         Ok(dict.into_any().unbind())
     }
+}
+
+/// Read and parse the file, building nothing. Benchmarking only.
+///
+/// Splits the loader's cost in two. Everything this does — the read, the
+/// tokenizer, the number and string parsing — `load_json` also does; what it
+/// skips is allocating the `PyDict`/`PyList`/`PyFloat` objects and hashing the
+/// keys. The difference between the two says which half to attack, and the
+/// answer decided against a SIMD tokenizer: see DESIGN.md.
+#[pyfunction]
+pub fn parse_json_only(py: Python<'_>, path: &str) -> PyResult<usize> {
+    let bytes = std::fs::read(path).map_err(|e| PyIOError::new_err(e.to_string()))?;
+    let n = bytes.len();
+    py.detach(|| {
+        let mut de = serde_json::Deserializer::from_slice(&bytes);
+        serde::de::IgnoredAny::deserialize(&mut de)
+            .map_err(|e| PyValueError::new_err(format!("{path}: {e}")))?;
+        de.end()
+            .map_err(|e| PyValueError::new_err(format!("{path}: trailing data: {e}")))
+    })?;
+    Ok(n)
+}
+
+/// Read the file and nothing else. Benchmarking only: the floor both of the
+/// above sit on, so neither gets credited with the disk.
+#[pyfunction]
+pub fn read_file_only(path: &str) -> PyResult<usize> {
+    std::fs::read(path)
+        .map(|b| b.len())
+        .map_err(|e| PyIOError::new_err(e.to_string()))
 }
 
 /// Parse a JSON file into Python objects.

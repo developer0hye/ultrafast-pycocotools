@@ -186,15 +186,66 @@ bbox (no masks at all)        0.070     0.011    0.042      0.000         0.000
 
 넣되, 규칙 1을 어기지 않는 곳에만. 실측 기준 우선순위:
 
-1. **JSON 파싱** — O365 val에서 GT 4.07s + DT 4.57s로 wall time의 최대 항목이다.
-   문자열·정수 처리라 등가성 위험이 0이다. (미구현 — 가장 큰 남은 작업)
+1. ~~**JSON 파싱**~~ — **기각.** 여기가 wall time의 최대 항목인 건 맞지만
+   (`bench/profile_loadres.py`: segm 결과 파일에서 51.7%), **파서가 아니라 Python
+   객체를 만드는 게 82%다.** `bench/profile_json.py`가 read / parse / build로 쪼갠다:
+
+   | 파일 | read | parse(버림) | + PyObject build | stdlib |
+   |---|---|---|---|---|
+   | 163 MB DT | 0.050s | +0.087s (11%) | +0.647s (**82%**) | 1.098s |
+   | 269 MB O365 | 0.086s | +0.238s (14%) | +1.420s (**81%**) | 2.946s |
+
+   토크나이저가 **무한히** 빨라져도 상한이 14%다. 남은 82%는 annotation마다
+   `PyDict` 하나 + 숫자 객체 열 개를 만드는 비용이고, `coco.anns[id]`가 진짜 dict여야
+   detectron2·mmdetection이 그걸 읽고 고칠 수 있으므로 없앨 수 없다. 이미 stdlib의
+   1.3~1.7배다.
 2. **`bb_iou` 내부 루프** — element-wise라 안전. crowded image / `useCats=0`에서 유효.
 3. **accumulate의 정렬** — O365 규모에서는 SIMD보다 stable LSD radix sort가 크다.
    f64 score를 order-preserving u64로 매핑하면 stable하게 정렬된다.
 4. **`rle_iou`의 run 병합** — 데이터 의존 분기라 이득이 거의 없다. 스칼라 유지.
+   대신 **아예 안 하는** 쪽으로 줄였다(아래).
 
 SIMD 커널을 넣을 때는 **반드시 스칼라 레퍼런스와 bit-identical 비교하는 테스트를
 같이** 넣어야 한다. 규칙을 사람이 기억하게 두면 안 된다.
+
+## IoU를 정확히 구하지 않아도 되는 pair
+
+`rle_iou`는 bbox prefilter를 통과한 pair마다 두 run 리스트를 끝까지 병합한다. 그런데
+매처가 그 값으로 하는 일은 threshold와 비교하는 것뿐이고, 가장 낮은 threshold는 보통
+0.5다. 실측: **prefilter 생존 pair의 77%가 결국 0.5 미만**이다. 정확히 구해서 "아니오"만
+듣는다.
+
+마스크는 자기 tight box 안에 있으므로 마스크 교집합이 box 교집합을 넘을 수 없다:
+
+```
+    i <= m = min(area_dt, area_gt, box_inter)
+    IoU = i / (a + b - i)   는 i에 대해 증가함수
+    => IoU <= m / (a + b - m)          (crowd면 m / area_dt)
+```
+
+이 bound가 이미 threshold 아래면 병합은 어떤 판정도 바꿀 수 없다. `0.0`을 쓰고 넘어간다.
+COCO val2017 + YOLO11m-seg에서 **pair의 63.5%** 에 걸리고(버려지는 일의 82%),
+**bound가 진짜 IoU를 넘은 적은 0번**이다 — 넘을 수 없다, 위가 증명이다.
+
+`min_thr <= 0`이면 끈다. **이건 성능 스위치가 아니다.** threshold가 0이면 매처는 낮은
+값을 건너뛰는 게 아니라 **순위를 매기기** 시작한다(threshold를 넘는 것 중 IoU 최대인 GT를
+고른다). 그때 진짜 0.37 대신 0.0을 쓰면 어느 GT가 이기는지가 바뀐다.
+
+측정(단일 스레드, segm):
+
+| | 전 | 후 |
+|---|---|---|
+| `iou` phase (worker 합) | 0.637s | 0.591s |
+| eval_total, YOLO11m-seg | 1.655s | 1.512s |
+| eval_total, Mask R-CNN | 1.047s | 0.977s |
+
+**7%만 줄었다.** run 병합이 이 단계의 주된 비용이 아니었기 때문이다 — 병합을 통째로
+빼고 재보니 `iou`가 0.388s였다. 남은 0.388s는 467k개 RLE의 `to_bbox`(+`area`, `bb_iou`,
+할당)이고, 그중 나눗셈은 0.104s다(`area`와 `toBbox`를 같은 입력으로 나란히 재서 뺐다).
+즉 **`iou`는 이제 바닥에 가깝다.** 더 줄이려면 `to_bbox`/`area`를 rasterise 시점에
+계산해 캐시해야 하는데, 지금 rasteriser는 단일 워커라 그리로 옮기면 직렬 구간이 늘어
+병렬 구간이 줄어든 만큼을 까먹는다. **rasteriser를 rayon으로 병렬화하는 것이 선행 조건**이고,
+그게 다음 후보다.
 
 ## 확장 지점
 

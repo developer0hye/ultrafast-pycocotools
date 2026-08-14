@@ -779,6 +779,8 @@ fn _ufcoco(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(mask::fr_py_objects, m)?)?;
     m.add_function(wrap_pyfunction!(mask::to_boundary, m)?)?;
     m.add_function(wrap_pyfunction!(json::load_json, m)?)?;
+    m.add_function(wrap_pyfunction!(json::parse_json_only, m)?)?;
+    m.add_function(wrap_pyfunction!(json::read_file_only, m)?)?;
     m.add_function(wrap_pyfunction!(alloc_stats, m)?)?;
     m.add_function(wrap_pyfunction!(reset_alloc_peak, m)?)?;
     Ok(())

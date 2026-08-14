@@ -352,6 +352,23 @@ impl Evaluator {
     }
 
     /// Row-major `D x G` IoU, or empty when either side has no entries.
+    /// The lowest IoU any match can be made at.
+    ///
+    /// `evaluate_img` compares against `min(thr, 1 - 1e-10)`, so this is the
+    /// floor over every threshold. A pair below it is skipped at all of them,
+    /// which is what lets `rle_iou_refs_above` stop short of an exact answer.
+    /// Zero (or a caller asking for a zero threshold) turns that off — see the
+    /// note on `rle_iou_refs_above`.
+    fn match_floor(&self) -> f64 {
+        self.params
+            .iou_thrs
+            .iter()
+            .copied()
+            .fold(f64::INFINITY, f64::min)
+            .min(1.0 - 1e-10)
+            .max(0.0)
+    }
+
     fn compute_iou(&self, dt_idx: &[u32], gt_idx: &[u32]) -> Vec<f64> {
         if dt_idx.is_empty() || gt_idx.is_empty() {
             return Vec::new();
@@ -362,6 +379,7 @@ impl Evaluator {
             .map(|&g| self.gt.iscrowd[g as usize] as u8)
             .collect();
         let mut out = vec![0.0f64; m * n];
+        let floor = self.match_floor();
 
         match (&self.dt.geom, &self.gt.geom) {
             (GeomStore::Bboxes(dv), GeomStore::Bboxes(gv)) => {
@@ -372,7 +390,7 @@ impl Evaluator {
             (GeomStore::Masks(dv), GeomStore::Masks(gv)) => {
                 let d: Vec<&Rle> = dt_idx.iter().map(|&i| &dv[i as usize]).collect();
                 let g: Vec<&Rle> = gt_idx.iter().map(|&i| &gv[i as usize]).collect();
-                rle::rle_iou_refs(&d, &g, &iscrowd, &mut out);
+                rle::rle_iou_refs_above(&d, &g, &iscrowd, floor, &mut out);
             }
             (
                 GeomStore::Boundaries {
@@ -386,11 +404,11 @@ impl Evaluator {
             ) => {
                 let d: Vec<&Rle> = dt_idx.iter().map(|&i| &dm[i as usize]).collect();
                 let g: Vec<&Rle> = gt_idx.iter().map(|&i| &gm[i as usize]).collect();
-                rle::rle_iou_refs(&d, &g, &iscrowd, &mut out);
+                rle::rle_iou_refs_above(&d, &g, &iscrowd, floor, &mut out);
                 let d: Vec<&Rle> = dt_idx.iter().map(|&i| &db[i as usize]).collect();
                 let g: Vec<&Rle> = gt_idx.iter().map(|&i| &gb[i as usize]).collect();
                 let mut bout = vec![0.0f64; m * n];
-                rle::rle_iou_refs(&d, &g, &iscrowd, &mut bout);
+                rle::rle_iou_refs_above(&d, &g, &iscrowd, floor, &mut bout);
                 // Crowd ground truth keeps the plain mask IoU.
                 for gi in 0..n {
                     if iscrowd[gi] != 0 {
