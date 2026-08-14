@@ -136,6 +136,52 @@ annotation 추출은 GIL을 잡아야 하므로 단일 스레드다. 대신 chun
 geometry를 모아 `py.detach()`로 GIL을 놓고 rasterise 한다. peak 메모리가 "전체
 polygon + 전체 RLE"가 아니라 "chunk 하나 + 완성된 RLE"가 된다.
 
+## 기각: 안 쓰이는 마스크 건너뛰기
+
+IoU는 (image, category) 셀 안에서만 계산된다. 한쪽이 비어 있는 셀의 마스크는 아무와도
+비교되지 않는다 — 매칭 상대가 없는 GT는 픽셀을 몰라도 FN 하나로 세어지고, 그 image에
+없는 category의 detection은 볼 것도 없이 FP다. 그런데 pycocotools도 우리도 **모든**
+annotation을 RLE로 굽는다. YOLO11m-seg + COCO val2017에서 467,787개 중 **119,564개
+(25.6%)** 가 그렇게 구워놓고 안 쓰인다.
+
+건너뛰어도 결과는 그대로다 — AP에도, `evalImgs`에도, `matches`에도 안 들어간다.
+그래도 안 했다. 이득이 **전체의 1.8%** 라서다.
+
+`bench/probe_unused_masks.py`가 상한을 잰다. 완벽한 구현이 건너뛸 annotation의
+segmentation을 1×1 빈 마스크로 바꿔 engine build를 측정한다:
+
+```
+                              build   gt_read  dt_read  rasterise  read_blocked
+segm, as-is                   0.288     0.055    0.200      0.182         0.026
+segm, unused masks stripped   0.257     0.062    0.167      0.144         0.014
+bbox (no masks at all)        0.070     0.011    0.042      0.000         0.000
+```
+
+0.030s. 단일 스레드 segm 평가 전체가 1.655s이므로 **1.8%** 이고, 이건 상한이다.
+실제 구현은 어느 셀이 비었는지 알아야 건너뛸 수 있고 그건 grouping을 먼저 만들어야
+한다는 뜻이라 — annotation을 두 번 걸어야 한다. 그 비용을 빼면 더 내려간다.
+
+25.6%를 지웠는데 왜 1.8%뿐인가: rasterise는 이미 읽기 뒤에 숨어 있다(`read_blocked`
+0.026s). 남는 건 "안 쓰일 segmentation을 Python에서 안 읽는 것"뿐이고, 그건 dt_read의
+일부다.
+
+### 이 측정에서 두 번 틀렸다 — 둘 다 실험 설계였다
+
+같은 실수를 반복하지 않도록 적어둔다.
+
+1. **stripped arm만 dict를 복사했다.** 일을 25% 줄였는데 **70% 느리게** 나왔다.
+   새로 할당한 dict 12만 개는 json이 남긴 것들과 다른 곳에 있고, 추출 루프가 cache
+   miss를 전부 물었다. 양쪽 arm이 똑같이 복사하도록 고쳤다.
+2. **`segmentation` 키를 지우는 것이 "건너뛰기"가 아니었다.** 키가 없으면 reader가
+   bbox로 fallback 하는데, **박스의 RLE가 마스크의 RLE보다 비싸다.** COCO RLE은
+   column-major라 폭 400짜리 직사각형은 열마다 run이 생겨 ~800 run이 되고, 뭉쳐 있는
+   blob의 압축 문자열은 그보다 훨씬 짧게 decode 된다. rasterise가 0.175 → 0.350으로
+   두 배가 됐다. 1×1 빈 마스크로 바꾸니 그제야 읽기 경로와 variant를 유지한 채 기하만
+   사라졌다.
+
+"일을 줄였는데 느려졌다"가 나오면 아이디어가 틀린 게 아니라 **측정이 틀렸을 가능성을
+먼저** 본다. 두 번 다 그랬다.
+
 ## SIMD 정책
 
 넣되, 규칙 1을 어기지 않는 곳에만. 실측 기준 우선순위:
