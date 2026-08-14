@@ -12,16 +12,21 @@
 //! "one chunk of raw geometry + the finished RLEs" rather than "every polygon
 //! in the dataset + every RLE".
 
+mod alloc;
 mod json;
 mod mask;
 
 use numpy::ndarray::{Array1, Array2, ArrayD, IxDyn};
 use numpy::IntoPyArray;
 use pyo3::exceptions::{PyKeyError, PyValueError};
+use pyo3::intern;
 use pyo3::prelude::*;
-use pyo3::types::{PyBytes, PyDict, PyList};
+use pyo3::types::{PyBytes, PyDict, PyFloat, PyList, PyString};
 use rayon::prelude::*;
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+use std::time::Instant;
 use ufcoco_core::eval::{
     EvalParams, Evaluator as CoreEvaluator, GeomStore, ImgEval, Instances, IouType,
 };
@@ -30,7 +35,36 @@ use ufcoco_core::rle::{self, Rle};
 /// How many annotations are read out of Python before their geometry is
 /// rasterised. Big enough to amortise the GIL round-trip, small enough that
 /// the raw polygon buffer stays bounded on million-annotation datasets.
-const CHUNK: usize = 16384;
+const CHUNK: usize = 4096;
+
+#[cfg(feature = "alloc-stats")]
+#[global_allocator]
+static GLOBAL: alloc::Counting = alloc::Counting;
+
+/// Rust-side allocation counters; see `alloc.rs`.
+///
+/// `enabled` is false unless the extension was built with the `alloc-stats`
+/// feature, in which case every other field is zero and should be ignored
+/// rather than reported as "no allocations".
+#[pyfunction]
+fn alloc_stats(py: Python<'_>) -> PyResult<Bound<'_, PyDict>> {
+    let d = PyDict::new(py);
+    d.set_item("enabled", cfg!(feature = "alloc-stats"))?;
+    let (live, peak, total, allocs, frees) = alloc::snapshot();
+    d.set_item("live_bytes", live)?;
+    d.set_item("peak_bytes", peak)?;
+    d.set_item("total_allocated_bytes", total)?;
+    d.set_item("allocations", allocs)?;
+    d.set_item("frees", frees)?;
+    Ok(d)
+}
+
+/// Drop the allocation high-water mark to the current live figure, so the
+/// next phase can be measured on its own.
+#[pyfunction]
+fn reset_alloc_peak() {
+    alloc::reset_peak();
+}
 
 fn iou_type_from_str(s: &str) -> PyResult<IouType> {
     match s {
@@ -46,39 +80,106 @@ fn iou_type_from_str(s: &str) -> PyResult<IouType> {
 
 /// Raw, not-yet-rasterised segmentation as it appears in the JSON.
 enum RawSegm {
-    /// One or more polygon rings, unioned into a single mask.
-    Poly(Vec<Vec<f64>>),
+    /// One or more polygon rings, unioned into a single mask. Stored flat
+    /// (`ends[i]` is the exclusive end of ring `i`) so a multi-ring polygon
+    /// costs one allocation instead of one per ring.
+    Poly { coords: Vec<f64>, ends: Vec<u32> },
     /// `counts` as a run list.
     Uncompressed(Vec<u32>),
     /// `counts` in the LEB128-ish string form.
     Compressed(Vec<u8>),
-    Missing,
+    /// No `segmentation` field: rasterise the bounding box instead.
+    ///
+    /// This is exactly what `loadRes` stores for a box-only detection
+    /// (`[[x1, y1, x1, y2, x2, y2, x2, y1]]`), so deriving it here rather than
+    /// materialising it in Python is invisible to the result and saves 376
+    /// bytes per detection — 440 MB on Objects365.
+    FromBbox([f64; 4]),
 }
 
-fn get_f64(d: &Bound<'_, PyDict>, key: &str) -> PyResult<Option<f64>> {
+fn get_f64(d: &Bound<'_, PyDict>, key: &Bound<'_, PyString>) -> PyResult<Option<f64>> {
     Ok(match d.get_item(key)? {
         Some(v) if !v.is_none() => Some(v.extract()?),
         _ => None,
     })
 }
 
-fn get_i64(d: &Bound<'_, PyDict>, key: &str) -> PyResult<Option<i64>> {
+fn get_i64(d: &Bound<'_, PyDict>, key: &Bound<'_, PyString>) -> PyResult<Option<i64>> {
     Ok(match d.get_item(key)? {
         Some(v) if !v.is_none() => Some(v.extract()?),
         _ => None,
     })
 }
 
-fn read_segm(d: &Bound<'_, PyDict>) -> PyResult<RawSegm> {
-    let Some(seg) = d.get_item("segmentation")? else {
-        return Ok(RawSegm::Missing);
+/// Read a flat `[x0, y0, x1, y1, ...]` ring into `out`.
+///
+/// `Vec<f64>::extract` would do this too, but it allocates a fresh `Vec` per
+/// ring and goes through the generic sequence path. COCO ground truth has
+/// ~900k polygon vertices, so appending into one reused buffer and taking the
+/// `PyFloat` fast path is worth the explicit loop.
+fn read_ring(obj: &Bound<'_, PyAny>, out: &mut Vec<f64>) -> PyResult<()> {
+    if let Ok(list) = obj.cast::<PyList>() {
+        let n = list.len();
+        out.reserve(n);
+        for i in 0..n {
+            // SAFETY: `i < n`, and `list` is a list for as long as we hold
+            // the GIL here.
+            let item = unsafe { list.get_item_unchecked(i) };
+            out.push(read_float(&item)?);
+        }
+        return Ok(());
+    }
+    out.extend(obj.extract::<Vec<f64>>()?);
+    Ok(())
+}
+
+/// Read one number, taking the `PyFloat` fast path.
+///
+/// COCO coordinates are floats, but ints appear (a polygon vertex on a whole
+/// pixel serialises as `12`, not `12.0`), so the slow path has to stay.
+#[inline]
+fn read_float(item: &Bound<'_, PyAny>) -> PyResult<f64> {
+    match item.cast::<PyFloat>() {
+        Ok(f) => Ok(f.value()),
+        Err(_) => item.extract::<f64>(),
+    }
+}
+
+/// Read `[x, y, w, h]` without allocating.
+///
+/// `Vec<f64>::extract` would heap-allocate four doubles per annotation; on
+/// Objects365 that is 2.4 million allocations for data that fits in a
+/// register pair.
+fn read_bbox(v: &Bound<'_, PyAny>) -> PyResult<[f64; 4]> {
+    let mut out = [0.0f64; 4];
+    if let Ok(list) = v.cast::<PyList>() {
+        if list.len() == 4 {
+            for (i, slot) in out.iter_mut().enumerate() {
+                // SAFETY: length checked immediately above.
+                let item = unsafe { list.get_item_unchecked(i) };
+                *slot = read_float(&item)?;
+            }
+            return Ok(out);
+        }
+    }
+    let b: Vec<f64> = v.extract()?;
+    if b.len() != 4 {
+        return Err(PyValueError::new_err("'bbox' must have 4 entries"));
+    }
+    out.copy_from_slice(&b);
+    Ok(out)
+}
+
+fn read_segm(d: &Bound<'_, PyDict>, keys: &Keys<'_>, bbox: [f64; 4]) -> PyResult<RawSegm> {
+    let Some(seg) = d.get_item(keys.segmentation)? else {
+        return Ok(RawSegm::FromBbox(bbox));
     };
     if seg.is_none() {
-        return Ok(RawSegm::Missing);
+        return Ok(RawSegm::FromBbox(bbox));
     }
     if let Ok(sd) = seg.cast::<PyDict>() {
         let counts = sd
-            .get_item("counts")?
+            .get_item(keys.counts)?
             .ok_or_else(|| PyValueError::new_err("RLE segmentation is missing 'counts'"))?;
         if let Ok(b) = counts.cast::<PyBytes>() {
             return Ok(RawSegm::Compressed(b.as_bytes().to_vec()));
@@ -88,19 +189,66 @@ fn read_segm(d: &Bound<'_, PyDict>) -> PyResult<RawSegm> {
         }
         return Ok(RawSegm::Uncompressed(counts.extract()?));
     }
-    // A list of rings, each a flat [x0, y0, x1, y1, ...].
-    let rings: Vec<Vec<f64>> = seg.extract()?;
-    Ok(RawSegm::Poly(rings))
+    // A list of rings, each a flat [x0, y0, x1, y1, ...]. Stored flat with
+    // offsets so a polygon with several rings costs one allocation, not one
+    // per ring.
+    let mut coords: Vec<f64> = Vec::new();
+    let mut ends: Vec<u32> = Vec::new();
+    for ring in seg.try_iter()? {
+        read_ring(&ring?, &mut coords)?;
+        ends.push(coords.len() as u32);
+    }
+    Ok(RawSegm::Poly { coords, ends })
+}
+
+/// Interned annotation keys.
+///
+/// `dict.get_item("image_id")` builds a fresh Python string for the lookup
+/// every time. At six lookups per annotation that is 14 million string
+/// objects on Objects365 — more work than the evaluation. `intern!` resolves
+/// each to a cached `PyString` once per interpreter.
+struct Keys<'py> {
+    id: &'py Bound<'py, PyString>,
+    image_id: &'py Bound<'py, PyString>,
+    category_id: &'py Bound<'py, PyString>,
+    score: &'py Bound<'py, PyString>,
+    bbox: &'py Bound<'py, PyString>,
+    area: &'py Bound<'py, PyString>,
+    iscrowd: &'py Bound<'py, PyString>,
+    num_keypoints: &'py Bound<'py, PyString>,
+    keypoints: &'py Bound<'py, PyString>,
+    lvis_mark: &'py Bound<'py, PyString>,
+    segmentation: &'py Bound<'py, PyString>,
+    counts: &'py Bound<'py, PyString>,
+}
+
+impl<'py> Keys<'py> {
+    fn new(py: Python<'py>) -> Keys<'py> {
+        Keys {
+            id: intern!(py, "id"),
+            image_id: intern!(py, "image_id"),
+            category_id: intern!(py, "category_id"),
+            score: intern!(py, "score"),
+            bbox: intern!(py, "bbox"),
+            area: intern!(py, "area"),
+            iscrowd: intern!(py, "iscrowd"),
+            num_keypoints: intern!(py, "num_keypoints"),
+            keypoints: intern!(py, "keypoints"),
+            lvis_mark: intern!(py, "lvis_mark"),
+            segmentation: intern!(py, "segmentation"),
+            counts: intern!(py, "counts"),
+        }
+    }
 }
 
 /// pycocotools' `annToRLE`: polygons are unioned, uncompressed RLE is taken
 /// as-is, compressed RLE is decoded.
 fn raw_to_rle(raw: &RawSegm, h: u32, w: u32, scratch: &mut rle::PolyScratch) -> Rle {
     match raw {
-        RawSegm::Poly(rings) => rle::rle_fr_polys_into(rings, h, w, scratch),
+        RawSegm::Poly { coords, ends } => rle::rle_fr_polys_flat_into(coords, ends, h, w, scratch),
         RawSegm::Uncompressed(c) => rle::rle_fr_uncompressed(c, h, w),
         RawSegm::Compressed(s) => Rle::from_str(s, h, w),
-        RawSegm::Missing => Rle::new(h, w, vec![(h as u64 * w as u64) as u32]),
+        RawSegm::FromBbox(b) => rle::rle_fr_bbox(b, h, w),
     }
 }
 
@@ -114,7 +262,7 @@ fn extract_instances(
     img_slot: &HashMap<i64, u32>,
     cat_slot: &HashMap<i64, u32>,
     boundary_dilation: f64,
-) -> PyResult<Instances> {
+) -> PyResult<(Instances, ExtractTimings)> {
     let n = anns.len();
     let mut inst = Instances {
         ids: Vec::with_capacity(n),
@@ -140,36 +288,136 @@ fn extract_instances(
         },
     };
 
+    let keys = Keys::new(py);
+    let timings: Arc<ExtractTimings> = Arc::default();
     let needs_mask = matches!(iou_type, IouType::Segm | IouType::Boundary);
-    let mut raw_chunk: Vec<(RawSegm, u32, u32)> = Vec::with_capacity(CHUNK.min(n.max(1)));
+    let want_boundary = iou_type == IouType::Boundary;
 
+    // Reading annotations out of Python needs the GIL; rasterising them does
+    // not. Run the two concurrently instead of alternating: a worker thread
+    // takes finished chunks and rasterises them across the rayon pool while
+    // this thread keeps reading. Total time becomes max(read, rasterise)
+    // rather than their sum, and the bounded channel keeps at most a couple
+    // of chunks of raw geometry alive.
+    let masks = std::thread::scope(|scope| -> PyResult<Vec<(Rle, Option<Rle>)>> {
+        let (tx_raw, rx_raw) = std::sync::mpsc::sync_channel::<Vec<(RawSegm, u32, u32)>>(2);
+        let worker_timings = Arc::clone(&timings);
+        let worker = scope.spawn(move || {
+            let mut out: Vec<(Rle, Option<Rle>)> = Vec::new();
+            while let Ok(chunk) = rx_raw.recv() {
+                let t = Instant::now();
+                let built: Vec<(Rle, Option<Rle>)> = chunk
+                    .par_iter()
+                    // One scratch per worker: polygon rasterisation otherwise
+                    // spends its time allocating and freeing the same buffers.
+                    .map_init(rle::PolyScratch::default, |scratch, (r, h, w)| {
+                        let m = raw_to_rle(r, *h, *w, scratch);
+                        let b = want_boundary.then(|| rle::rle_to_boundary(&m, boundary_dilation));
+                        (m, b)
+                    })
+                    .collect();
+                worker_timings
+                    .rasterise_ns
+                    .fetch_add(t.elapsed().as_nanos() as u64, Ordering::Relaxed);
+                out.extend(built);
+            }
+            out
+        });
+
+        let mut raw_chunk: Vec<(RawSegm, u32, u32)> = Vec::with_capacity(CHUNK.min(n.max(1)));
+        let outcome = read_annotations(
+            anns,
+            is_gt,
+            iou_type,
+            img_sizes,
+            img_slot,
+            cat_slot,
+            &keys,
+            needs_mask,
+            &mut inst,
+            &mut raw_chunk,
+            &tx_raw,
+            &timings,
+        );
+        if outcome.is_ok() && !raw_chunk.is_empty() {
+            let _ = tx_raw.send(raw_chunk);
+        }
+        // Closing the channel is what lets the worker finish; it must happen
+        // on the error path too.
+        drop(tx_raw);
+        let built = worker.join().expect("mask worker panicked");
+        outcome.map(|()| built)
+    })?;
+
+    match &mut inst.geom {
+        GeomStore::Masks(v) => v.extend(masks.into_iter().map(|(m, _)| m)),
+        GeomStore::Boundaries {
+            masks: ms,
+            boundaries,
+        } => {
+            for (m, b) in masks {
+                ms.push(m);
+                boundaries.push(b.expect("boundary requested but not built"));
+            }
+        }
+        _ => debug_assert!(masks.is_empty()),
+    }
+    let timings = Arc::try_unwrap(timings).unwrap_or_default();
+    Ok((inst, timings))
+}
+
+/// Wall-clock breakdown of building an `Evaluator`.
+///
+/// `read` and `rasterise` overlap by design, so they do not sum to the total.
+/// `read_blocked` is the part of `read` spent waiting for the rasteriser to
+/// catch up: if it is large the rasteriser is the bottleneck, if it is ~0 the
+/// GIL-bound reading is.
+#[derive(Default)]
+struct ExtractTimings {
+    read_ns: AtomicU64,
+    read_blocked_ns: AtomicU64,
+    rasterise_ns: AtomicU64,
+}
+
+/// The GIL-bound half of extraction: scalar fields straight into `inst`, raw
+/// geometry batched out to the rasteriser.
+#[allow(clippy::too_many_arguments)]
+fn read_annotations(
+    anns: &Bound<'_, PyList>,
+    is_gt: bool,
+    iou_type: IouType,
+    img_sizes: &HashMap<i64, (u32, u32)>,
+    img_slot: &HashMap<i64, u32>,
+    cat_slot: &HashMap<i64, u32>,
+    keys: &Keys<'_>,
+    needs_mask: bool,
+    inst: &mut Instances,
+    raw_chunk: &mut Vec<(RawSegm, u32, u32)>,
+    tx_raw: &std::sync::mpsc::SyncSender<Vec<(RawSegm, u32, u32)>>,
+    timings: &ExtractTimings,
+) -> PyResult<()> {
+    let t_read = Instant::now();
     for (i, item) in anns.iter().enumerate() {
         let d = item
             .cast::<PyDict>()
             .map_err(|_| PyValueError::new_err("annotations must be dicts"))?;
-        let image_id = get_i64(d, "image_id")?
+        let image_id = get_i64(d, keys.image_id)?
             .ok_or_else(|| PyKeyError::new_err("annotation is missing 'image_id'"))?;
-        let category_id = get_i64(d, "category_id")?.unwrap_or(-1);
-        inst.ids.push(get_i64(d, "id")?.unwrap_or(i as i64 + 1));
+        let category_id = get_i64(d, keys.category_id)?.unwrap_or(-1);
+        inst.ids.push(get_i64(d, keys.id)?.unwrap_or(i as i64 + 1));
         inst.img_slot
             .push(img_slot.get(&image_id).copied().unwrap_or(u32::MAX));
         inst.cat_slot
             .push(cat_slot.get(&category_id).copied().unwrap_or(u32::MAX));
-        inst.scores.push(get_f64(d, "score")?.unwrap_or(0.0));
+        inst.scores.push(get_f64(d, keys.score)?.unwrap_or(0.0));
 
-        let bbox: [f64; 4] = match d.get_item("bbox")? {
-            Some(v) if !v.is_none() => {
-                let b: Vec<f64> = v.extract()?;
-                if b.len() != 4 {
-                    return Err(PyValueError::new_err("'bbox' must have 4 entries"));
-                }
-                [b[0], b[1], b[2], b[3]]
-            }
+        let bbox: [f64; 4] = match d.get_item(keys.bbox)? {
+            Some(v) if !v.is_none() => read_bbox(&v)?,
             _ => [0.0; 4],
         };
         inst.areas
-            .push(get_f64(d, "area")?.unwrap_or(bbox[2] * bbox[3]));
-        let iscrowd = get_i64(d, "iscrowd")?.unwrap_or(0) != 0;
+            .push(get_f64(d, keys.area)?.unwrap_or(bbox[2] * bbox[3]));
+        let iscrowd = get_i64(d, keys.iscrowd)?.unwrap_or(0) != 0;
         inst.iscrowd.push(iscrowd);
 
         if is_gt {
@@ -183,20 +431,20 @@ fn extract_instances(
             // and the README says so out loud rather than quietly fixing it.
             let mut ig = iscrowd;
             if iou_type == IouType::Keypoints {
-                ig = get_i64(d, "num_keypoints")?.unwrap_or(0) == 0 || ig;
+                ig = get_i64(d, keys.num_keypoints)?.unwrap_or(0) == 0 || ig;
             }
             inst.ignore.push(ig);
         } else {
             inst.ignore.push(false);
         }
         inst.lvis_mark
-            .push(get_i64(d, "lvis_mark")?.unwrap_or(0) != 0);
+            .push(get_i64(d, keys.lvis_mark)?.unwrap_or(0) != 0);
 
         match &mut inst.geom {
             GeomStore::Bboxes(v) => v.push(bbox),
             GeomStore::Keypoints { data, k } => {
                 inst.bboxes.push(bbox);
-                let kp: Vec<f64> = match d.get_item("keypoints")? {
+                let kp: Vec<f64> = match d.get_item(keys.keypoints)? {
                     Some(v) if !v.is_none() => v.extract()?,
                     _ => Vec::new(),
                 };
@@ -209,60 +457,36 @@ fn extract_instances(
                 let (h, w) = *img_sizes.get(&image_id).ok_or_else(|| {
                     PyKeyError::new_err(format!("no image entry for image_id {image_id}"))
                 })?;
-                raw_chunk.push((read_segm(d)?, h, w));
+                raw_chunk.push((read_segm(d, keys, bbox)?, h, w));
             }
         }
 
         if needs_mask && raw_chunk.len() >= CHUNK {
-            flush_masks(py, &mut raw_chunk, &mut inst.geom, boundary_dilation);
-        }
-    }
-    if needs_mask && !raw_chunk.is_empty() {
-        flush_masks(py, &mut raw_chunk, &mut inst.geom, boundary_dilation);
-    }
-    Ok(inst)
-}
-
-/// Rasterise a chunk of raw segmentations with the GIL released.
-fn flush_masks(
-    py: Python<'_>,
-    raw: &mut Vec<(RawSegm, u32, u32)>,
-    geom: &mut GeomStore,
-    boundary_dilation: f64,
-) {
-    let want_boundary = matches!(geom, GeomStore::Boundaries { .. });
-    let built: Vec<(Rle, Option<Rle>)> = py.detach(|| {
-        // One scratch per worker thread: polygon rasterisation is otherwise
-        // dominated by allocating and freeing the same seven vectors.
-        raw.par_iter()
-            .map_init(rle::PolyScratch::default, |scratch, (r, h, w)| {
-                let m = raw_to_rle(r, *h, *w, scratch);
-                let b = if want_boundary {
-                    Some(rle::rle_to_boundary(&m, boundary_dilation))
-                } else {
-                    None
-                };
-                (m, b)
-            })
-            .collect()
-    });
-    match geom {
-        GeomStore::Masks(v) => v.extend(built.into_iter().map(|(m, _)| m)),
-        GeomStore::Boundaries { masks, boundaries } => {
-            for (m, b) in built {
-                masks.push(m);
-                boundaries.push(b.unwrap());
+            // Blocks once the worker is two chunks behind, which is the
+            // backpressure that bounds raw-geometry memory.
+            let chunk = std::mem::replace(raw_chunk, Vec::with_capacity(CHUNK));
+            let t_block = Instant::now();
+            let sent = tx_raw.send(chunk);
+            timings
+                .read_blocked_ns
+                .fetch_add(t_block.elapsed().as_nanos() as u64, Ordering::Relaxed);
+            if sent.is_err() {
+                return Err(PyValueError::new_err("mask rasteriser stopped"));
             }
         }
-        _ => unreachable!("flush_masks called for a non-mask geometry"),
     }
-    raw.clear();
+    timings
+        .read_ns
+        .fetch_add(t_read.elapsed().as_nanos() as u64, Ordering::Relaxed);
+    Ok(())
 }
 
 /// The evaluation engine, constructed once from prepared annotations.
 #[pyclass(module = "ultrafast_pycocotools._ufcoco")]
 pub struct Evaluator {
     inner: CoreEvaluator,
+    gt_extract: ExtractTimings,
+    dt_extract: ExtractTimings,
 }
 
 #[pymethods]
@@ -303,7 +527,7 @@ impl Evaluator {
             .map(|(i, &v)| (v, i as u32))
             .collect();
 
-        let gt = extract_instances(
+        let (gt, gt_extract) = extract_instances(
             py,
             gt_anns,
             true,
@@ -313,7 +537,7 @@ impl Evaluator {
             &cat_map,
             boundary_dilation,
         )?;
-        let dt = extract_instances(
+        let (dt, dt_extract) = extract_instances(
             py,
             dt_anns,
             false,
@@ -338,6 +562,8 @@ impl Evaluator {
         };
         Ok(Evaluator {
             inner: CoreEvaluator::new(params, gt, dt),
+            gt_extract,
+            dt_extract,
         })
     }
 
@@ -363,6 +589,30 @@ impl Evaluator {
             out.set_item("evalImgs", eval_imgs_to_py(py, &eval_imgs, t)?)?;
         }
         Ok(out)
+    }
+
+    /// Per-phase timings, in seconds.
+    ///
+    /// Extraction and evaluation are measured differently on purpose.
+    /// `gt_read` / `gt_rasterise` are wall-clock on two threads that overlap,
+    /// so they do not sum; `gt_read_blocked` is how much of the reading was
+    /// spent waiting on the rasteriser, which is what says who the bottleneck
+    /// is. The evaluation phases are summed across rayon workers, so compare
+    /// them to the caller's wall-clock to see whether they parallelised.
+    fn timings<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        let d = PyDict::new(py);
+        let ns = |c: &AtomicU64| c.load(Ordering::Relaxed) as f64 / 1e9;
+        for (prefix, t) in [("gt", &self.gt_extract), ("dt", &self.dt_extract)] {
+            d.set_item(format!("{prefix}_read"), ns(&t.read_ns))?;
+            d.set_item(format!("{prefix}_read_blocked"), ns(&t.read_blocked_ns))?;
+            d.set_item(format!("{prefix}_rasterise"), ns(&t.rasterise_ns))?;
+        }
+        let [group, iou, matching, accumulate] = self.inner.timings().as_secs();
+        d.set_item("group_index", group)?;
+        d.set_item("iou_cpu", iou)?;
+        d.set_item("match_cpu", matching)?;
+        d.set_item("accumulate_cpu", accumulate)?;
+        Ok(d)
     }
 
     /// Per-instance verdicts at one setting, column-wise.
@@ -490,5 +740,7 @@ fn _ufcoco(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(mask::fr_py_objects, m)?)?;
     m.add_function(wrap_pyfunction!(mask::to_boundary, m)?)?;
     m.add_function(wrap_pyfunction!(json::load_json, m)?)?;
+    m.add_function(wrap_pyfunction!(alloc_stats, m)?)?;
+    m.add_function(wrap_pyfunction!(reset_alloc_peak, m)?)?;
     Ok(())
 }

@@ -32,6 +32,47 @@ use crate::group::{Grouping, Run, RunJoin};
 use crate::rle::{self, Rle};
 use rayon::prelude::*;
 use std::cmp::Ordering;
+use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
+use std::time::Instant;
+
+/// Where the evaluation spent its time, in nanoseconds.
+///
+/// Values are **summed across worker threads**, so on a parallel phase they
+/// exceed wall-clock time — deliberately. The sum says where the CPU went; the
+/// caller's wall-clock says whether it parallelised. Comparing the two is what
+/// distinguishes "this phase is expensive" from "this phase is serialised".
+///
+/// Timers sit at category granularity (a few hundred `Instant::now()` calls
+/// per run), so the instrumentation cannot distort what it measures.
+#[derive(Default, Debug)]
+pub struct Timings {
+    /// Building the sparse (image, category) index.
+    pub group_ns: AtomicU64,
+    /// `computeIoU` / `computeOks`, including the per-image detection sort.
+    pub iou_ns: AtomicU64,
+    /// `evaluateImg`: the greedy matcher.
+    pub match_ns: AtomicU64,
+    /// `accumulate`: the score sort and the PR curves.
+    pub accumulate_ns: AtomicU64,
+}
+
+impl Timings {
+    #[inline]
+    fn add(counter: &AtomicU64, start: Instant) {
+        counter.fetch_add(start.elapsed().as_nanos() as u64, AtomicOrdering::Relaxed);
+    }
+
+    /// `(group, iou, match, accumulate)` in seconds.
+    pub fn as_secs(&self) -> [f64; 4] {
+        let g = |c: &AtomicU64| c.load(AtomicOrdering::Relaxed) as f64 / 1e9;
+        [
+            g(&self.group_ns),
+            g(&self.iou_ns),
+            g(&self.match_ns),
+            g(&self.accumulate_ns),
+        ]
+    }
+}
 
 /// `np.spacing(1)`.
 pub const EPS: f64 = f64::EPSILON;
@@ -205,6 +246,7 @@ struct CatImage {
 
 /// Per-image match result for one area range, in the compact form
 /// accumulation needs.
+#[derive(Default)]
 struct ImgMatch {
     dt_scores: Vec<f64>,
     /// `T * D`, ground-truth slot or -1.
@@ -224,6 +266,7 @@ pub struct Evaluator {
     gt_groups: Grouping,
     dt_groups: Grouping,
     n_groups: usize,
+    timings: Timings,
 }
 
 impl Evaluator {
@@ -236,8 +279,11 @@ impl Evaluator {
         } else {
             1
         };
+        let timings = Timings::default();
+        let t = Instant::now();
         let gt_groups = Grouping::build(&gt.img_slot, &gt.cat_slot, n_groups, params.use_cats);
         let dt_groups = Grouping::build(&dt.img_slot, &dt.cat_slot, n_groups, params.use_cats);
+        Timings::add(&timings.group_ns, t);
         Evaluator {
             params,
             gt,
@@ -245,7 +291,13 @@ impl Evaluator {
             gt_groups,
             dt_groups,
             n_groups,
+            timings,
         }
+    }
+
+    /// Per-phase timings accumulated so far. See [`Timings`].
+    pub fn timings(&self) -> &Timings {
+        &self.timings
     }
 
     pub fn gt_instances(&self) -> &Instances {
@@ -409,30 +461,63 @@ impl Evaluator {
 
     /// `evaluateImg` for one image and area range.
     fn evaluate_img(&self, ci: &CatImage, area_idx: usize) -> Option<ImgMatch> {
+        let mut out = ImgMatch::default();
+        let mut scratch = MatchScratch::default();
+        self.evaluate_img_into(ci, area_idx, &mut out, &mut scratch)
+            .then_some(out)
+    }
+
+    /// `evaluateImg`, writing into caller-owned buffers.
+    ///
+    /// Returns whether this image contributes anything, which depends only on
+    /// whether it has any annotations and so is the same for every area range.
+    /// Reusing `out` across area ranges is what keeps this off the allocator:
+    /// at Objects365 scale the per-image vectors were 20 million allocations,
+    /// and sixteen threads contending for the heap costs more than the
+    /// matching itself.
+    fn evaluate_img_into(
+        &self,
+        ci: &CatImage,
+        area_idx: usize,
+        out: &mut ImgMatch,
+        scratch: &mut MatchScratch,
+    ) -> bool {
         if ci.gt_idx.is_empty() && ci.dt_idx.is_empty() {
-            return None;
+            return false;
         }
         let a_rng = self.params.area_rng[area_idx];
         let t_n = self.params.iou_thrs.len();
         let g_n = ci.gt_idx.len();
         let d_n = ci.dt_idx.len();
+        // Destructured so the matcher can hold several of these at once;
+        // borrowing them one field at a time through `out` would not compile.
+        let ImgMatch {
+            dt_scores,
+            dt_match,
+            dt_ignore,
+            gt_ignore,
+            gt_perm,
+        } = out;
 
         // Ignore flags, then a stable partition that puts them last.
-        let ignore: Vec<bool> = ci
-            .gt_idx
-            .iter()
-            .map(|&g| {
-                let g = g as usize;
-                let a = self.gt.areas[g];
-                self.gt.ignore[g] || a < a_rng[0] || a > a_rng[1]
-            })
-            .collect();
-        let mut gt_perm: Vec<u32> = (0..g_n as u32).collect();
+        let ignore = &mut scratch.ignore;
+        ignore.clear();
+        ignore.extend(ci.gt_idx.iter().map(|&g| {
+            let g = g as usize;
+            let a = self.gt.areas[g];
+            self.gt.ignore[g] || a < a_rng[0] || a > a_rng[1]
+        }));
+        gt_perm.clear();
+        gt_perm.extend(0..g_n as u32);
         gt_perm.sort_by_key(|&i| ignore[i as usize] as u8);
-        let gt_ignore: Vec<bool> = gt_perm.iter().map(|&i| ignore[i as usize]).collect();
+        gt_ignore.clear();
+        gt_ignore.extend(gt_perm.iter().map(|&i| ignore[i as usize]));
 
-        let mut dt_match = vec![-1i32; t_n * d_n];
-        let mut gt_matched = vec![false; t_n * g_n];
+        dt_match.clear();
+        dt_match.resize(t_n * d_n, -1);
+        let gt_matched = &mut scratch.gt_matched;
+        gt_matched.clear();
+        gt_matched.resize(t_n * g_n, false);
 
         if !ci.ious.is_empty() {
             for (tind, &thr) in self.params.iou_thrs.iter().enumerate() {
@@ -473,7 +558,8 @@ impl Evaluator {
 
         // Unmatched detections outside the area range (or LVIS-marked) are
         // ignored rather than counted as false positives.
-        let mut dt_ignore = vec![false; t_n * d_n];
+        dt_ignore.clear();
+        dt_ignore.resize(t_n * d_n, false);
         for tind in 0..t_n {
             for dind in 0..d_n {
                 let src = ci.dt_idx[dind] as usize;
@@ -487,17 +573,9 @@ impl Evaluator {
             }
         }
 
-        Some(ImgMatch {
-            dt_scores: ci
-                .dt_idx
-                .iter()
-                .map(|&i| self.dt.scores[i as usize])
-                .collect(),
-            dt_match,
-            dt_ignore,
-            gt_ignore,
-            gt_perm,
-        })
+        dt_scores.clear();
+        dt_scores.extend(ci.dt_idx.iter().map(|&i| self.dt.scores[i as usize]));
+        true
     }
 
     /// Run the whole evaluation.
@@ -515,7 +593,9 @@ impl Evaluator {
         let per_cat: Vec<CatOut> = (0..k_n)
             .into_par_iter()
             .map(|k| {
+                let t = Instant::now();
                 let work = self.prepare_category(k);
+                Timings::add(&self.timings.iou_ns, t);
                 let mut out = CatOut {
                     // -1 is pycocotools' "this category has no ground truth
                     // here" sentinel; summarize() filters on s > -1.
@@ -525,14 +605,30 @@ impl Evaluator {
                     eval_imgs: Vec::new(),
                 };
                 let mut buf = AccumBuf::default();
+                // Allocated once per category and refilled for each area
+                // range: which images contribute depends only on whether they
+                // have annotations, which does not vary by area.
+                let mut matches: Vec<Option<ImgMatch>> = Vec::new();
+                let mut scratch = MatchScratch::default();
                 for a in 0..a_n {
-                    let matches: Vec<Option<ImgMatch>> =
-                        work.iter().map(|ci| self.evaluate_img(ci, a)).collect();
+                    let t = Instant::now();
+                    if matches.is_empty() {
+                        matches.resize_with(work.len(), || Some(ImgMatch::default()));
+                    }
+                    for (slot, ci) in matches.iter_mut().zip(work.iter()) {
+                        let mut buf = slot.take().unwrap_or_default();
+                        *slot = self
+                            .evaluate_img_into(ci, a, &mut buf, &mut scratch)
+                            .then_some(buf);
+                    }
+                    Timings::add(&self.timings.match_ns, t);
+                    let t = Instant::now();
                     for (m, &max_det) in p.max_dets.iter().enumerate() {
                         self.accumulate_slice(
                             &matches, max_det, a, m, t_n, r_n, a_n, m_n, &mut buf, &mut out,
                         );
                     }
+                    Timings::add(&self.timings.accumulate_ns, t);
                     if collect_eval_imgs {
                         out.eval_imgs
                             .extend(self.materialise_eval_imgs(&work, &matches, k, a, i_n));
@@ -813,6 +909,13 @@ impl Evaluator {
                 },
             )
     }
+}
+
+/// Working buffers for one image's match, reused across images.
+#[derive(Default)]
+struct MatchScratch {
+    ignore: Vec<bool>,
+    gt_matched: Vec<bool>,
 }
 
 #[derive(Default)]

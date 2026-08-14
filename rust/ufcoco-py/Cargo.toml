@@ -11,10 +11,16 @@ description = "Python bindings for ufcoco-core"
 name = "_ufcoco"
 crate-type = ["cdylib"]
 
+[features]
+# Wrap the global allocator to count bytes and allocations. Off by default:
+# the counters are cheap but not free, and a benchmark must not slow down what
+# it measures. See src/alloc.rs.
+alloc-stats = []
+
 [dependencies]
 ufcoco-core = { path = "../ufcoco-core" }
 rayon = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-pyo3 = { version = "0.29", features = ["extension-module", "abi3-py39"] }
+pyo3 = { version = "0.29", features = ["extension-module"] }
 numpy = "0.29"

@@ -30,14 +30,35 @@
 /// instead (NaN -> 0), which would silently disagree with pycocotools on
 /// annotations that contain duplicate consecutive vertices — and those do
 /// occur in the wild.
+///
+/// It also sits in the innermost polygon-tracing loop — roughly five calls per
+/// boundary pixel — so it is one range test plus a raw convert. `x as i32`
+/// would repeat that range test internally to guarantee saturation, and NaN
+/// fails both comparisons here, which is exactly the case we want sent to
+/// `INT_MIN`.
 #[inline]
 fn c_i32(x: f64) -> i32 {
-    let t = x.trunc();
-    if t.is_nan() || t < i32::MIN as f64 || t > i32::MAX as f64 {
-        i32::MIN
+    if x > -2147483649.0 && x < 2147483648.0 {
+        // SAFETY: the comparison above excludes NaN and everything outside
+        // i32's range after truncation, which is `to_int_unchecked`'s
+        // precondition.
+        unsafe { x.to_int_unchecked::<i32>() }
     } else {
-        t as i32
+        i32::MIN
     }
+}
+
+/// Hand back a run array with no capacity slack.
+///
+/// The counts vectors are built by pushing, so they carry up to 2x the bytes
+/// they need. That is invisible on one mask and 30 MB across a COCO
+/// segmentation run, where the RLEs are the bulk of live memory — and they
+/// are built once and read many times, so paying one realloc to shed it is
+/// the right trade.
+#[inline]
+fn tight(mut cnts: Vec<u32>) -> Vec<u32> {
+    cnts.shrink_to_fit();
+    cnts
 }
 
 /// A run-length-encoded binary mask, column-major (Fortran order) like COCO.
@@ -154,7 +175,11 @@ impl Rle {
             c += 1;
         }
         cnts.push(c);
-        Rle { h, w, cnts }
+        Rle {
+            h,
+            w,
+            cnts: tight(cnts),
+        }
     }
 
     /// `rleToString`: LEB128-like, 6 bits per char, ASCII 48..111.
@@ -219,7 +244,11 @@ impl Rle {
             }
             cnts.push(x as u32);
         }
-        Rle { h, w, cnts }
+        Rle {
+            h,
+            w,
+            cnts: tight(cnts),
+        }
     }
 }
 
@@ -287,7 +316,11 @@ pub fn merge(rles: &[Rle], intersect: bool) -> Rle {
         h = rles[0].h;
         w = rles[0].w;
     }
-    Rle { h, w, cnts }
+    Rle {
+        h,
+        w,
+        cnts: tight(cnts),
+    }
 }
 
 /// `bbIou`, writing a row-major `m x n` matrix (`out[d * n + g]`).
@@ -552,7 +585,11 @@ pub fn rle_fr_poly_into(xy: &[f64], h: u32, w: u32, s: &mut PolyScratch) -> Rle 
             }
         }
     }
-    Rle { h, w, cnts: b }
+    Rle {
+        h,
+        w,
+        cnts: tight(b),
+    }
 }
 
 /// `rleFrBbox`: a box is just its four-corner polygon.
@@ -579,6 +616,35 @@ pub fn rle_fr_polys_into(polys: &[Vec<f64>], h: u32, w: u32, s: &mut PolyScratch
     parts.clear();
     for p in polys {
         parts.push(rle_fr_poly_into(p, h, w, s));
+    }
+    let out = merge(&parts, false);
+    s.parts = parts;
+    out
+}
+
+/// [`rle_fr_polys`] over rings stored flat, with `ends[i]` the exclusive end
+/// of ring `i` in `coords`.
+///
+/// The flat form exists so that reading a multi-ring polygon out of Python
+/// costs one allocation instead of one per ring; the rasterisation is
+/// identical.
+pub fn rle_fr_polys_flat_into(
+    coords: &[f64],
+    ends: &[u32],
+    h: u32,
+    w: u32,
+    s: &mut PolyScratch,
+) -> Rle {
+    if ends.len() == 1 {
+        return rle_fr_poly_into(coords, h, w, s);
+    }
+    let mut parts = std::mem::take(&mut s.parts);
+    parts.clear();
+    let mut start = 0usize;
+    for &end in ends {
+        let end = end as usize;
+        parts.push(rle_fr_poly_into(&coords[start..end], h, w, s));
+        start = end;
     }
     let out = merge(&parts, false);
     s.parts = parts;

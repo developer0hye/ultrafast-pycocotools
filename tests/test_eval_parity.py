@@ -210,6 +210,27 @@ def test_all_scores_tied(synthetic, tmp_path):
     )
 
 
+@pytest.mark.parametrize("iou_type", ["bbox", "segm"])
+def test_derive_segmentation_off_changes_nothing(synthetic, iou_type):
+    """The 440 MB `loadRes` saves must be free.
+
+    ``derive_segmentation=False`` skips storing the four-corner polygon that
+    pycocotools materialises for box-only results; the evaluator rasterises the
+    box itself instead. If that rasterisation is not the same mask, segm AP
+    moves — so this compares against pycocotools with the polygon present, not
+    merely against ourselves without it.
+    """
+    gt_path, dt_path = synthetic
+    ref = run_reference(gt_path, dt_path, iou_type)
+
+    gt = ufc.COCO(str(gt_path), verbose=False)
+    dt = gt.loadRes(str(dt_path), derive_segmentation=False)
+    assert "segmentation" not in next(iter(dt.anns.values()))
+    ev = ufc.COCOeval(gt, dt, iou_type, print_function=lambda *_: None)
+    ev.run()
+    assert_bit_identical(ref, ev, f"derive_segmentation=False/{iou_type}")
+
+
 def test_eval_imgs_shape_matches_reference(synthetic):
     """``evalImgs`` is opt-in, but when asked for it must match upstream."""
     gt_path, dt_path = synthetic

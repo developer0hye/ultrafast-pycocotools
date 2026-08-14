@@ -164,22 +164,82 @@ per-image 진단, mean IoU, calibration이 전부 여기서 나온다.
 
 ## 측정 방법
 
-수치는 전부 실측이고, 재현 절차는 다음과 같다.
+**추측으로 최적화하지 않는다.** 이 저장소의 최적화는 전부 계측이 먼저 지목한 것이고,
+계측 도구가 코드와 같이 들어 있다.
 
 ```bash
 python bench/make_dets.py --gt <gt.json> --out bench/data/dt.json [--segm]
+
+# 비교 (구현마다 별도 프로세스, 3회 돌려 best)
 python bench/run_impl.py --impl {pycocotools,faster,hotcoco,ufcoco} \
-    --gt <gt.json> --dt bench/data/dt.json --iou-type {bbox,segm}
-python bench/profile_phases.py --gt <gt.json> --dt bench/data/dt.json --iou-type segm
+    --gt <gt.json> --dt bench/data/dt.json --iou-type {bbox,segm} --json-out out.json
+python bench/summarize.py bench/out/*.json
+
+# 어디에 시간이 가는가 (engine 내부 timer를 직접 읽음)
+python bench/profile_engine.py --gt <gt.json> --dt bench/data/dt.json --iou-type segm
+
+# 어디에 메모리가 가는가 (Rust global allocator 계측)
+maturin develop --release --features alloc-stats
+python bench/profile_memory.py --gt <gt.json> --dt bench/data/dt.json --iou-type segm
+
 python bench/check_params.py <gt.json> {hotcoco,faster,ufcoco}   # 격자 bit 비교
 ```
 
-각 구현은 **별도 프로세스**에서 돈다. 같은 프로세스에서 재면 다른 라이브러리의 warm
-cache와 allocator 상태가 섞이고 peak RSS가 의미를 잃는다.
+측정할 때 지킬 것:
+
+- **구현마다 별도 프로세스.** 같은 프로세스에서 재면 다른 라이브러리의 warm cache와
+  allocator 상태가 섞이고 peak RSS가 의미를 잃는다.
+- **최소 3회 돌려 best를 쓴다.** 0.1~0.3초대 측정의 분산이 15%다. 한 번만 재고
+  "빨라졌다/느려졌다"를 판정하면 노이즈를 쫓게 된다 — 실제로 이 저장소의 버퍼 재사용
+  최적화는 단발 측정에서 13% 느려 보였고, 5회 측정에서 노이즈였음이 드러났다.
+- **차분 추정과 직접 계측을 구분한다.** `profile_segm.py`는 입력을 바꿔가며 전체
+  시간 차이로 비용을 역산한다 — 첫 감을 잡기엔 좋지만 engine 내부를 못 보고
+  오버랩도 못 본다. `profile_engine.py`는 engine이 스스로 잰 값을 읽으므로 귀속이
+  확실하다.
+
+### 두 종류의 숫자를 섞어 읽지 않기
+
+`profile_engine.py`의 extraction과 evaluation은 의미가 다르다.
+
+- **extraction**은 서로 겹쳐 도는 두 스레드의 wall-clock이다. annotation을 Python에서
+  읽으려면 GIL이 필요하고 rasterise에는 필요 없으므로, 둘을 번갈아 하지 않고 동시에
+  한다. 그래서 `read`와 `rasterise`는 **합해지지 않는다.** `read_blocked`가 둘 중
+  누가 병목인지를 말해준다.
+- **evaluation**은 worker 스레드에 걸쳐 **합산된 CPU 시간**이라 wall을 넘는다.
+  일부러 그렇게 둔다 — 합은 CPU가 어디로 갔는지를, wall과의 비(`parallel speedup`)는
+  그 phase가 실제로 병렬화됐는지를 말한다.
+
+`profile_memory.py`의 RSS delta는 allocator 여유분과 단편화를 포함하므로 Rust/Python
+수치보다 크고 서로 합해지지 않는다. 사용자가 OOM으로 맞는 숫자는 RSS 쪽이다.
+
+`alloc-stats` feature가 없으면 Rust 열은 0이 아니라 `n/a`로 나온다. 0으로 보이면
+"할당을 안 한다"로 잘못 읽히는데, 그건 정반대의 결론이다.
 
 `bench/make_dataset.py`는 씨앗 고정 synthetic 데이터를 만든다. 일부러 어려운 입력을
 넣는다 — crowd, small/medium/large 경계에 정확히 걸치는 area, 동점 score, GT만 있는
 image, detection만 있는 image, 꼭짓점이 중복된 polygon.
+
+## 계측이 지목했고 실제로 고친 것
+
+| 계측이 보여준 것 | 원인 | 고친 방법 |
+|---|---|---|
+| dict lookup이 extraction의 큰 몫 | `get_item("image_id")`가 매번 Python 문자열 생성 | `intern!`로 key 캐시. O365에서 1,440만 개 제거 |
+| segm setup의 81%가 extract+rasterise | 읽기와 rasterise를 번갈아 실행 | worker 스레드 + bounded channel로 파이프라인화. rasterise가 읽기 뒤로 완전히 숨음(`read_blocked` 0.000s) |
+| polygon vertex 읽기 92 ns | `abi3`에서 `PyFloat_AS_DOUBLE`이 매크로가 아니라 함수 호출 | abi3 포기, per-version wheel. 0.098s → 0.067s |
+| bbox마다 힙 할당 | `Vec<f64>::extract` | 고정 배열로 직접 읽기. O365에서 240만 할당 제거 |
+| evaluate에서 2,176만 할당 | area range마다 match 버퍼 재할당 | category 안에서 재사용. 666만으로 감소, 해당 phase 2.22s → 0.83s |
+| 마스크 메모리가 예상의 2배 | `Vec::push`로 만든 `cnts`의 capacity 여유분 | `shrink_to_fit` |
+| O365 `loadRes` 1,148 MB | box detection마다 네 꼭짓점 polygon 생성 | engine이 box에서 직접 rasterise. `derive_segmentation=False`로 320 MB·2.1s 절약 |
+
+**abi3를 포기한 것은 패키징 결정이다.** Python 버전마다 wheel을 만들어야 한다. 대신
+limited API에서는 `PyFloat_AS_DOUBLE`, `PyList_GET_ITEM`이 매크로가 아니라 함수 호출이
+되는데, annotation을 읽는 것이 이 라이브러리의 가장 뜨거운 루프라 그 비용이 그대로
+드러난다. pycocotools 자체도 Cython 확장이라 per-version wheel을 배포하므로 사용자가
+겪는 차이는 없다.
+
+부수 효과: `cargo build -p ufcoco-py`가 Python 인터프리터를 찾아야 한다. venv를
+활성화했거나 `PYO3_PYTHON`이 설정돼 있으면 된다. 알고리즘과 테스트가 있는
+`ufcoco-core`는 PyO3 의존이 없으므로 `cargo test -p ufcoco-core`는 항상 그냥 돈다.
 
 ## 한 줄 요약
 

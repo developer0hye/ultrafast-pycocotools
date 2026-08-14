@@ -135,46 +135,96 @@ pycocotools는 `pr = tp / (fp + tp + np.spacing(1))`이다. `np.spacing(1)`을 �
 ## 속도와 메모리
 
 전부 실측이다. 재현 절차는 [§직접 해보기](#직접-해보기)에 있다. 각 구현은 별도
-프로세스에서 돌렸고(peak RSS가 섞이지 않도록), `eval`은
-`evaluate + accumulate + summarize` 합계다.
+프로세스에서 돌렸고(peak RSS가 섞이지 않도록), 구현마다 3회 돌려 **best**를 적었다
+— 이 정도 시간대에서는 단발 측정의 분산이 15%라 한 번만 재면 아무 결론도 못 낸다.
+`eval`은 `evaluate + accumulate + summarize` 합계다.
 
 **COCO val2017** — 5,000 images / 36,781 GT / 37,504 detections
 
 | iouType | 구현 | eval | speedup | peak RSS | 동치 |
 |---|---|---|---|---|---|
-| bbox | pycocotools 2.0.11 | 6.650s | 1.0× | 644 MB | (기준) |
-| bbox | faster-coco-eval 1.7.2 | 2.338s | 2.8× | 636 MB | bit-identical |
-| bbox | hotcoco 0.5.0 | 0.176s | 37.9× | 479 MB | max \|diff\| 1.0e-05 |
-| bbox | **ultrafast-pycocotools** | **0.160s** | **41.4×** | **244 MB** | **bit-identical** |
-| segm | pycocotools 2.0.11 | 9.413s | 1.0× | 636 MB | (기준) |
-| segm | faster-coco-eval 1.7.2 | 4.142s | 2.3× | 686 MB | bit-identical |
-| segm | hotcoco 0.5.0 | **0.213s** | **44.3×** | 481 MB | max \|diff\| 2.0e-06 |
-| segm | **ultrafast-pycocotools** | 0.302s | 31.1× | **346 MB** | **bit-identical** |
+| bbox | pycocotools 2.0.11 | 6.494s | 1.0× | 644 MB | (기준) |
+| bbox | faster-coco-eval 1.7.2 | 1.839s | 3.5× | 636 MB | bit-identical |
+| bbox | hotcoco 0.5.0 | 0.149s | 43.4× | 477 MB | max \|diff\| 1.0e-05 |
+| bbox | **ultrafast-pycocotools** | **0.115s** | **56.4×** | **244 MB** | **bit-identical** |
+| segm | pycocotools 2.0.11 | 7.484s | 1.0× | 636 MB | (기준) |
+| segm | faster-coco-eval 1.7.2 | 3.704s | 2.0× | 685 MB | bit-identical |
+| segm | hotcoco 0.5.0 | 0.220s | 34.0× | 482 MB | max \|diff\| 2.0e-06 |
+| segm | **ultrafast-pycocotools** | 0.221s | 33.8× | **339 MB** | **bit-identical** |
 
 **Objects365 val** — 80,000 images / 1,240,587 GT / 1,170,984 detections / 365 categories
 
-| 구현 | eval | speedup | wall | peak RSS | 동치 |
-|---|---|---|---|---|---|
-| pycocotools 2.0.11 | 384.7s | 1.0× | 392.9s | 24.89 GB | (기준) |
-| faster-coco-eval 1.7.2 | 157.6s | 2.4× | 166.6s | 28.81 GB | bit-identical |
-| hotcoco 0.5.0 | 4.21s | 91.4× | 8.35s | 10.74 GB | max \|diff\| 1.8e-06 |
-| **ultrafast-pycocotools** | **3.66s** | **105.2×** | 10.18s | **2.40 GB** | **bit-identical** |
+| 구현 | eval | speedup | peak RSS | 동치 |
+|---|---|---|---|---|
+| pycocotools 2.0.11 | 384.7s | 1.0× | 24.89 GB | (기준) |
+| faster-coco-eval 1.7.2 | 157.6s | 2.4× | 28.81 GB | bit-identical |
+| hotcoco 0.5.0 | 4.22s | 91.1× | 10.74 GB | max \|diff\| 1.8e-06 |
+| **ultrafast-pycocotools** | **2.74s** | **140.3×** | **2.40 GB** | **bit-identical** |
 
-스케일이 커질수록 메모리 차이가 벌어진다. **pycocotools의 10분의 1, hotcoco의 4분의 1**이다.
-pycocotools의 메모리는 대부분 `evalImgs`다 — (category × areaRange × image)개의 dict를
-만들고 각각 `T×D` float64 배열을 담는다. 우리는 그 중간 산출물을 아예 만들지 않고
-(category, areaRange) 하나씩 처리하며 accumulate까지 끝낸다. 필요하면
-`COCOeval(..., store_eval_imgs=True)`로 pycocotools와 동일한 `evalImgs`를 받을 수 있다.
+스케일이 커질수록 메모리 차이가 벌어진다. O365에서 **pycocotools의 10분의 1,
+hotcoco의 4.5분의 1**이다. pycocotools의 메모리는 대부분 `evalImgs`다 —
+(category × areaRange × image)개의 dict를 만들고 각각 `T×D` float64 배열을 담는다.
+우리는 그 중간 산출물을 아예 만들지 않고 (category, areaRange) 하나씩 처리하며
+accumulate까지 끝낸다. 필요하면 `COCOeval(..., store_eval_imgs=True)`로 pycocotools와
+동일한 `evalImgs`를 받을 수 있다.
 
-**segm에서 hotcoco보다 느린 이유는 숨기지 않겠다.** 우리는 annotation을 Python dict에서
-읽어 Rust로 넘기는데, segm에서는 그 추출 + polygon rasterisation이 engine 시간의 81%를
-차지한다(0.217s / 0.269s). `COCO`가 Python dict를 그대로 유지하는 설계의 대가다
-([§의도적 차이](#의도적-차이) 참조). detectron2·mmdetection·torchvision이 전부
-`coco.anns[id]`를 직접 읽고 수정하기 때문에 그 dict를 Rust view로 바꿀 수는 없다.
+**남은 2.40 GB의 89%는 Python annotation dict다** (`bench/profile_memory.py` 계측:
+GT 867 MB + DT 828 MB + Rust engine 197 MB). `coco.anns[id]`를 dict로 유지하는 설계의
+대가이고, detectron2·mmdetection·torchvision이 전부 그 dict를 직접 읽고 수정하기 때문에
+Rust view로 바꿀 수는 없다.
+
+그중 되돌릴 수 있는 낭비가 하나 있다. pycocotools의 `loadRes`는 box detection마다
+`segmentation`에 네 꼭짓점 polygon을 만들어 넣는다 — detection당 376 B, O365에서
+**320 MB**다. `iouType="bbox"`면 아무도 안 읽고, `iouType="segm"`이어도 우리 engine은
+box를 직접 rasterise하므로 결과가 같다:
+
+```python
+dt = gt.loadRes("detections.json", derive_segmentation=False)   # -320 MB, loadRes -2.1s
+```
+
+수치가 안 바뀐다는 건 테스트가 지킨다(`test_derive_segmentation_off_changes_nothing`,
+bbox·segm 양쪽에서 pycocotools와 바이트 비교). 기본값은 호환을 위해 `True`다 — 직접
+`ann["segmentation"]`을 읽는 코드가 있다면 그대로 두면 된다.
 
 annotation 파일 로딩도 Rust로 한다(`json.load`와 **비트까지 동일한** 결과를 낸다 —
-`tests/test_json_loader.py`가 실제 COCO 파일로 확인한다). O365 val 269MB 기준
+`tests/test_json_loader.py`가 실제 COCO 파일로 확인한다). O365 val 269 MB 기준
 4.07s → 2.52s.
+
+## 측정 도구
+
+수치를 못 재면 최적화는 추측이다. 두 harness가 저장소에 들어 있고, 위 표의 모든
+숫자가 이걸로 나왔다.
+
+```bash
+# 어느 단계에 시간이 가는가 — engine 내부 phase timer를 직접 읽는다
+python bench/profile_engine.py --gt gt.json --dt dt.json --iou-type segm
+
+# 어느 단계가 메모리를 쓰는가 — Rust global allocator를 감싸서 정확히 센다
+maturin develop --release --features alloc-stats
+python bench/profile_memory.py --gt gt.json --dt dt.json --iou-type segm
+```
+
+`profile_engine.py`가 내는 것:
+
+- **extraction** — `read`(GIL 필요)와 `rasterise`(GIL 불필요)는 **동시에 돈다.** 그래서
+  합이 안 맞는 게 정상이다. `read_blocked`가 크면 rasteriser가 병목, 0이면 읽기가 병목.
+- **evaluation** — phase별 시간이 worker 스레드에 걸쳐 **합산**된다. wall과 비교하면
+  그 phase가 실제로 병렬화됐는지가 보인다(`parallel speedup`).
+
+`profile_memory.py`가 내는 것: phase별 RSS delta / Python 할당(`tracemalloc`, 선택) /
+Rust live·peak 바이트 / 할당 횟수. `alloc-stats` feature 없이 빌드하면 Rust 열은 0이
+아니라 `n/a`로 나온다 — 0으로 보이면 "할당을 안 한다"로 잘못 읽히기 때문이다.
+
+이 harness가 실제로 잡아낸 것들:
+
+| 계측이 지목한 것 | 고친 방법 | 효과 |
+|---|---|---|
+| annotation dict lookup마다 Python 문자열 생성 | `intern!`으로 key 캐시 | O365에서 1,440만 개 문자열 제거 |
+| 읽기와 rasterisation이 번갈아 실행 | worker 스레드로 파이프라인화 | rasterisation이 읽기 뒤로 완전히 숨음 |
+| `abi3`에서 `PyFloat_AS_DOUBLE`이 함수 호출 | per-version wheel로 전환 | polygon 읽기 0.098s → 0.067s |
+| bbox마다 `Vec<f64>` 힙 할당 | 고정 배열로 직접 읽기 | O365에서 240만 할당 제거 |
+| area range마다 match 버퍼 재할당 | category 안에서 버퍼 재사용 | O365 evaluate 할당 2,176만 → 666만 |
+| RLE `cnts`의 capacity 여유분 | `shrink_to_fit` | 마스크 메모리 최대 2× → 1× |
 
 ---
 

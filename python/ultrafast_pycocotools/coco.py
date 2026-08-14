@@ -287,14 +287,23 @@ class COCO:
         )
         return None
 
-    def loadRes(self, resFile) -> "COCO":
+    def loadRes(self, resFile, *, derive_segmentation: bool = True) -> "COCO":
         """Build a result handle from detections.
 
         Accepts a path, a list of dicts, or an ``Nx7`` numpy array. The derived
-        fields (``id``, ``area``, ``iscrowd``, and ``segmentation`` for bbox
-        results) are filled in exactly as pycocotools fills them, because
-        ``area`` decides which area range a detection falls in and therefore
-        changes AP_small/medium/large.
+        fields (``id``, ``area``, ``iscrowd``) are filled in exactly as
+        pycocotools fills them, because ``area`` decides which area range a
+        detection falls in and therefore changes AP_small/medium/large.
+
+        Args:
+            derive_segmentation: for box-only results, also store the
+                equivalent four-corner polygon under ``segmentation``, as
+                pycocotools does. It costs 376 bytes per detection — 440 MB on
+                Objects365 — and is read by nothing here: the evaluator
+                rasterises the box directly when the field is absent, so
+                ``iouType="segm"`` gives identical results either way. Set
+                False on large detection sets unless your own code reads
+                ``ann["segmentation"]`` off a box-only result.
         """
         res = COCO(verbose=self.verbose)
         res.dataset["info"] = copy.deepcopy(self.dataset.get("info", {}))
@@ -330,8 +339,8 @@ class COCO:
             res.dataset["categories"] = copy.deepcopy(self.dataset["categories"])
             for idx, ann in enumerate(anns):
                 bb = ann["bbox"]
-                x1, x2, y1, y2 = bb[0], bb[0] + bb[2], bb[1], bb[1] + bb[3]
-                if "segmentation" not in ann:
+                if derive_segmentation and "segmentation" not in ann:
+                    x1, x2, y1, y2 = bb[0], bb[0] + bb[2], bb[1], bb[1] + bb[3]
                     ann["segmentation"] = [[x1, y1, x1, y2, x2, y2, x2, y1]]
                 ann["area"] = bb[2] * bb[3]
                 ann["id"] = idx + 1
