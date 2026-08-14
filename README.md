@@ -71,8 +71,29 @@ pycocotools를 바꿀 이유는 보통 셋 중 하나다. 자기 증상에서 �
 | faster-coco-eval 1.7.2 | bit-identical | bit-identical | bit-identical | |
 | hotcoco 0.5.0 | 최대 1.0e-5 | 최대 2.0e-6 | 최대 1.8e-6 | 아래 원인 |
 
-실무적으로 1e-5는 소수점 3자리 리포팅에서 안 보인다. 하지만 "AP가 바뀌지 않는다"를
-계약으로 걸려면 요약 수치가 아니라 배열로 증명해야 하고, 그러면 얘기가 달라진다.
+실무적으로 AP를 소수점 3자리로 보고하면 1e-5는 안 보인다. 하지만 **개별 cell은
+0.85까지 틀린다** — 평균이 감춰줄 뿐이다. YOLO11m 예측에서 hotcoco의 차이를 셀 단위로
+분해하면:
+
+| 크기 | cell 수 | 원인 |
+|---|---|---|
+| ~2e-16 (1 ULP) | 5,744 | `np.spacing(1)` 누락 |
+| 1e-6 ~ 1e-2 | 84 | threshold grid 1 ULP |
+| **> 1e-2** | **241** | threshold grid 1 ULP |
+
+두 번째 원인의 메커니즘은 완전히 재현된다(`bench/diagnose_divergence.py`):
+
+```
+pycocotools recThrs[70] = 0x1.6666666666667p-1  (0.7000000000000001)
+hotcoco     recThrs[70] = 0x1.6666666666666p-1  (0.7)
+recall 7/10            = 0x1.6666666666666p-1  (0.7)
+
+7/10 >= pycocotools thr : False  ->  샘플 없음  ->  precision 0.0
+7/10 >= hotcoco thr     : True   ->  curve 샘플 ->  precision 0.85
+```
+
+GT가 10개인 category에서 recall이 정확히 7/10에 떨어지면 그 지점이 0이 되느냐 0.85가
+되느냐가 갈린다. 희귀 category일수록 심하다.
 
 ### 어디서 어긋나는가 — 실제로 밟은 두 지점
 
@@ -226,6 +247,46 @@ AP가 같은 것과 **코드가 그대로 도는 것**은 다른 문제다. 같�
 프로세스에서 돌렸고(peak RSS가 섞이지 않도록), 구현마다 3회 돌려 **best**를 적었다
 — 이 정도 시간대에서는 단발 측정의 분산이 15%라 한 번만 재면 아무 결론도 못 낸다.
 `eval`은 `evaluate + accumulate + summarize` 합계다.
+
+### 실제 모델 출력으로 검증
+
+합성 detection은 GT에서 유도된다 — box가 GT와 상관되어 있고 score는 3자리로 반올림해
+동점이 수천 건이다. 동점은 stable sort가 걸리는 지점이라 일부러 어렵게 만든 것이지만,
+실제 모델 출력은 **정반대**다: float32 score라 동점이 거의 없고, box는 detector 자신의
+prior에서 나오며, 이미지당 개수가 훨씬 많다. 둘 다에서 맞아야 한 생성기의 우연이
+아니다.
+
+세 개의 구조적으로 다른 detector를 COCO val2017에 직접 돌려 확인했다
+(`bench/predict_coco*.py`):
+
+| 모델 | 구조 | detection | 이미지당 | 측정 AP | 공식 수치 |
+|---|---|---|---|---|---|
+| YOLO11m | anchor-free + NMS | 431,145 | 86.2 | 0.507 | 51.5 |
+| YOLO11m-seg | + prototype mask | 431,006 | 86.2 | segm | |
+| RF-DETR base | DETR query, NMS 없음 | 1,500,000 | 300.0 | 0.532 | ~53-54 |
+| Keypoint R-CNN | two-stage, OKS | 74,143 | 14.8 | 0.600 | 61.1 |
+
+AP가 공식 수치와 맞으므로 파이프라인 자체가 옳다. **네 경우 모두 bit-identical**이다.
+keypoints가 특히 의미 있는데, OKS는 `exp()`를 쓰는 유일한 경로라 numpy의 벡터화된
+`exp`와 Rust libm의 `exp`가 갈릴 수 있다고 처음부터 위험으로 적어뒀던 곳이다.
+
+### 두 대의 머신에서
+
+"pycocotools와 같다"는 한 머신 안의 이야기다. 그 수치가 플랫폼을 건너서도 같은지는
+별개 질문이고, 실제로 갈릴 수 있는 자리가 둘 있다 — `rleToString`이 쓰는 C `long`은
+gcc에서 64비트, MSVC에서 32비트고, OKS의 `exp`는 libm 구현마다 다르다.
+
+| | |
+|---|---|
+| Windows 11 / MSVC / AMD64 | pycocotools는 MSVC 빌드(32비트 `long`) |
+| Ubuntu 24.04 / glibc 2.39 / EPYC 9554 | pycocotools는 gcc 빌드(64비트 `long`) |
+
+같은 예측 파일을 양쪽에서 돌려 `precision`/`recall`/`scores` 배열 전체의 digest를
+비교했다(`bench/cross_platform.py`). bbox·segm·keypoints 모두, 네 구현 모두
+**두 머신에서 동일**했다. 그리고 각 머신에서 따로 계산한 pycocotools 대비 판정도
+동일하다 — 우리는 양쪽에서 bit-identical, hotcoco는 양쪽에서 3.7e-05~3.9e-05.
+
+---
 
 **COCO val2017** — 5,000 images / 36,781 GT / 37,504 detections
 

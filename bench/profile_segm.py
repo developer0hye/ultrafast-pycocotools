@@ -66,7 +66,7 @@ def main() -> None:
     p.imgIds = [int(i) for i in np.unique(p.imgIds)]
     p.catIds = [int(c) for c in np.unique(p.catIds)]
     p.maxDets = sorted(p.maxDets)
-    gts, dts, img_sizes = ev._prepare()
+    gts, dts, img_sizes = ev._collect()
 
     n_poly = sum(1 for a in gts if isinstance(a.get("segmentation"), list))
     n_pts = sum(

@@ -604,6 +604,7 @@ impl Evaluator {
         let (a_n, m_n) = (p.area_rng.len(), p.max_dets.len());
         let i_n = p.img_ids.len();
 
+        let max_det_all = p.max_dets.last().copied().unwrap_or(0);
         let per_cat: Vec<CatOut> = (0..k_n)
             .into_par_iter()
             .map(|k| {
@@ -623,6 +624,14 @@ impl Evaluator {
                 // range: which images contribute depends only on whether they
                 // have annotations, which does not vary by area.
                 let mut matches: Vec<Option<ImgMatch>> = Vec::new();
+                // The score-sorted detection order is the same for every area
+                // range and every maxDets: area only changes which ground
+                // truths are ignored, and maxDets only takes a prefix of each
+                // image's list. Sorting inside the (area, maxDets) loops meant
+                // sorting the same data twelve times for a default run, which
+                // on a dense detector is most of the accumulate cost.
+                let mut order: Vec<(u32, u32)> = Vec::new();
+                let mut order_ready = false;
                 for a in 0..a_n {
                     let t = Instant::now();
                     if matches.is_empty() {
@@ -643,9 +652,14 @@ impl Evaluator {
                         });
                     Timings::add(&self.timings.match_ns, t);
                     let t = Instant::now();
+                    if !order_ready {
+                        Self::build_order(&matches, max_det_all, &mut order);
+                        order_ready = true;
+                    }
                     for (m, &max_det) in p.max_dets.iter().enumerate() {
                         self.accumulate_slice(
-                            &matches, max_det, a, m, t_n, r_n, a_n, m_n, &mut buf, &mut out,
+                            &matches, &order, max_det, a, m, t_n, r_n, a_n, m_n, &mut buf,
+                            &mut out,
                         );
                     }
                     Timings::add(&self.timings.accumulate_ns, t);
@@ -746,11 +760,34 @@ impl Evaluator {
         out
     }
 
+    /// Flatten (image, detection) in image order and stable-sort by descending
+    /// score — the list pycocotools builds with np.concatenate followed by
+    /// argsort(kind='mergesort').
+    ///
+    /// Built for the largest maxDets; smaller ones are a subsequence, and
+    /// filtering a stably-sorted list leaves it stably sorted, so this runs
+    /// once per category rather than once per (area, maxDets).
+    fn build_order(matches: &[Option<ImgMatch>], max_det: usize, order: &mut Vec<(u32, u32)>) {
+        order.clear();
+        for (i, mm) in matches.iter().enumerate() {
+            let Some(mm) = mm else { continue };
+            for d in 0..mm.dt_scores.len().min(max_det) {
+                order.push((i as u32, d as u32));
+            }
+        }
+        order.sort_by(|x, y| {
+            let sx = matches[x.0 as usize].as_ref().unwrap().dt_scores[x.1 as usize];
+            let sy = matches[y.0 as usize].as_ref().unwrap().dt_scores[y.1 as usize];
+            cmp_desc_score(sx, sy)
+        });
+    }
+
     /// The body of pycocotools' `accumulate` for one (category, area, maxDet).
     #[allow(clippy::too_many_arguments)]
     fn accumulate_slice(
         &self,
         matches: &[Option<ImgMatch>],
+        order: &[(u32, u32)],
         max_det: usize,
         a: usize,
         m: usize,
@@ -761,32 +798,21 @@ impl Evaluator {
         buf: &mut AccumBuf,
         out: &mut CatOut,
     ) {
-        // Flatten (image, detection) in image order, then stable-sort by
-        // descending score — the list pycocotools builds with np.concatenate
-        // followed by argsort(kind='mergesort').
-        buf.flat.clear();
         let mut npig = 0usize;
         let mut any = false;
-        for (i, mm) in matches.iter().enumerate() {
+        for mm in matches.iter() {
             let Some(mm) = mm else { continue };
             any = true;
-            let d_n = mm.dt_scores.len().min(max_det);
-            for d in 0..d_n {
-                buf.flat.push((i as u32, d as u32));
-            }
             npig += mm.gt_ignore.iter().filter(|&&ig| !ig).count();
         }
         if !any || npig == 0 {
             return;
         }
-        {
-            let mm = &matches;
-            buf.flat.sort_by(|x, y| {
-                let sx = mm[x.0 as usize].as_ref().unwrap().dt_scores[x.1 as usize];
-                let sy = mm[y.0 as usize].as_ref().unwrap().dt_scores[y.1 as usize];
-                cmp_desc_score(sx, sy)
-            });
-        }
+        // `d` is the detection's rank inside its own image, so keeping
+        // `d < max_det` is exactly pycocotools' per-image `[0:maxDet]` cut.
+        buf.flat.clear();
+        buf.flat
+            .extend(order.iter().copied().filter(|&(_, d)| (d as usize) < max_det));
         let nd = buf.flat.len();
         buf.scores_sorted.clear();
         buf.scores_sorted.extend(

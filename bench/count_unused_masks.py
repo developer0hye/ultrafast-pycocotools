@@ -38,7 +38,7 @@ def main() -> None:
     p = ev.params
     p.imgIds = [int(i) for i in np.unique(p.imgIds)]
     p.catIds = [int(c) for c in np.unique(p.catIds)]
-    gts, dts, _ = ev._prepare()
+    gts, dts, _ = ev._collect()
 
     gt_groups: dict = defaultdict(int)
     dt_groups: dict = defaultdict(int)

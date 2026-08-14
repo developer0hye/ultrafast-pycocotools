@@ -172,7 +172,7 @@ def main() -> None:
     p.maxDets = sorted(p.maxDets)
 
     with rec.phase("_prepare"):
-        gts, dts, img_sizes = ev._prepare()
+        gts, dts, img_sizes = ev._collect()
 
     sigmas = getattr(p, "kpt_oks_sigmas", np.zeros(0))
     with rec.phase("engine build"):

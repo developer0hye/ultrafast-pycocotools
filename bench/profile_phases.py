@@ -43,7 +43,7 @@ def main() -> None:
     p.maxDets = sorted(p.maxDets)
 
     t = time.perf_counter()
-    gts, dts, img_sizes = ev._prepare()
+    gts, dts, img_sizes = ev._collect()
     t_prepare = time.perf_counter() - t
 
     sigmas = getattr(p, "kpt_oks_sigmas", np.zeros(0))

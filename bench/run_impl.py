@@ -11,10 +11,14 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import platform
 import sys
 import time
 from pathlib import Path
+
+import numpy as np
 
 
 def peak_rss_mb() -> float:
@@ -104,6 +108,17 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str) -> dict:
     timings["summarize"] = time.perf_counter() - t
 
     stats = [float(x) for x in ev.stats]
+    # Digests of the full arrays, not just the twelve summary numbers, so two
+    # machines can be compared without shipping ~8 MB of doubles around. A
+    # summary can match while the curve underneath differs in a hundred places.
+    import hashlib
+
+    digests = {
+        k: hashlib.sha256(
+            np.ascontiguousarray(ev.eval[k], dtype=np.float64).tobytes()
+        ).hexdigest()[:16]
+        for k in ("precision", "recall", "scores")
+    }
     return {
         "impl": impl,
         "iou_type": iou_type,
@@ -111,6 +126,8 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str) -> dict:
         "eval_total": timings["evaluate"] + timings["accumulate"] + timings["summarize"],
         "wall_total": sum(timings.values()),
         "stats": stats,
+        "digests": digests,
+        "platform": f"{sys.platform}/{platform.machine()}",
         "peak_rss_mb": peak_rss_mb(),
     }
 
