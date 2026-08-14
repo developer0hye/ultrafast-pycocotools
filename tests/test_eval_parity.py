@@ -80,7 +80,25 @@ def test_synthetic(synthetic, iou_type):
 
 
 @pytest.mark.parametrize("iou_type", ["bbox", "segm"])
+def test_real_coco(real_coco, iou_type):
+    """Real annotations, committed so this runs everywhere.
+
+    Real polygons have dozens of vertices across several rings and real crowd
+    regions are uncompressed RLE; the synthetic generator can only approximate
+    both. This is the test that would notice a `rleFrPoly` divergence on shapes
+    nobody thought to construct.
+    """
+    gt_path, dt_path = real_coco
+    assert_bit_identical(
+        run_reference(gt_path, dt_path, iou_type),
+        run_ours(gt_path, dt_path, iou_type),
+        f"real-coco/{iou_type}",
+    )
+
+
+@pytest.mark.parametrize("iou_type", ["bbox", "segm"])
 def test_real_coco_subset(real_pair, tmp_path, iou_type):
+    """The same, at 400 images, when the full annotation file is present."""
     gt_full, dt_full = real_pair
     gt_path = subset_gt(gt_full, REAL_SUBSET_IMAGES, tmp_path)
     dt_path = subset_dt(dt_full, gt_path, tmp_path)

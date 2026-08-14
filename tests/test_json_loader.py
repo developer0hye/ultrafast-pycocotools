@@ -13,7 +13,7 @@ import json
 import math
 
 import pytest
-from conftest import REAL_GT
+from conftest import COCO_SUBSET_GT, REAL_GT
 
 from ultrafast_pycocotools.coco import load_json
 
@@ -67,9 +67,25 @@ def test_literals(text, tmp_path):
 
 
 def test_real_annotation_file():
-    """The case that actually matters: a real COCO file, every float checked."""
+    """The case that actually matters: a real COCO file, every float checked.
+
+    Runs on the committed slice so it is never skipped — this is the test that
+    caught serde_json's default float parser being one ULP out on values like
+    32002.703, and a skipped test catches nothing.
+    """
+    with open(COCO_SUBSET_GT) as f:
+        want = json.load(f)
+    assert_exactly_equal(want, load_json(COCO_SUBSET_GT))
+    # Real annotation areas are polygon integrals, so they exercise the long
+    # decimal forms that a fast-path parser rounds differently.
+    areas = [a["area"] for a in want["annotations"]]
+    assert sum(1 for a in areas if len(repr(a)) > 12) > 100, "too few awkward floats"
+
+
+def test_full_annotation_file_when_present():
+    """The same over all 20 MB, for anyone who has it locally."""
     if not REAL_GT.exists():
-        pytest.skip("COCO val2017 annotations not present")
+        pytest.skip("full COCO val2017 annotations not present")
     with open(REAL_GT) as f:
         want = json.load(f)
     assert_exactly_equal(want, load_json(REAL_GT))

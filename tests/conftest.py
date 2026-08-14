@@ -24,6 +24,15 @@ REAL_GT = DATA / "instances_val2017.json"
 REAL_DT = DATA / "dt_val2017_bbox.json"
 REAL_KP_GT = DATA / "person_keypoints_val2017.json"
 
+# A committed slice of real COCO val2017. Synthetic data approximates real
+# annotations and gets some of it wrong — our generator draws polygons with 3-8
+# vertices where COCO's have dozens across several rings, and it cannot
+# reproduce the exact shapes that make `rleFrPoly` interesting. This runs
+# everywhere, including a fresh clone and CI; see bench/make_real_fixture.py.
+FIXTURE = ROOT / "tests" / "data"
+COCO_SUBSET_GT = FIXTURE / "coco_subset_gt.json"
+COCO_SUBSET_DT = FIXTURE / "coco_subset_dt.json"
+
 
 @pytest.fixture(scope="session")
 def synthetic(tmp_path_factory) -> tuple[Path, Path]:
@@ -58,9 +67,24 @@ def synthetic_kp(tmp_path_factory) -> tuple[Path, Path]:
 
 
 @pytest.fixture(scope="session")
+def real_coco() -> tuple[Path, Path]:
+    """The committed slice of real COCO val2017. Always available."""
+    assert COCO_SUBSET_GT.exists(), (
+        f"{COCO_SUBSET_GT} is missing; regenerate with bench/make_real_fixture.py"
+    )
+    return COCO_SUBSET_GT, COCO_SUBSET_DT
+
+
+@pytest.fixture(scope="session")
 def real_pair() -> tuple[Path, Path]:
+    """Full COCO val2017, when someone has it locally.
+
+    Skips rather than fails: this is a bonus on top of `real_coco`, not the
+    only real-data coverage. It used to be the only one, which meant the
+    suite's strongest test ran on exactly one machine.
+    """
     if not (REAL_GT.exists() and REAL_DT.exists()):
-        pytest.skip("COCO val2017 fixtures not present; run bench/make_dets.py")
+        pytest.skip("full COCO val2017 not present; run bench/make_dets.py")
     return REAL_GT, REAL_DT
 
 

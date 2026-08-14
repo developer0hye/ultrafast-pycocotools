@@ -123,7 +123,7 @@ pycocotools는 `pr = tp / (fp + tp + np.spacing(1))`이다. `np.spacing(1)`을 �
 
 ### 검증 범위
 
-`pytest tests/` 136개와 `cargo test` 57개가 전부 실제 pycocotools와 비교한다
+`pytest tests/` 139개와 `cargo test` 57개가 전부 실제 pycocotools와 비교한다
 (golden 파일이 아니라 live 비교).
 
 ### 통과 여부가 아니라 mutation score로 잰다
@@ -170,14 +170,16 @@ precision envelope이 오른쪽에서 왼쪽으로 전파되는지(그래서 fix
 - **mask API 47개** — `encode`/`decode`/`merge`/`area`/`toBbox`/`iou`/`frPyObjects`를
   1×1 이미지, 빈 마스크, 꽉 찬 마스크, 이미지 밖으로 나간 polygon, **꼭짓점이 중복된
   polygon**(`rleFrPoly`가 0으로 나눠 NaN을 int로 캐스팅하는 지점), crowd flag까지.
-- **fixture 구성 7개** — 다른 모든 테스트가 전제하는 어려운 케이스가 fixture에 **실제로 들어 있는지**. crowd 확률이 0으로 바뀌어도 parity 테스트는 전부 통과한다(crowd 없는 데이터에서는 양쪽이 완벽히 일치하니까). 스위트가 조용해지는 것이 parity 스위트의 최악의 실패 모드라 따로 못박았다. **이 가드가 바로 생성기의 실제 결함을 찾았다** — keypoint 가시성을 독립적으로 뽑느라 `num_keypoints == 0` 인스턴스가 (1/5)^17 확률이라 사실상 없었고, OKS의 해당 분기가 한 번도 안 밟히고 있었다.
+- **실제 COCO 8개** — 커밋된 93 이미지 slice(`tests/data/`, 440 kB)로 fresh clone과 CI에서도 **항상 돈다**. 예전에는 20 MB annotation 파일이 있는 한 대의 머신에서만 돌고 나머지에서는 조용히 skip됐다. 실제 polygon은 꼭짓점이 수십 개에 ring이 여러 개고 crowd는 임의 형태의 uncompressed RLE라, 합성 데이터가 근사만 하는 부분이다.
+- **fixture 구성 8개** — 다른 모든 테스트가 전제하는 어려운 케이스가 fixture에 **실제로 들어 있는지**. crowd 확률이 0으로 바뀌어도 parity 테스트는 전부 통과한다(crowd 없는 데이터에서는 양쪽이 완벽히 일치하니까). 스위트가 조용해지는 것이 parity 스위트의 최악의 실패 모드라 따로 못박았다. **이 가드가 바로 생성기의 실제 결함을 찾았다** — keypoint 가시성을 독립적으로 뽑느라 `num_keypoints == 0` 인스턴스가 (1/5)^17 확률이라 사실상 없었고, OKS의 해당 분기가 한 번도 안 밟히고 있었다.
 - **평가 parity 16개** — 배열 전체를 바이트 비교. synthetic bbox/segm, 실제 COCO
   val2017 subset, keypoints, `useCats=0`, custom areaRng/maxDets/iouThrs,
   image/category subset, detection이 하나도 없는 경우, **모든 score가 동점인 경우**,
   `derive_segmentation=False`, `evalImgs` 전체.
 - **drop-in 34개** — [§drop-in 호환](#drop-in-호환) 참조.
-- **JSON loader 15개** — `json.load`와 float 비트까지 같은지. 실제 COCO 파일로 확인한다
-  (이 테스트가 `serde_json`의 기본 float 파서가 1 ULP 틀리는 것을 잡았다).
+- **JSON loader 16개** — `json.load`와 float 비트까지 같은지. 커밋된 실제 COCO
+  파일로 확인한다(이 테스트가 `serde_json`의 기본 float 파서가 1 ULP 틀리는 것을
+  잡았다 — skip되는 테스트는 아무것도 못 잡는다).
 - **확장 API 15개** — per-class AP가 mAP로 되돌아오는지, confusion matrix가 AP 회계와
   화해되는지 같은 불변식.
 - **결정성 2개** — rayon 스레드 수(1 vs 8)가 결과 바이트를 바꾸지 않는지. 한 머신에서

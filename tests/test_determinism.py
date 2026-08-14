@@ -36,6 +36,14 @@ RUNNER = textwrap.dedent(
         for k in ("precision", "recall", "scores")
     }
     out["stats"] = np.asarray(ev.stats, dtype=np.float64).tobytes().hex()
+    # per_instance is the one path that combines per-thread results with a
+    # reduce rather than writing into disjoint slots, so it is the one that
+    # could actually reorder. Sorted before hashing so only the *content* is
+    # compared, not the concatenation order, which is not part of the contract.
+    dets, gts = ev.per_instance(iou_thr=0.5)
+    rows = sorted(zip(dets["dt_id"].tolist(), dets["gt_id"].tolist(), dets["iou"].tolist()))
+    out["per_instance"] = str(rows)
+    out["per_instance_n"] = f"{len(rows)}/{len(gts['gt_id'])}"
     print(json.dumps(out))
     """
 )
@@ -58,5 +66,5 @@ def test_thread_count_does_not_change_results(synthetic, iou_type):
     gt_path, dt_path = synthetic
     one = run_with_threads(1, gt_path, dt_path, iou_type)
     many = run_with_threads(8, gt_path, dt_path, iou_type)
-    for key in ("precision", "recall", "scores", "stats"):
+    for key in ("precision", "recall", "scores", "stats", "per_instance", "per_instance_n"):
         assert one[key] == many[key], f"{iou_type}/{key} changed with thread count"

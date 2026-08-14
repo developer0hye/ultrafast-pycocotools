@@ -111,3 +111,35 @@ def test_keypoint_fixture_has_invisible_and_empty_annotations(synthetic_kp):
     assert any(
         any(v == 0 for v in a["keypoints"][2::3]) for a in anns
     ), "no partially invisible instance"
+
+
+def test_real_coco_fixture_carries_the_cases_synthetic_cannot(real_coco):
+    """The committed COCO slice earns its 440 kB or it should not be there.
+
+    Synthetic polygons are 3-8 vertices in a single ring; real ones are dozens
+    of vertices across several. Synthetic crowd regions are axis-aligned
+    rectangles; real ones are arbitrary shapes. If a regenerated fixture lost
+    those, this file would keep passing while testing less.
+    """
+    gt = json.loads(real_coco[0].read_text())
+    anns = gt["annotations"]
+
+    crowd = [a for a in anns if a.get("iscrowd")]
+    assert len(crowd) >= 20, f"only {len(crowd)} crowd annotations"
+    assert any(isinstance(a["segmentation"], dict) for a in crowd), "no uncompressed RLE"
+
+    polys = [a["segmentation"] for a in anns if isinstance(a["segmentation"], list)]
+    assert sum(1 for p in polys if len(p) > 1) >= 30, "too few multi-ring polygons"
+    longest = max(len(r) // 2 for p in polys for r in p)
+    assert longest >= 40, f"longest polygon is only {longest} vertices"
+
+    # Both ends of COCO's area scale, and a category with nothing in it (the
+    # -1 "absent category" sentinel).
+    assert any(a["area"] < 32.0**2 for a in anns)
+    assert any(a["area"] > 96.0**2 for a in anns)
+    present = {a["category_id"] for a in anns}
+    assert len(present) < len(gt["categories"]), "every category is populated"
+
+    # Images with nothing annotated at all.
+    with_gt = {a["image_id"] for a in anns}
+    assert {i["id"] for i in gt["images"]} - with_gt, "no empty image"
