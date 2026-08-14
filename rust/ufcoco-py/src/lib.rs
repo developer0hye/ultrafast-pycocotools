@@ -177,10 +177,10 @@ fn extract_instances(
             //     gt['ignore'] = gt['ignore'] if 'ignore' in gt else 0
             //     gt['ignore'] = 'iscrowd' in gt and gt['iscrowd']
             // The second line unconditionally overwrites the first, so the
-            // annotation's own `ignore` field has no effect upstream. That is
-            // a long-standing upstream bug, and reproducing it is the whole
-            // point of this crate — `respect_ignore_field` on the Python side
-            // opts out of it explicitly.
+            // annotation's own `ignore` field has no effect upstream — a
+            // surprise for CrowdHuman-style data that sets `ignore: 1`.
+            // Reproducing the bug is the whole point of this crate, so we do,
+            // and the README says so out loud rather than quietly fixing it.
             let mut ig = iscrowd;
             if iou_type == IouType::Keypoints {
                 ig = get_i64(d, "num_keypoints")?.unwrap_or(0) == 0 || ig;

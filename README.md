@@ -5,8 +5,14 @@ pycocotools를 그대로 대체하는 Rust 구현이다. `pip install` 한 줄�
 `scores` 배열 전체가 바이트까지 동일하며, 그걸 tolerance가 아니라 바이트 비교로
 테스트한다.
 
+> **상태: 아직 PyPI에 올라가 있지 않다.** 소스에서 빌드해야 한다
+> ([§직접 해보기](#직접-해보기)). Rust toolchain이 필요하고, wheel을 배포하면
+> 그때는 필요 없어진다.
+
 ```bash
-pip install ultrafast-pycocotools
+git clone https://github.com/developer0hye/ultrafast-pycocotools
+cd ultrafast-pycocotools
+pip install maturin && maturin develop --release
 ```
 
 ```python
