@@ -1,0 +1,831 @@
+//! COCO detection / segmentation / keypoint evaluation.
+//!
+//! A port of `pycocotools.cocoeval.COCOeval` that aims to be numerically
+//! identical to it, not merely close. The places where that costs something
+//! are called out in comments; the short list is:
+//!
+//! * every sort is stable, because pycocotools passes `kind='mergesort'` and
+//!   the greedy matcher is order-sensitive — with ties in detection score, an
+//!   unstable sort changes which ground truth gets claimed and moves AP;
+//! * precision is `tp / (fp + tp + eps)` with `eps = np.spacing(1)`, not
+//!   `tp / (fp + tp)`. Those differ by one ULP whenever `fp + tp == 1`, which
+//!   is the first point of every curve;
+//! * the IoU and recall threshold grids are supplied by the caller, which
+//!   builds them with `np.linspace`. Reconstructing them as `start + i * step`
+//!   lands one ULP off at several points and shifts AP by ~1e-6 — this is a
+//!   real, measured failure mode of other reimplementations, not a
+//!   hypothetical.
+//!
+//! Structurally the difference from pycocotools is the loop nest. Upstream
+//! computes every IoU, materialises `K*A*I` result dicts, then accumulates.
+//! Here the outer loop is over categories and the whole (IoU -> match ->
+//! accumulate) chain runs inside it, so live memory is one category's worth of
+//! intermediates instead of the whole dataset's.
+//!
+//! The matching loops are written with explicit indices because they walk
+//! several parallel arrays at once (ious, the ignore-sorted permutation, the
+//! match table) and because they have to stay readable next to the Python they
+//! are a port of.
+#![allow(clippy::needless_range_loop)]
+
+use crate::group::{Grouping, Run, RunJoin};
+use crate::rle::{self, Rle};
+use rayon::prelude::*;
+use std::cmp::Ordering;
+
+/// `np.spacing(1)`.
+pub const EPS: f64 = f64::EPSILON;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum IouType {
+    Segm,
+    Bbox,
+    Keypoints,
+    /// Extension: `min(mask IoU, boundary IoU)`, per Boundary IoU (CVPR'21).
+    Boundary,
+}
+
+/// Per-annotation geometry, stored column-wise so a million annotations do
+/// not each pay for the largest variant.
+#[derive(Debug)]
+pub enum GeomStore {
+    Bboxes(Vec<[f64; 4]>),
+    Masks(Vec<Rle>),
+    Boundaries {
+        masks: Vec<Rle>,
+        boundaries: Vec<Rle>,
+    },
+    /// Flat `k * 3` keypoint triplets per instance.
+    Keypoints {
+        data: Vec<f64>,
+        k: usize,
+    },
+}
+
+/// Annotations in struct-of-arrays form.
+#[derive(Debug)]
+pub struct Instances {
+    pub ids: Vec<i64>,
+    pub scores: Vec<f64>,
+    pub areas: Vec<f64>,
+    pub iscrowd: Vec<bool>,
+    /// Ground truth only: the `ignore` flag pycocotools derives in `_prepare`.
+    pub ignore: Vec<bool>,
+    /// LVIS extension: a detection of a category that is not exhaustively
+    /// annotated in this image is ignored rather than counted as a false
+    /// positive. Always false for plain COCO.
+    pub lvis_mark: Vec<bool>,
+    /// Keypoint runs only: the ground-truth box OKS uses for its fall-back
+    /// distance and for the CrowdPose area substitute.
+    pub bboxes: Vec<[f64; 4]>,
+    /// Slot indices resolved against `EvalParams::img_ids` / `cat_ids`;
+    /// `u32::MAX` for annotations outside the evaluation.
+    pub img_slot: Vec<u32>,
+    pub cat_slot: Vec<u32>,
+    pub geom: GeomStore,
+}
+
+impl Instances {
+    pub fn len(&self) -> usize {
+        self.ids.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.ids.is_empty()
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct EvalParams {
+    pub img_ids: Vec<i64>,
+    pub cat_ids: Vec<i64>,
+    pub iou_thrs: Vec<f64>,
+    pub rec_thrs: Vec<f64>,
+    /// Ascending, as pycocotools sorts them in `evaluate()`.
+    pub max_dets: Vec<usize>,
+    pub area_rng: Vec<[f64; 2]>,
+    pub use_cats: bool,
+    pub iou_type: IouType,
+    pub kpt_sigmas: Vec<f64>,
+    /// CrowdPose ground truth has no usable `area`; fall back to
+    /// `0.53 * w * h`.
+    pub use_area: bool,
+}
+
+/// Accumulated curves, laid out exactly like the numpy arrays pycocotools
+/// stores in `self.eval`.
+#[derive(Debug)]
+pub struct EvalResult {
+    /// `[T, R, K, A, M]`
+    pub counts: [usize; 5],
+    /// `T*R*K*A*M`, C order
+    pub precision: Vec<f64>,
+    /// `T*K*A*M`, C order
+    pub recall: Vec<f64>,
+    /// `T*R*K*A*M`, C order
+    pub scores: Vec<f64>,
+}
+
+/// One evaluated detection, with the verdict the AP arithmetic gave it.
+///
+/// `ignore` is the deciding field and the reason this is not just a list of
+/// matches: a detection that matched a crowd region, or that falls outside the
+/// area range, counts as neither a true nor a false positive. Anything built
+/// on top of this (confusion matrices, TP/FP listings, calibration) has to
+/// respect that or it will disagree with the AP printed next to it.
+#[derive(Clone, Copy, Debug)]
+pub struct DetRecord {
+    pub img_id: i64,
+    pub cat_id: i64,
+    pub dt_id: i64,
+    pub score: f64,
+    /// Matched ground-truth id, or -1.
+    pub gt_id: i64,
+    /// IoU with the matched ground truth; 0.0 when unmatched.
+    pub iou: f64,
+    pub ignore: bool,
+}
+
+/// One evaluated ground truth.
+#[derive(Clone, Copy, Debug)]
+pub struct GtRecord {
+    pub img_id: i64,
+    pub cat_id: i64,
+    pub gt_id: i64,
+    /// Ignored: a crowd region, or outside the area range.
+    pub ignore: bool,
+    pub matched: bool,
+}
+
+/// The `evalImgs` entry for one (image, category, area range), in the shape
+/// pycocotools exposes.
+#[derive(Clone, Debug)]
+pub struct ImgEval {
+    pub img_id: i64,
+    pub cat_id: i64,
+    pub area_idx: usize,
+    pub max_det: usize,
+    pub dt_ids: Vec<i64>,
+    pub gt_ids: Vec<i64>,
+    pub dt_scores: Vec<f64>,
+    pub gt_ignore: Vec<bool>,
+    /// `T * D`, matched ground-truth id or 0 (pycocotools' `dtMatches`).
+    pub dt_matches: Vec<i64>,
+    /// `T * G`, matched detection id or 0 (`gtMatches`).
+    pub gt_matches: Vec<i64>,
+    /// `T * D`
+    pub dt_ignore: Vec<bool>,
+}
+
+/// Stable descending order by score, NaN last.
+///
+/// pycocotools sorts `np.argsort(-scores, kind='mergesort')`. Negating and
+/// sorting ascending is the same permutation as sorting descending — including
+/// for `-0.0`, which compares equal to `0.0` either way — and numpy puts NaN
+/// last.
+#[inline]
+fn cmp_desc_score(a: f64, b: f64) -> Ordering {
+    match (a.is_nan(), b.is_nan()) {
+        (true, true) => Ordering::Equal,
+        (true, false) => Ordering::Greater,
+        (false, true) => Ordering::Less,
+        (false, false) => b.partial_cmp(&a).unwrap(),
+    }
+}
+
+/// Everything one image contributes to one category.
+struct CatImage {
+    img_slot: u32,
+    gt_idx: Vec<u32>,
+    /// Score-sorted, truncated to `max_dets.last()`.
+    dt_idx: Vec<u32>,
+    /// Row-major `D x G`; empty when either side is empty, which is the `[]`
+    /// pycocotools' `computeIoU` returns.
+    ious: Vec<f64>,
+}
+
+/// Per-image match result for one area range, in the compact form
+/// accumulation needs.
+struct ImgMatch {
+    dt_scores: Vec<f64>,
+    /// `T * D`, ground-truth slot or -1.
+    dt_match: Vec<i32>,
+    /// `T * D`
+    dt_ignore: Vec<bool>,
+    /// `G`, in ignore-sorted order.
+    gt_ignore: Vec<bool>,
+    /// Permutation applied to the ground truth (ignore-sorted, stable).
+    gt_perm: Vec<u32>,
+}
+
+pub struct Evaluator {
+    pub params: EvalParams,
+    gt: Instances,
+    dt: Instances,
+    gt_groups: Grouping,
+    dt_groups: Grouping,
+    n_groups: usize,
+}
+
+impl Evaluator {
+    pub fn new(params: EvalParams, gt: Instances, dt: Instances) -> Evaluator {
+        // With useCats = 0 everything collapses into a single group, but the
+        // grouping still sorts by category inside each image so the merged
+        // list matches pycocotools' category-major concatenation.
+        let n_groups = if params.use_cats {
+            params.cat_ids.len()
+        } else {
+            1
+        };
+        let gt_groups = Grouping::build(&gt.img_slot, &gt.cat_slot, n_groups, params.use_cats);
+        let dt_groups = Grouping::build(&dt.img_slot, &dt.cat_slot, n_groups, params.use_cats);
+        Evaluator {
+            params,
+            gt,
+            dt,
+            gt_groups,
+            dt_groups,
+            n_groups,
+        }
+    }
+
+    pub fn gt_instances(&self) -> &Instances {
+        &self.gt
+    }
+    pub fn dt_instances(&self) -> &Instances {
+        &self.dt
+    }
+
+    /// `computeIoU` / `computeOks` for every image of one category.
+    fn prepare_category(&self, k: usize) -> Vec<CatImage> {
+        let max_det = self.params.max_dets.last().copied().unwrap_or(0);
+        let gt_runs = self.gt_groups.group(k);
+        let dt_runs = self.dt_groups.group(k);
+        let mut out = Vec::new();
+        for (img_slot, gr, dr) in RunJoin::new(gt_runs, dt_runs) {
+            let gt_idx: Vec<u32> = gr
+                .map(|r: Run| self.gt_groups.indices(&r).to_vec())
+                .unwrap_or_default();
+            let mut dt_idx: Vec<u32> = dr
+                .map(|r: Run| self.dt_groups.indices(&r).to_vec())
+                .unwrap_or_default();
+            dt_idx.sort_by(|&a, &b| {
+                cmp_desc_score(self.dt.scores[a as usize], self.dt.scores[b as usize])
+            });
+            if dt_idx.len() > max_det {
+                dt_idx.truncate(max_det);
+            }
+            let ious = self.compute_iou(&dt_idx, &gt_idx);
+            out.push(CatImage {
+                img_slot,
+                gt_idx,
+                dt_idx,
+                ious,
+            });
+        }
+        out
+    }
+
+    /// Row-major `D x G` IoU, or empty when either side has no entries.
+    fn compute_iou(&self, dt_idx: &[u32], gt_idx: &[u32]) -> Vec<f64> {
+        if dt_idx.is_empty() || gt_idx.is_empty() {
+            return Vec::new();
+        }
+        let (m, n) = (dt_idx.len(), gt_idx.len());
+        let iscrowd: Vec<u8> = gt_idx
+            .iter()
+            .map(|&g| self.gt.iscrowd[g as usize] as u8)
+            .collect();
+        let mut out = vec![0.0f64; m * n];
+
+        match (&self.dt.geom, &self.gt.geom) {
+            (GeomStore::Bboxes(dv), GeomStore::Bboxes(gv)) => {
+                let d: Vec<[f64; 4]> = dt_idx.iter().map(|&i| dv[i as usize]).collect();
+                let g: Vec<[f64; 4]> = gt_idx.iter().map(|&i| gv[i as usize]).collect();
+                rle::bb_iou(&d, &g, &iscrowd, &mut out);
+            }
+            (GeomStore::Masks(dv), GeomStore::Masks(gv)) => {
+                let d: Vec<&Rle> = dt_idx.iter().map(|&i| &dv[i as usize]).collect();
+                let g: Vec<&Rle> = gt_idx.iter().map(|&i| &gv[i as usize]).collect();
+                rle::rle_iou_refs(&d, &g, &iscrowd, &mut out);
+            }
+            (
+                GeomStore::Boundaries {
+                    masks: dm,
+                    boundaries: db,
+                },
+                GeomStore::Boundaries {
+                    masks: gm,
+                    boundaries: gb,
+                },
+            ) => {
+                let d: Vec<&Rle> = dt_idx.iter().map(|&i| &dm[i as usize]).collect();
+                let g: Vec<&Rle> = gt_idx.iter().map(|&i| &gm[i as usize]).collect();
+                rle::rle_iou_refs(&d, &g, &iscrowd, &mut out);
+                let d: Vec<&Rle> = dt_idx.iter().map(|&i| &db[i as usize]).collect();
+                let g: Vec<&Rle> = gt_idx.iter().map(|&i| &gb[i as usize]).collect();
+                let mut bout = vec![0.0f64; m * n];
+                rle::rle_iou_refs(&d, &g, &iscrowd, &mut bout);
+                // Crowd ground truth keeps the plain mask IoU.
+                for gi in 0..n {
+                    if iscrowd[gi] != 0 {
+                        continue;
+                    }
+                    for di in 0..m {
+                        let i = di * n + gi;
+                        out[i] = out[i].min(bout[i]);
+                    }
+                }
+            }
+            (GeomStore::Keypoints { data: dd, k }, GeomStore::Keypoints { data: gd, .. }) => {
+                self.compute_oks(dt_idx, gt_idx, dd, gd, *k, &mut out);
+            }
+            _ => panic!("ground truth and detection geometry kinds disagree"),
+        }
+        out
+    }
+
+    /// `computeOks`, following pycocotools' exact operation order.
+    ///
+    /// The divisions are applied one at a time (`/ vars / area / 2`), which is
+    /// not the same in floating point as dividing by the product, so they stay
+    /// separate here.
+    fn compute_oks(
+        &self,
+        dt_idx: &[u32],
+        gt_idx: &[u32],
+        dd: &[f64],
+        gd: &[f64],
+        k: usize,
+        out: &mut [f64],
+    ) {
+        let n = gt_idx.len();
+        let vars: Vec<f64> = self
+            .params
+            .kpt_sigmas
+            .iter()
+            .map(|s| (s * 2.0) * (s * 2.0))
+            .collect();
+        for (j, &gi) in gt_idx.iter().enumerate() {
+            let g = &gd[(gi as usize) * k * 3..(gi as usize + 1) * k * 3];
+            let k1 = (0..k).filter(|&t| g[t * 3 + 2] > 0.0).count();
+            let bb = self.gt.bboxes[gi as usize];
+            let (x0, x1) = (bb[0] - bb[2], bb[0] + bb[2] * 2.0);
+            let (y0, y1) = (bb[1] - bb[3], bb[1] + bb[3] * 2.0);
+            let area = if self.params.use_area {
+                self.gt.areas[gi as usize]
+            } else {
+                bb[3] * bb[2] * 0.53
+            };
+            for (i, &di) in dt_idx.iter().enumerate() {
+                let d = &dd[(di as usize) * k * 3..(di as usize + 1) * k * 3];
+                let mut sum = 0.0f64;
+                let mut cnt = 0usize;
+                for t in 0..k {
+                    // `!(v > 0.0)`, not `v <= 0.0`: pycocotools filters with
+                    // the boolean mask `vg > 0`, so a NaN visibility flag is
+                    // excluded. The negation is what reproduces that; the
+                    // "simpler" comparison would keep it.
+                    #[allow(clippy::neg_cmp_op_on_partial_ord)]
+                    if k1 > 0 && !(g[t * 3 + 2] > 0.0) {
+                        continue;
+                    }
+                    let (xd, yd) = (d[t * 3], d[t * 3 + 1]);
+                    let (dx, dy) = if k1 > 0 {
+                        (xd - g[t * 3], yd - g[t * 3 + 1])
+                    } else {
+                        (
+                            f64::max(0.0, x0 - xd) + f64::max(0.0, xd - x1),
+                            f64::max(0.0, y0 - yd) + f64::max(0.0, yd - y1),
+                        )
+                    };
+                    let e = (dx * dx + dy * dy) / vars[t] / (area + EPS) / 2.0;
+                    sum += (-e).exp();
+                    cnt += 1;
+                }
+                out[i * n + j] = sum / cnt as f64;
+            }
+        }
+    }
+
+    /// `evaluateImg` for one image and area range.
+    fn evaluate_img(&self, ci: &CatImage, area_idx: usize) -> Option<ImgMatch> {
+        if ci.gt_idx.is_empty() && ci.dt_idx.is_empty() {
+            return None;
+        }
+        let a_rng = self.params.area_rng[area_idx];
+        let t_n = self.params.iou_thrs.len();
+        let g_n = ci.gt_idx.len();
+        let d_n = ci.dt_idx.len();
+
+        // Ignore flags, then a stable partition that puts them last.
+        let ignore: Vec<bool> = ci
+            .gt_idx
+            .iter()
+            .map(|&g| {
+                let g = g as usize;
+                let a = self.gt.areas[g];
+                self.gt.ignore[g] || a < a_rng[0] || a > a_rng[1]
+            })
+            .collect();
+        let mut gt_perm: Vec<u32> = (0..g_n as u32).collect();
+        gt_perm.sort_by_key(|&i| ignore[i as usize] as u8);
+        let gt_ignore: Vec<bool> = gt_perm.iter().map(|&i| ignore[i as usize]).collect();
+
+        let mut dt_match = vec![-1i32; t_n * d_n];
+        let mut gt_matched = vec![false; t_n * g_n];
+
+        if !ci.ious.is_empty() {
+            for (tind, &thr) in self.params.iou_thrs.iter().enumerate() {
+                for dind in 0..d_n {
+                    // pycocotools clamps the floor so a threshold of exactly
+                    // 1.0 can still match a pair whose IoU rounds just below.
+                    let mut best = f64::min(thr, 1.0 - 1e-10);
+                    let mut m: i32 = -1;
+                    for gind in 0..g_n {
+                        let gsrc = gt_perm[gind] as usize;
+                        // Already claimed by a higher-scoring detection, and
+                        // not a crowd region (which may absorb many).
+                        if gt_matched[tind * g_n + gind]
+                            && !self.gt.iscrowd[ci.gt_idx[gsrc] as usize]
+                        {
+                            continue;
+                        }
+                        // Ground truths are ignore-sorted, so once we hold a
+                        // real match there is nothing better further right.
+                        if m > -1 && !gt_ignore[m as usize] && gt_ignore[gind] {
+                            break;
+                        }
+                        let v = ci.ious[dind * g_n + gsrc];
+                        if v < best {
+                            continue;
+                        }
+                        best = v;
+                        m = gind as i32;
+                    }
+                    if m < 0 {
+                        continue;
+                    }
+                    dt_match[tind * d_n + dind] = m;
+                    gt_matched[tind * g_n + m as usize] = true;
+                }
+            }
+        }
+
+        // Unmatched detections outside the area range (or LVIS-marked) are
+        // ignored rather than counted as false positives.
+        let mut dt_ignore = vec![false; t_n * d_n];
+        for tind in 0..t_n {
+            for dind in 0..d_n {
+                let src = ci.dt_idx[dind] as usize;
+                let m = dt_match[tind * d_n + dind];
+                dt_ignore[tind * d_n + dind] = if m >= 0 {
+                    gt_ignore[m as usize]
+                } else {
+                    let a = self.dt.areas[src];
+                    a < a_rng[0] || a > a_rng[1] || self.dt.lvis_mark[src]
+                };
+            }
+        }
+
+        Some(ImgMatch {
+            dt_scores: ci
+                .dt_idx
+                .iter()
+                .map(|&i| self.dt.scores[i as usize])
+                .collect(),
+            dt_match,
+            dt_ignore,
+            gt_ignore,
+            gt_perm,
+        })
+    }
+
+    /// Run the whole evaluation.
+    ///
+    /// `collect_eval_imgs` materialises the pycocotools-shaped per-image
+    /// records. It is off by default because building them is what makes
+    /// upstream's memory profile bad, and almost nothing reads them.
+    pub fn run(&self, collect_eval_imgs: bool) -> (EvalResult, Vec<Option<ImgEval>>) {
+        let p = &self.params;
+        let (t_n, r_n) = (p.iou_thrs.len(), p.rec_thrs.len());
+        let k_n = self.n_groups;
+        let (a_n, m_n) = (p.area_rng.len(), p.max_dets.len());
+        let i_n = p.img_ids.len();
+
+        let per_cat: Vec<CatOut> = (0..k_n)
+            .into_par_iter()
+            .map(|k| {
+                let work = self.prepare_category(k);
+                let mut out = CatOut {
+                    // -1 is pycocotools' "this category has no ground truth
+                    // here" sentinel; summarize() filters on s > -1.
+                    precision: vec![-1.0; t_n * r_n * a_n * m_n],
+                    recall: vec![-1.0; t_n * a_n * m_n],
+                    scores: vec![-1.0; t_n * r_n * a_n * m_n],
+                    eval_imgs: Vec::new(),
+                };
+                let mut buf = AccumBuf::default();
+                for a in 0..a_n {
+                    let matches: Vec<Option<ImgMatch>> =
+                        work.iter().map(|ci| self.evaluate_img(ci, a)).collect();
+                    for (m, &max_det) in p.max_dets.iter().enumerate() {
+                        self.accumulate_slice(
+                            &matches, max_det, a, m, t_n, r_n, a_n, m_n, &mut buf, &mut out,
+                        );
+                    }
+                    if collect_eval_imgs {
+                        out.eval_imgs
+                            .extend(self.materialise_eval_imgs(&work, &matches, k, a, i_n));
+                    }
+                }
+                out
+            })
+            .collect();
+
+        let mut precision = vec![-1.0; t_n * r_n * k_n * a_n * m_n];
+        let mut recall = vec![-1.0; t_n * k_n * a_n * m_n];
+        let mut scores = vec![-1.0; t_n * r_n * k_n * a_n * m_n];
+        let am = a_n * m_n;
+        for (k, c) in per_cat.iter().enumerate() {
+            for t in 0..t_n {
+                // recall is [T, K, A, M]
+                let dst = (t * k_n + k) * am;
+                recall[dst..dst + am].copy_from_slice(&c.recall[t * am..t * am + am]);
+                // precision / scores are [T, R, K, A, M]
+                for r in 0..r_n {
+                    let src = (t * r_n + r) * am;
+                    let dst = ((t * r_n + r) * k_n + k) * am;
+                    precision[dst..dst + am].copy_from_slice(&c.precision[src..src + am]);
+                    scores[dst..dst + am].copy_from_slice(&c.scores[src..src + am]);
+                }
+            }
+        }
+
+        // pycocotools orders evalImgs [K][A][I]; per_cat is already nested
+        // that way.
+        let eval_imgs = per_cat.into_iter().flat_map(|c| c.eval_imgs).collect();
+
+        (
+            EvalResult {
+                counts: [t_n, r_n, k_n, a_n, m_n],
+                precision,
+                recall,
+                scores,
+            },
+            eval_imgs,
+        )
+    }
+
+    /// Expand the compact per-image matches into pycocotools' `evalImgs`
+    /// dicts, re-inserting `None` for images with neither ground truth nor
+    /// detections so positional indexing still works.
+    fn materialise_eval_imgs(
+        &self,
+        work: &[CatImage],
+        matches: &[Option<ImgMatch>],
+        k: usize,
+        a: usize,
+        i_n: usize,
+    ) -> Vec<Option<ImgEval>> {
+        let p = &self.params;
+        let t_n = p.iou_thrs.len();
+        let max_det = p.max_dets.last().copied().unwrap_or(0);
+        let mut out: Vec<Option<ImgEval>> = vec![None; i_n];
+        for (ci, mm) in work.iter().zip(matches.iter()) {
+            let Some(mm) = mm else { continue };
+            let g_n = ci.gt_idx.len();
+            let d_n = ci.dt_idx.len();
+            let gt_ids: Vec<i64> = mm
+                .gt_perm
+                .iter()
+                .map(|&i| self.gt.ids[ci.gt_idx[i as usize] as usize])
+                .collect();
+            let dt_ids: Vec<i64> = ci.dt_idx.iter().map(|&i| self.dt.ids[i as usize]).collect();
+            // pycocotools stores matched *ids*, with 0 meaning unmatched.
+            let mut dt_matches = vec![0i64; t_n * d_n];
+            let mut gt_matches = vec![0i64; t_n * g_n];
+            for t in 0..t_n {
+                for d in 0..d_n {
+                    let m = mm.dt_match[t * d_n + d];
+                    if m >= 0 {
+                        dt_matches[t * d_n + d] = gt_ids[m as usize];
+                        gt_matches[t * g_n + m as usize] = dt_ids[d];
+                    }
+                }
+            }
+            out[ci.img_slot as usize] = Some(ImgEval {
+                img_id: p.img_ids[ci.img_slot as usize],
+                cat_id: if p.use_cats { p.cat_ids[k] } else { -1 },
+                area_idx: a,
+                max_det,
+                dt_ids,
+                gt_ids,
+                dt_scores: mm.dt_scores.clone(),
+                gt_ignore: mm.gt_ignore.clone(),
+                dt_matches,
+                gt_matches,
+                dt_ignore: mm.dt_ignore.clone(),
+            });
+        }
+        out
+    }
+
+    /// The body of pycocotools' `accumulate` for one (category, area, maxDet).
+    #[allow(clippy::too_many_arguments)]
+    fn accumulate_slice(
+        &self,
+        matches: &[Option<ImgMatch>],
+        max_det: usize,
+        a: usize,
+        m: usize,
+        t_n: usize,
+        r_n: usize,
+        a_n: usize,
+        m_n: usize,
+        buf: &mut AccumBuf,
+        out: &mut CatOut,
+    ) {
+        // Flatten (image, detection) in image order, then stable-sort by
+        // descending score — the list pycocotools builds with np.concatenate
+        // followed by argsort(kind='mergesort').
+        buf.flat.clear();
+        let mut npig = 0usize;
+        let mut any = false;
+        for (i, mm) in matches.iter().enumerate() {
+            let Some(mm) = mm else { continue };
+            any = true;
+            let d_n = mm.dt_scores.len().min(max_det);
+            for d in 0..d_n {
+                buf.flat.push((i as u32, d as u32));
+            }
+            npig += mm.gt_ignore.iter().filter(|&&ig| !ig).count();
+        }
+        if !any || npig == 0 {
+            return;
+        }
+        {
+            let mm = &matches;
+            buf.flat.sort_by(|x, y| {
+                let sx = mm[x.0 as usize].as_ref().unwrap().dt_scores[x.1 as usize];
+                let sy = mm[y.0 as usize].as_ref().unwrap().dt_scores[y.1 as usize];
+                cmp_desc_score(sx, sy)
+            });
+        }
+        let nd = buf.flat.len();
+        buf.scores_sorted.clear();
+        buf.scores_sorted.extend(
+            buf.flat
+                .iter()
+                .map(|&(i, d)| matches[i as usize].as_ref().unwrap().dt_scores[d as usize]),
+        );
+        buf.pr.clear();
+        buf.pr.resize(nd, 0.0);
+        buf.rc.clear();
+        buf.rc.resize(nd, 0.0);
+
+        let rec_thrs = &self.params.rec_thrs;
+        let npig_f = npig as f64;
+
+        for t in 0..t_n {
+            let (mut tp, mut fp) = (0i64, 0i64);
+            for (n, &(i, d)) in buf.flat.iter().enumerate() {
+                let mm = matches[i as usize].as_ref().unwrap();
+                let d_full = mm.dt_scores.len();
+                let idx = t * d_full + d as usize;
+                if !mm.dt_ignore[idx] {
+                    if mm.dt_match[idx] >= 0 {
+                        tp += 1;
+                    } else {
+                        fp += 1;
+                    }
+                }
+                let tpf = tp as f64;
+                let fpf = fp as f64;
+                buf.rc[n] = tpf / npig_f;
+                // `+ EPS` is np.spacing(1) in the reference. Dropping it
+                // changes the first point of every curve by one ULP.
+                buf.pr[n] = tpf / (fpf + tpf + EPS);
+            }
+
+            out.recall[(t * a_n + a) * m_n + m] = if nd > 0 { buf.rc[nd - 1] } else { 0.0 };
+
+            // Make precision monotonically non-increasing in recall.
+            for i in (1..nd).rev() {
+                if buf.pr[i] > buf.pr[i - 1] {
+                    buf.pr[i - 1] = buf.pr[i];
+                }
+            }
+
+            // np.searchsorted(rc, recThrs, side='left'). Both sides are
+            // non-decreasing, so one merge walk replaces R binary searches.
+            // Thresholds past the achieved recall read 0, not the -1
+            // sentinel: this category is present, it just ran out of recall.
+            let mut pi = 0usize;
+            for (ri, &thr) in rec_thrs.iter().enumerate() {
+                while pi < nd && buf.rc[pi] < thr {
+                    pi += 1;
+                }
+                let dst = (t * r_n + ri) * a_n * m_n + a * m_n + m;
+                if pi < nd {
+                    out.precision[dst] = buf.pr[pi];
+                    out.scores[dst] = buf.scores_sorted[pi];
+                } else {
+                    out.precision[dst] = 0.0;
+                    out.scores[dst] = 0.0;
+                }
+            }
+        }
+    }
+
+    /// Per-instance verdicts for one (IoU threshold, area range, maxDet).
+    ///
+    /// Extension API. Everything diagnostic — TP/FP/FN listings, confusion
+    /// matrices, mean IoU, calibration — should be built from this rather than
+    /// re-deriving its own matching, so it cannot disagree with the AP numbers.
+    ///
+    /// Detections beyond `max_det` for an (image, category) are not returned
+    /// at all, because the AP arithmetic never saw them either.
+    pub fn per_instance(
+        &self,
+        t_idx: usize,
+        a_idx: usize,
+        max_det: usize,
+    ) -> (Vec<DetRecord>, Vec<GtRecord>) {
+        let p = &self.params;
+        (0..self.n_groups)
+            .into_par_iter()
+            .map(|k| {
+                let work = self.prepare_category(k);
+                let cat_id = if p.use_cats { p.cat_ids[k] } else { -1 };
+                let mut dets = Vec::new();
+                let mut gts = Vec::new();
+                for ci in &work {
+                    let Some(mm) = self.evaluate_img(ci, a_idx) else {
+                        continue;
+                    };
+                    let img_id = p.img_ids[ci.img_slot as usize];
+                    let g_n = ci.gt_idx.len();
+                    let d_full = ci.dt_idx.len();
+                    let d_n = d_full.min(max_det);
+                    let mut gt_matched = vec![false; g_n];
+                    for d in 0..d_n {
+                        let di = ci.dt_idx[d] as usize;
+                        let slot = mm.dt_match[t_idx * d_full + d];
+                        let (gt_id, iou) = if slot < 0 {
+                            (-1, 0.0)
+                        } else {
+                            let gsrc = mm.gt_perm[slot as usize] as usize;
+                            gt_matched[gsrc] = true;
+                            (
+                                self.gt.ids[ci.gt_idx[gsrc] as usize],
+                                ci.ious[d * g_n + gsrc],
+                            )
+                        };
+                        dets.push(DetRecord {
+                            img_id,
+                            cat_id,
+                            dt_id: self.dt.ids[di],
+                            score: self.dt.scores[di],
+                            gt_id,
+                            iou,
+                            ignore: mm.dt_ignore[t_idx * d_full + d],
+                        });
+                    }
+                    for (slot, &perm) in mm.gt_perm.iter().enumerate() {
+                        let gsrc = perm as usize;
+                        gts.push(GtRecord {
+                            img_id,
+                            cat_id,
+                            gt_id: self.gt.ids[ci.gt_idx[gsrc] as usize],
+                            ignore: mm.gt_ignore[slot],
+                            matched: gt_matched[gsrc],
+                        });
+                    }
+                }
+                (dets, gts)
+            })
+            .reduce(
+                || (Vec::new(), Vec::new()),
+                |mut a, b| {
+                    a.0.extend(b.0);
+                    a.1.extend(b.1);
+                    a
+                },
+            )
+    }
+}
+
+#[derive(Default)]
+struct AccumBuf {
+    flat: Vec<(u32, u32)>,
+    scores_sorted: Vec<f64>,
+    pr: Vec<f64>,
+    rc: Vec<f64>,
+}
+
+struct CatOut {
+    precision: Vec<f64>,
+    recall: Vec<f64>,
+    scores: Vec<f64>,
+    eval_imgs: Vec<Option<ImgEval>>,
+}

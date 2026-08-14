@@ -1,0 +1,135 @@
+"""Run one COCO evaluation implementation and report stats, time and peak RSS.
+
+Each implementation runs in its own process so the timings are not polluted by
+another library's warm caches or allocator state, and so peak RSS means what it
+says.
+
+Usage:
+    python bench/run_impl.py --impl pycocotools --gt GT.json --dt DT.json --iou-type bbox
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import time
+from pathlib import Path
+
+
+def peak_rss_mb() -> float:
+    """Peak working set of this process, in MB."""
+    if sys.platform == "win32":
+        import ctypes
+        from ctypes import wintypes
+
+        class PROCESS_MEMORY_COUNTERS(ctypes.Structure):
+            _fields_ = [
+                ("cb", wintypes.DWORD),
+                ("PageFaultCount", wintypes.DWORD),
+                ("PeakWorkingSetSize", ctypes.c_size_t),
+                ("WorkingSetSize", ctypes.c_size_t),
+                ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                ("PagefileUsage", ctypes.c_size_t),
+                ("PeakPagefileUsage", ctypes.c_size_t),
+            ]
+
+        counters = PROCESS_MEMORY_COUNTERS()
+        counters.cb = ctypes.sizeof(counters)
+        # K32GetProcessMemoryInfo lives in kernel32 on Vista+; the psapi.dll
+        # export exists but is a forwarder that ctypes.windll cannot always
+        # resolve, and it fails silently (leaving the struct zeroed).
+        fn = getattr(ctypes.windll.kernel32, "K32GetProcessMemoryInfo", None)
+        if fn is None:
+            fn = ctypes.windll.psapi.GetProcessMemoryInfo
+        # Without explicit argtypes ctypes truncates the HANDLE on win64 and
+        # the call quietly returns zeroed counters.
+        fn.argtypes = [
+            wintypes.HANDLE,
+            ctypes.POINTER(PROCESS_MEMORY_COUNTERS),
+            wintypes.DWORD,
+        ]
+        fn.restype = wintypes.BOOL
+        cur = ctypes.windll.kernel32.GetCurrentProcess
+        cur.restype = wintypes.HANDLE
+        fn(cur(), ctypes.byref(counters), counters.cb)
+        return counters.PeakWorkingSetSize / 1e6
+    import resource
+
+    ru = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    # Linux reports KB, macOS bytes.
+    return ru / 1e3 if sys.platform.startswith("linux") else ru / 1e6
+
+
+def run(impl: str, gt_path: str, dt_path: str, iou_type: str) -> dict:
+    timings: dict[str, float] = {}
+
+    if impl == "pycocotools":
+        from pycocotools.coco import COCO
+        from pycocotools.cocoeval import COCOeval
+    elif impl == "faster":
+        from faster_coco_eval import COCO
+        from faster_coco_eval import COCOeval_faster as COCOeval
+    elif impl == "hotcoco":
+        from hotcoco import COCO, COCOeval
+    elif impl == "ufcoco":
+        from ultrafast_pycocotools import COCO, COCOeval
+    else:
+        raise SystemExit(f"unknown impl {impl}")
+
+    t = time.perf_counter()
+    gt = COCO(gt_path)
+    timings["load_gt"] = time.perf_counter() - t
+
+    t = time.perf_counter()
+    with open(dt_path) as f:
+        dt_json = json.load(f)
+    dt = gt.loadRes(dt_json)
+    timings["load_dt"] = time.perf_counter() - t
+
+    t = time.perf_counter()
+    ev = COCOeval(gt, dt, iou_type)
+    ev.evaluate()
+    timings["evaluate"] = time.perf_counter() - t
+
+    t = time.perf_counter()
+    ev.accumulate()
+    timings["accumulate"] = time.perf_counter() - t
+
+    t = time.perf_counter()
+    ev.summarize()
+    timings["summarize"] = time.perf_counter() - t
+
+    stats = [float(x) for x in ev.stats]
+    return {
+        "impl": impl,
+        "iou_type": iou_type,
+        "timings": timings,
+        "eval_total": timings["evaluate"] + timings["accumulate"] + timings["summarize"],
+        "wall_total": sum(timings.values()),
+        "stats": stats,
+        "peak_rss_mb": peak_rss_mb(),
+    }
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--impl", required=True)
+    ap.add_argument("--gt", required=True)
+    ap.add_argument("--dt", required=True)
+    ap.add_argument("--iou-type", default="bbox")
+    ap.add_argument("--json-out", type=Path)
+    args = ap.parse_args()
+
+    res = run(args.impl, args.gt, args.dt, args.iou_type)
+    if args.json_out:
+        args.json_out.parent.mkdir(parents=True, exist_ok=True)
+        args.json_out.write_text(json.dumps(res, indent=2))
+    print("RESULT " + json.dumps(res))
+
+
+if __name__ == "__main__":
+    main()

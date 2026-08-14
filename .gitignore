@@ -1,0 +1,23 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+*.so
+*.pyd
+
+# Benchmark inputs and outputs.
+#
+# The annotation files are hundreds of MB and belong to their datasets, not to
+# this repo; bench/make_dets.py and bench/make_dataset.py regenerate everything
+# else deterministically from them.
+/bench/data/
+/bench/out/
+*.pdb

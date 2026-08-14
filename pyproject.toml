@@ -1,0 +1,46 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "ultrafast-pycocotools"
+requires-python = ">=3.9"
+description = "A bit-exact, fast, memory-stable drop-in replacement for pycocotools"
+readme = "README.md"
+license = { text = "BSD-2-Clause" }
+authors = [{ name = "Yonghye Kwon", email = "developer.0hye@gmail.com" }]
+keywords = ["coco", "pycocotools", "object-detection", "evaluation", "mAP", "rust"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = ["numpy>=1.21"]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+plot = ["matplotlib>=3.5"]
+test = ["pytest>=7", "pycocotools>=2.0.7"]
+
+[project.urls]
+Homepage = "https://github.com/developer0hye/ultrafast-pycocotools"
+Issues = "https://github.com/developer0hye/ultrafast-pycocotools/issues"
+
+[tool.maturin]
+manifest-path = "rust/ufcoco-py/Cargo.toml"
+python-source = "python"
+module-name = "ultrafast_pycocotools._ufcoco"
+features = ["pyo3/extension-module"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    "error::DeprecationWarning",
+    # pycocotools' Cython `Masks.__array__` predates the numpy 2 copy-keyword
+    # rule. It is the reference we compare against, so we have to tolerate it
+    # warning; our own deprecations still fail the suite.
+    "ignore:__array__ implementation doesn't accept a copy keyword:DeprecationWarning",
+]

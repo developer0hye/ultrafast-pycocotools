@@ -1,0 +1,13 @@
+[package]
+name = "ufcoco-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Pure-Rust COCO mask RLE and detection-evaluation core, bit-compatible with pycocotools"
+
+[dependencies]
+rayon = { workspace = true }
+
+[dev-dependencies]

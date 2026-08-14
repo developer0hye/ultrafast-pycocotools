@@ -1,0 +1,29 @@
+[workspace]
+members = ["rust/ufcoco-core", "rust/ufcoco-py"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "BSD-2-Clause"
+repository = "https://github.com/developer0hye/ultrafast-pycocotools"
+
+[workspace.dependencies]
+rayon = "1.10"
+serde = { version = "1", features = ["derive"] }
+# `float_roundtrip` is not optional for us. serde_json's default number parser
+# takes a fast path that is off by one ULP on values like 32002.703, and an
+# annotation's `area` decides its small/medium/large bucket — a one-ULP shift
+# on a value sitting near 32^2 moves AP_small. Caught by
+# tests/test_json_loader.py against real COCO annotations.
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+# Equivalence with pycocotools is decided by floating-point details, so the
+# release profile must not enable anything that lets LLVM reassociate FP math
+# (no fast-math flags anywhere). opt-level/lto/codegen-units are all
+# value-preserving.
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
