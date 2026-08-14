@@ -121,14 +121,20 @@ pycocotools는 `pr = tp / (fp + tp + np.spacing(1))`이다. `np.spacing(1)`을 �
 
 ### 검증 범위
 
-`pytest tests/` 61개가 전부 실제 pycocotools와 비교한다 (golden 파일이 아니라 live 비교).
+`pytest tests/` 93개가 전부 실제 pycocotools와 비교한다 (golden 파일이 아니라 live 비교).
 
-- mask API 47개: `encode`/`decode`/`merge`/`area`/`toBbox`/`iou`/`frPyObjects`를
+- **mask API 47개** — `encode`/`decode`/`merge`/`area`/`toBbox`/`iou`/`frPyObjects`를
   1×1 이미지, 빈 마스크, 꽉 찬 마스크, 이미지 밖으로 나간 polygon, **꼭짓점이 중복된
   polygon**(`rleFrPoly`가 0으로 나눠 NaN을 int로 캐스팅하는 지점), crowd flag까지.
-- 평가 14개: synthetic bbox/segm, 실제 COCO val2017 subset bbox/segm, keypoints,
+- **평가 16개** — synthetic bbox/segm, 실제 COCO val2017 subset bbox/segm, keypoints,
   `useCats=0`, custom areaRng/maxDets/iouThrs, image/category subset, detection이 하나도
-  없는 경우, **모든 score가 동점인 경우**, `evalImgs` 전체.
+  없는 경우, **모든 score가 동점인 경우**, `derive_segmentation=False`, `evalImgs` 전체.
+- **JSON loader 15개** — `json.load`와 float 비트까지 같은지. 실제 COCO 파일로 확인한다
+  (이 테스트가 `serde_json`의 기본 float 파서가 1 ULP 틀리는 것을 잡았다).
+- **확장 API 13개** — per-class AP가 mAP로 되돌아오는지, confusion matrix가 AP 회계와
+  화해되는지 같은 불변식.
+- **결정성 2개** — rayon 스레드 수(1 vs 8)가 결과 바이트를 바꾸지 않는지. 한 머신에서
+  pycocotools와만 비교해서는 절대 못 잡는 실패 모드다.
 
 ---
 
@@ -146,11 +152,11 @@ pycocotools는 `pr = tp / (fp + tp + np.spacing(1))`이다. `np.spacing(1)`을 �
 | bbox | pycocotools 2.0.11 | 6.494s | 1.0× | 644 MB | (기준) |
 | bbox | faster-coco-eval 1.7.2 | 1.839s | 3.5× | 636 MB | bit-identical |
 | bbox | hotcoco 0.5.0 | 0.149s | 43.4× | 477 MB | max \|diff\| 1.0e-05 |
-| bbox | **ultrafast-pycocotools** | **0.115s** | **56.4×** | **244 MB** | **bit-identical** |
+| bbox | **ultrafast-pycocotools** | **0.104s** | **62.3×** | **244 MB** | **bit-identical** |
 | segm | pycocotools 2.0.11 | 7.484s | 1.0× | 636 MB | (기준) |
 | segm | faster-coco-eval 1.7.2 | 3.704s | 2.0× | 685 MB | bit-identical |
 | segm | hotcoco 0.5.0 | 0.220s | 34.0× | 482 MB | max \|diff\| 2.0e-06 |
-| segm | **ultrafast-pycocotools** | 0.221s | 33.8× | **339 MB** | **bit-identical** |
+| segm | **ultrafast-pycocotools** | **0.200s** | **37.4×** | **341 MB** | **bit-identical** |
 
 **Objects365 val** — 80,000 images / 1,240,587 GT / 1,170,984 detections / 365 categories
 
@@ -159,7 +165,7 @@ pycocotools는 `pr = tp / (fp + tp + np.spacing(1))`이다. `np.spacing(1)`을 �
 | pycocotools 2.0.11 | 384.7s | 1.0× | 24.89 GB | (기준) |
 | faster-coco-eval 1.7.2 | 157.6s | 2.4× | 28.81 GB | bit-identical |
 | hotcoco 0.5.0 | 4.22s | 91.1× | 10.74 GB | max \|diff\| 1.8e-06 |
-| **ultrafast-pycocotools** | **2.74s** | **140.3×** | **2.40 GB** | **bit-identical** |
+| **ultrafast-pycocotools** | **2.75s** | **139.8×** | **2.41 GB** | **bit-identical** |
 
 스케일이 커질수록 메모리 차이가 벌어진다. O365에서 **pycocotools의 10분의 1,
 hotcoco의 4.5분의 1**이다. pycocotools의 메모리는 대부분 `evalImgs`다 —
@@ -225,6 +231,8 @@ Rust live·peak 바이트 / 할당 횟수. `alloc-stats` feature 없이 빌드�
 | bbox마다 `Vec<f64>` 힙 할당 | 고정 배열로 직접 읽기 | O365에서 240만 할당 제거 |
 | area range마다 match 버퍼 재할당 | category 안에서 버퍼 재사용 | O365 evaluate 할당 2,176만 → 666만 |
 | RLE `cnts`의 capacity 여유분 | `shrink_to_fit` | 마스크 메모리 최대 2× → 1× |
+| GT rasteriser가 비우는 동안 DT 읽기가 대기 | 양쪽이 worker 하나를 공유 | segm 추출 0.127s → 0.115s |
+| category 편중으로 병렬 효율 4.5×/12코어 | category 안에서도 이미지 단위 병렬화 | segm evaluation 0.052s → 0.037s |
 
 ---
 

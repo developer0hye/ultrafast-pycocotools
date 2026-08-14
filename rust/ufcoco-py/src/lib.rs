@@ -253,18 +253,9 @@ fn raw_to_rle(raw: &RawSegm, h: u32, w: u32, scratch: &mut rle::PolyScratch) -> 
 }
 
 #[allow(clippy::too_many_arguments)]
-fn extract_instances(
-    py: Python<'_>,
-    anns: &Bound<'_, PyList>,
-    is_gt: bool,
-    iou_type: IouType,
-    img_sizes: &HashMap<i64, (u32, u32)>,
-    img_slot: &HashMap<i64, u32>,
-    cat_slot: &HashMap<i64, u32>,
-    boundary_dilation: f64,
-) -> PyResult<(Instances, ExtractTimings)> {
-    let n = anns.len();
-    let mut inst = Instances {
+/// An empty `Instances` sized for `n` annotations of `iou_type`.
+fn new_instances(n: usize, iou_type: IouType) -> Instances {
+    Instances {
         ids: Vec::with_capacity(n),
         scores: Vec::with_capacity(n),
         areas: Vec::with_capacity(n),
@@ -286,75 +277,13 @@ fn extract_instances(
                 k: 0,
             },
         },
-    };
+    }
+}
 
-    let keys = Keys::new(py);
-    let timings: Arc<ExtractTimings> = Arc::default();
-    let needs_mask = matches!(iou_type, IouType::Segm | IouType::Boundary);
-    let want_boundary = iou_type == IouType::Boundary;
-
-    // Reading annotations out of Python needs the GIL; rasterising them does
-    // not. Run the two concurrently instead of alternating: a worker thread
-    // takes finished chunks and rasterises them across the rayon pool while
-    // this thread keeps reading. Total time becomes max(read, rasterise)
-    // rather than their sum, and the bounded channel keeps at most a couple
-    // of chunks of raw geometry alive.
-    let masks = std::thread::scope(|scope| -> PyResult<Vec<(Rle, Option<Rle>)>> {
-        let (tx_raw, rx_raw) = std::sync::mpsc::sync_channel::<Vec<(RawSegm, u32, u32)>>(2);
-        let worker_timings = Arc::clone(&timings);
-        let worker = scope.spawn(move || {
-            let mut out: Vec<(Rle, Option<Rle>)> = Vec::new();
-            while let Ok(chunk) = rx_raw.recv() {
-                let t = Instant::now();
-                let built: Vec<(Rle, Option<Rle>)> = chunk
-                    .par_iter()
-                    // One scratch per worker: polygon rasterisation otherwise
-                    // spends its time allocating and freeing the same buffers.
-                    .map_init(rle::PolyScratch::default, |scratch, (r, h, w)| {
-                        let m = raw_to_rle(r, *h, *w, scratch);
-                        let b = want_boundary.then(|| rle::rle_to_boundary(&m, boundary_dilation));
-                        (m, b)
-                    })
-                    .collect();
-                worker_timings
-                    .rasterise_ns
-                    .fetch_add(t.elapsed().as_nanos() as u64, Ordering::Relaxed);
-                out.extend(built);
-            }
-            out
-        });
-
-        let mut raw_chunk: Vec<(RawSegm, u32, u32)> = Vec::with_capacity(CHUNK.min(n.max(1)));
-        let outcome = read_annotations(
-            anns,
-            is_gt,
-            iou_type,
-            img_sizes,
-            img_slot,
-            cat_slot,
-            &keys,
-            needs_mask,
-            &mut inst,
-            &mut raw_chunk,
-            &tx_raw,
-            &timings,
-        );
-        if outcome.is_ok() && !raw_chunk.is_empty() {
-            let _ = tx_raw.send(raw_chunk);
-        }
-        // Closing the channel is what lets the worker finish; it must happen
-        // on the error path too.
-        drop(tx_raw);
-        let built = worker.join().expect("mask worker panicked");
-        outcome.map(|()| built)
-    })?;
-
-    match &mut inst.geom {
+fn attach_masks(geom: &mut GeomStore, masks: Vec<(Rle, Option<Rle>)>) {
+    match geom {
         GeomStore::Masks(v) => v.extend(masks.into_iter().map(|(m, _)| m)),
-        GeomStore::Boundaries {
-            masks: ms,
-            boundaries,
-        } => {
+        GeomStore::Boundaries { masks: ms, boundaries } => {
             for (m, b) in masks {
                 ms.push(m);
                 boundaries.push(b.expect("boundary requested but not built"));
@@ -362,8 +291,100 @@ fn extract_instances(
         }
         _ => debug_assert!(masks.is_empty()),
     }
+}
+
+/// Read both annotation sets, rasterising behind a single worker.
+///
+/// Reading annotations out of Python needs the GIL; rasterising them does not.
+/// So one worker thread takes finished chunks and rasterises them across the
+/// rayon pool while this thread keeps reading, and total time becomes
+/// max(read, rasterise) instead of their sum.
+///
+/// The two sides share that worker rather than getting one each. With separate
+/// pipelines the detection read could not start until the ground-truth
+/// rasteriser had drained, and on COCO segmentation that barrier cost 0.02s of
+/// a 0.13s extraction — the reader sat idle while the worker finished, then
+/// the worker sat idle while the reader restarted. Ground truth is sent first
+/// and the channel preserves order, so the finished masks split back apart at
+/// a known offset.
+#[allow(clippy::too_many_arguments)]
+fn extract_both(
+    py: Python<'_>,
+    gt_anns: &Bound<'_, PyList>,
+    dt_anns: &Bound<'_, PyList>,
+    iou_type: IouType,
+    img_sizes: &HashMap<i64, (u32, u32)>,
+    img_slot: &HashMap<i64, u32>,
+    cat_slot: &HashMap<i64, u32>,
+    boundary_dilation: f64,
+) -> PyResult<(Instances, Instances, ExtractTimings)> {
+    let keys = Keys::new(py);
+    let timings: Arc<ExtractTimings> = Arc::default();
+    let needs_mask = matches!(iou_type, IouType::Segm | IouType::Boundary);
+    let want_boundary = iou_type == IouType::Boundary;
+    let mut gt = new_instances(gt_anns.len(), iou_type);
+    let mut dt = new_instances(dt_anns.len(), iou_type);
+    // Every annotation contributes exactly one raw segmentation when masks are
+    // in play, so this is where the worker's output splits.
+    let gt_mask_count = if needs_mask { gt_anns.len() } else { 0 };
+
+    let (gt_masks, dt_masks) = std::thread::scope(
+        |scope| -> PyResult<(Vec<(Rle, Option<Rle>)>, Vec<(Rle, Option<Rle>)>)> {
+            let (tx_raw, rx_raw) =
+                std::sync::mpsc::sync_channel::<Vec<(RawSegm, u32, u32)>>(2);
+            let worker_timings = Arc::clone(&timings);
+            let worker = scope.spawn(move || {
+                let mut out: Vec<(Rle, Option<Rle>)> = Vec::new();
+                while let Ok(chunk) = rx_raw.recv() {
+                    let t = Instant::now();
+                    let built: Vec<(Rle, Option<Rle>)> = chunk
+                        .par_iter()
+                        // One scratch per worker: polygon rasterisation
+                        // otherwise spends its time allocating and freeing the
+                        // same buffers.
+                        .map_init(rle::PolyScratch::default, |scratch, (r, h, w)| {
+                            let m = raw_to_rle(r, *h, *w, scratch);
+                            let b =
+                                want_boundary.then(|| rle::rle_to_boundary(&m, boundary_dilation));
+                            (m, b)
+                        })
+                        .collect();
+                    worker_timings
+                        .rasterise_ns
+                        .fetch_add(t.elapsed().as_nanos() as u64, Ordering::Relaxed);
+                    out.extend(built);
+                }
+                out
+            });
+
+            let mut raw_chunk: Vec<(RawSegm, u32, u32)> = Vec::with_capacity(CHUNK);
+            let outcome = read_annotations(
+                gt_anns, true, iou_type, img_sizes, img_slot, cat_slot, &keys, needs_mask,
+                &mut gt, &mut raw_chunk, &tx_raw, &timings, true,
+            )
+            .and_then(|()| {
+                read_annotations(
+                    dt_anns, false, iou_type, img_sizes, img_slot, cat_slot, &keys, needs_mask,
+                    &mut dt, &mut raw_chunk, &tx_raw, &timings, false,
+                )
+            });
+            if outcome.is_ok() && !raw_chunk.is_empty() {
+                let _ = tx_raw.send(raw_chunk);
+            }
+            // Closing the channel is what lets the worker finish; it must
+            // happen on the error path too.
+            drop(tx_raw);
+            let mut built = worker.join().expect("mask worker panicked");
+            outcome?;
+            let dt_masks = built.split_off(gt_mask_count.min(built.len()));
+            Ok((built, dt_masks))
+        },
+    )?;
+
+    attach_masks(&mut gt.geom, gt_masks);
+    attach_masks(&mut dt.geom, dt_masks);
     let timings = Arc::try_unwrap(timings).unwrap_or_default();
-    Ok((inst, timings))
+    Ok((gt, dt, timings))
 }
 
 /// Wall-clock breakdown of building an `Evaluator`.
@@ -374,7 +395,8 @@ fn extract_instances(
 /// GIL-bound reading is.
 #[derive(Default)]
 struct ExtractTimings {
-    read_ns: AtomicU64,
+    gt_read_ns: AtomicU64,
+    dt_read_ns: AtomicU64,
     read_blocked_ns: AtomicU64,
     rasterise_ns: AtomicU64,
 }
@@ -395,6 +417,7 @@ fn read_annotations(
     raw_chunk: &mut Vec<(RawSegm, u32, u32)>,
     tx_raw: &std::sync::mpsc::SyncSender<Vec<(RawSegm, u32, u32)>>,
     timings: &ExtractTimings,
+    is_gt_side: bool,
 ) -> PyResult<()> {
     let t_read = Instant::now();
     for (i, item) in anns.iter().enumerate() {
@@ -475,9 +498,12 @@ fn read_annotations(
             }
         }
     }
-    timings
-        .read_ns
-        .fetch_add(t_read.elapsed().as_nanos() as u64, Ordering::Relaxed);
+    let counter = if is_gt_side {
+        &timings.gt_read_ns
+    } else {
+        &timings.dt_read_ns
+    };
+    counter.fetch_add(t_read.elapsed().as_nanos() as u64, Ordering::Relaxed);
     Ok(())
 }
 
@@ -485,8 +511,7 @@ fn read_annotations(
 #[pyclass(module = "ultrafast_pycocotools._ufcoco")]
 pub struct Evaluator {
     inner: CoreEvaluator,
-    gt_extract: ExtractTimings,
-    dt_extract: ExtractTimings,
+    extract: ExtractTimings,
 }
 
 #[pymethods]
@@ -527,20 +552,10 @@ impl Evaluator {
             .map(|(i, &v)| (v, i as u32))
             .collect();
 
-        let (gt, gt_extract) = extract_instances(
+        let (gt, dt, extract) = extract_both(
             py,
             gt_anns,
-            true,
-            it,
-            &img_sizes,
-            &img_map,
-            &cat_map,
-            boundary_dilation,
-        )?;
-        let (dt, dt_extract) = extract_instances(
-            py,
             dt_anns,
-            false,
             it,
             &img_sizes,
             &img_map,
@@ -562,8 +577,7 @@ impl Evaluator {
         };
         Ok(Evaluator {
             inner: CoreEvaluator::new(params, gt, dt),
-            gt_extract,
-            dt_extract,
+            extract,
         })
     }
 
@@ -602,11 +616,10 @@ impl Evaluator {
     fn timings<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
         let d = PyDict::new(py);
         let ns = |c: &AtomicU64| c.load(Ordering::Relaxed) as f64 / 1e9;
-        for (prefix, t) in [("gt", &self.gt_extract), ("dt", &self.dt_extract)] {
-            d.set_item(format!("{prefix}_read"), ns(&t.read_ns))?;
-            d.set_item(format!("{prefix}_read_blocked"), ns(&t.read_blocked_ns))?;
-            d.set_item(format!("{prefix}_rasterise"), ns(&t.rasterise_ns))?;
-        }
+        d.set_item("gt_read", ns(&self.extract.gt_read_ns))?;
+        d.set_item("dt_read", ns(&self.extract.dt_read_ns))?;
+        d.set_item("read_blocked", ns(&self.extract.read_blocked_ns))?;
+        d.set_item("rasterise", ns(&self.extract.rasterise_ns))?;
         let [group, iou, matching, accumulate] = self.inner.timings().as_secs();
         d.set_item("group_index", group)?;
         d.set_item("iou_cpu", iou)?;

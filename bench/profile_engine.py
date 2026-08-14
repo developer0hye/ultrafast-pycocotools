@@ -91,13 +91,17 @@ def main() -> None:
     print(f"  _prepare               {t_prepare:8.3f}s")
     print()
     print(f"extraction (wall {t_build:.3f}s; read and rasterise overlap)")
-    for side in ("gt", "dt"):
-        read = tm[f"{side}_read"]
-        blocked = tm[f"{side}_read_blocked"]
-        rast = tm[f"{side}_rasterise"]
-        print(f"  {side}_read               {read:8.3f}s  {bar(read / max(t_build, 1e-9))}")
-        print(f"    of which blocked     {blocked:8.3f}s  (waiting for rasteriser)")
-        print(f"  {side}_rasterise         {rast:8.3f}s  {bar(rast / max(t_build, 1e-9))}")
+    for label, key in (
+        ("gt_read", "gt_read"),
+        ("dt_read", "dt_read"),
+        ("rasterise", "rasterise"),
+    ):
+        v = tm[key]
+        print(f"  {label:22s} {v:8.3f}s  {bar(v / max(t_build, 1e-9))}")
+    print(
+        f"  {'read blocked':22s} {tm['read_blocked']:8.3f}s"
+        "  (reader waiting on the rasteriser)"
+    )
     print()
     print(f"evaluation (wall {t_run:.3f}s; phases are summed over workers)")
     total_cpu = tm["iou_cpu"] + tm["match_cpu"] + tm["accumulate_cpu"]

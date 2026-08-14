@@ -77,6 +77,12 @@ impl Timings {
 /// `np.spacing(1)`.
 pub const EPS: f64 = f64::EPSILON;
 
+/// Smallest slice of images a nested parallel split will hand to a worker.
+///
+/// Below this the split costs more than the work; above it, uneven categories
+/// get spread across idle workers.
+const PAR_MIN_IMAGES: usize = 64;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IouType {
     Segm,
@@ -312,29 +318,37 @@ impl Evaluator {
         let max_det = self.params.max_dets.last().copied().unwrap_or(0);
         let gt_runs = self.gt_groups.group(k);
         let dt_runs = self.dt_groups.group(k);
-        let mut out = Vec::new();
-        for (img_slot, gr, dr) in RunJoin::new(gt_runs, dt_runs) {
-            let gt_idx: Vec<u32> = gr
-                .map(|r: Run| self.gt_groups.indices(&r).to_vec())
-                .unwrap_or_default();
-            let mut dt_idx: Vec<u32> = dr
-                .map(|r: Run| self.dt_groups.indices(&r).to_vec())
-                .unwrap_or_default();
-            dt_idx.sort_by(|&a, &b| {
-                cmp_desc_score(self.dt.scores[a as usize], self.dt.scores[b as usize])
-            });
-            if dt_idx.len() > max_det {
-                dt_idx.truncate(max_det);
-            }
-            let ious = self.compute_iou(&dt_idx, &gt_idx);
-            out.push(CatImage {
-                img_slot,
-                gt_idx,
-                dt_idx,
-                ious,
-            });
-        }
-        out
+        let joins: Vec<(u32, Option<Run>, Option<Run>)> = RunJoin::new(gt_runs, dt_runs).collect();
+        // Nested inside the per-category fan-out. Categories are wildly
+        // uneven — `person` alone is a third of COCO's annotations — so
+        // splitting only by category leaves one worker with the tail while
+        // eleven idle. `with_min_len` keeps small categories from paying for
+        // splits they do not need.
+        joins
+            .par_iter()
+            .with_min_len(PAR_MIN_IMAGES)
+            .map(|&(img_slot, gr, dr)| {
+                let gt_idx: Vec<u32> = gr
+                    .map(|r: Run| self.gt_groups.indices(&r).to_vec())
+                    .unwrap_or_default();
+                let mut dt_idx: Vec<u32> = dr
+                    .map(|r: Run| self.dt_groups.indices(&r).to_vec())
+                    .unwrap_or_default();
+                dt_idx.sort_by(|&a, &b| {
+                    cmp_desc_score(self.dt.scores[a as usize], self.dt.scores[b as usize])
+                });
+                if dt_idx.len() > max_det {
+                    dt_idx.truncate(max_det);
+                }
+                let ious = self.compute_iou(&dt_idx, &gt_idx);
+                CatImage {
+                    img_slot,
+                    gt_idx,
+                    dt_idx,
+                    ious,
+                }
+            })
+            .collect()
     }
 
     /// Row-major `D x G` IoU, or empty when either side has no entries.
@@ -609,18 +623,24 @@ impl Evaluator {
                 // range: which images contribute depends only on whether they
                 // have annotations, which does not vary by area.
                 let mut matches: Vec<Option<ImgMatch>> = Vec::new();
-                let mut scratch = MatchScratch::default();
                 for a in 0..a_n {
                     let t = Instant::now();
                     if matches.is_empty() {
                         matches.resize_with(work.len(), || Some(ImgMatch::default()));
                     }
-                    for (slot, ci) in matches.iter_mut().zip(work.iter()) {
-                        let mut buf = slot.take().unwrap_or_default();
-                        *slot = self
-                            .evaluate_img_into(ci, a, &mut buf, &mut scratch)
-                            .then_some(buf);
-                    }
+                    // Buffers stay attached to their image slot, so reuse
+                    // across area ranges survives the parallel split; the
+                    // scratch is per worker.
+                    matches
+                        .par_iter_mut()
+                        .zip(work.par_iter())
+                        .with_min_len(PAR_MIN_IMAGES)
+                        .for_each_init(MatchScratch::default, |scratch, (slot, ci)| {
+                            let mut buf = slot.take().unwrap_or_default();
+                            *slot = self
+                                .evaluate_img_into(ci, a, &mut buf, scratch)
+                                .then_some(buf);
+                        });
                     Timings::add(&self.timings.match_ns, t);
                     let t = Instant::now();
                     for (m, &max_det) in p.max_dets.iter().enumerate() {
