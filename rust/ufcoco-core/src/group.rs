@@ -199,6 +199,67 @@ mod tests {
     }
 
     #[test]
+    fn annotations_outside_the_evaluation_are_dropped() {
+        // u32::MAX marks an annotation whose image or category is not being
+        // evaluated. Keeping it would put it in some other group's bucket.
+        let img = [0u32, u32::MAX, 1];
+        let cat = [0u32, 0, u32::MAX];
+        let g = Grouping::build(&img, &cat, 1, true);
+        assert_eq!(g.order, vec![0]);
+        assert_eq!(g.group(0).len(), 1);
+    }
+
+    #[test]
+    fn a_group_with_no_annotations_reads_back_empty() {
+        // Categories that appear in params but not in the data are normal;
+        // they must not index out of bounds or borrow another group's runs.
+        let g = Grouping::build(&[0u32], &[0u32], 3, true);
+        assert_eq!(g.group(0).len(), 1);
+        assert_eq!(g.group(1).len(), 0);
+        assert_eq!(g.group(2).len(), 0);
+    }
+
+    #[test]
+    fn building_from_nothing_is_empty_everywhere() {
+        let g = Grouping::build(&[], &[], 2, true);
+        assert!(g.order.is_empty());
+        assert_eq!(g.group(0).len(), 0);
+        assert_eq!(g.group(1).len(), 0);
+    }
+
+    #[test]
+    fn runs_are_ascending_by_image_within_a_group() {
+        // RunJoin merge-walks two groupings and relies on this order.
+        let img = [5u32, 1, 3, 1];
+        let cat = [0u32, 0, 0, 0];
+        let g = Grouping::build(&img, &cat, 1, true);
+        let slots: Vec<u32> = g.group(0).iter().map(|r| r.img_slot).collect();
+        assert_eq!(slots, vec![1, 3, 5]);
+        // Image 1 keeps both of its annotations, in annotation order.
+        assert_eq!(g.indices(&g.group(0)[0]), &[1, 3]);
+    }
+
+    #[test]
+    fn join_with_one_empty_side() {
+        let a = [Run {
+            img_slot: 3,
+            start: 0,
+            len: 2,
+        }];
+        let got: Vec<(u32, bool, bool)> = RunJoin::new(&a, &[])
+            .map(|(i, g, d)| (i, g.is_some(), d.is_some()))
+            .collect();
+        assert_eq!(got, vec![(3, true, false)]);
+
+        let got: Vec<(u32, bool, bool)> = RunJoin::new(&[], &a)
+            .map(|(i, g, d)| (i, g.is_some(), d.is_some()))
+            .collect();
+        assert_eq!(got, vec![(3, false, true)]);
+
+        assert_eq!(RunJoin::new(&[], &[]).count(), 0);
+    }
+
+    #[test]
     fn join_yields_union_of_images() {
         let a = [
             Run {

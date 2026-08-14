@@ -29,9 +29,20 @@ Deviations from pycocotools, all deliberate and none numeric:
   between the two, which is where its memory goes; we keep the split in the
   API and not in the memory profile. Pass ``store_eval_imgs=True`` to get
   ``evalImgs`` populated anyway.
-* Annotations are not mutated. Upstream rewrites ``ann['segmentation']`` to
-  RLE and ``ann['ignore']`` in place; we read them and leave them alone.
-* ``self.ious`` is not populated by default (see :meth:`compute_ious`).
+* ``ann['segmentation']`` is never rewritten to RLE. Upstream does that in
+  place, editing the caller's data; :meth:`computeIoU` converts on the fly
+  instead and produces the same masks. (``ignore`` / ``_ignore`` *are* set,
+  exactly as upstream sets them, but only on the compatibility path below.)
+* ``self._gts``, ``self._dts`` and ``self.ious`` are built on first access
+  rather than during ``evaluate()``. The engine does not read them, and
+  materialising every IoU matrix is a large part of what makes pycocotools'
+  memory profile bad. Code that touches them still works and pays upstream's
+  cost for it.
+
+:meth:`computeIoU`, :meth:`computeOks` and :meth:`evaluateImg` are faithful
+Python ports kept because they are public API — libraries subclass
+``COCOeval`` to override ``evaluateImg`` — not because the fast path uses
+them. It does the same work in Rust across all images at once.
 """
 
 from __future__ import annotations
@@ -39,12 +50,14 @@ from __future__ import annotations
 import copy
 import datetime
 import time
+from collections import defaultdict
 from collections.abc import Callable
 from typing import Any
 
 import numpy as np
 
 from . import _ufcoco
+from . import mask as maskUtils
 from .coco import COCO
 
 __all__ = ["COCOeval", "Params"]
@@ -143,12 +156,16 @@ class COCOeval:
         self.cocoDt = cocoDt
         self.evalImgs: list = []
         self.eval: dict = {}
-        self._gts: list = []
-        self._dts: list = []
+        # Left as plain dicts until something asks for them; `_ensure_prepared`
+        # swaps in the populated defaultdicts. `ious` is a property, so the
+        # backing field is what gets initialised here — assigning `self.ious`
+        # would go through the setter and defeat the laziness.
+        self._gts: Any = {}
+        self._dts: Any = {}
+        self._ious: dict | None = None
         self.params = Params(iouType=iouType)
         self._paramsEval: Params | None = None
         self.stats: Any = []
-        self.ious: dict = {}
 
         self.store_eval_imgs = store_eval_imgs
         self.use_area = use_area
@@ -168,7 +185,7 @@ class COCOeval:
     # core pipeline
     # ------------------------------------------------------------------
 
-    def _prepare(self) -> tuple[list, list, dict]:
+    def _collect(self) -> tuple[list, list, dict]:
         """Collect the annotations to evaluate, in pycocotools' order.
 
         The order matters: ``getAnnIds`` groups by image in ``imgIds`` order
@@ -192,6 +209,219 @@ class COCOeval:
                         img_sizes[int(img_id)] = (int(img["height"]), int(img["width"]))
         return gts, dts, img_sizes
 
+    def _prepare(self) -> None:
+        """Populate ``_gts`` / ``_dts``, keyed by ``(imgId, catId)``.
+
+        The engine does not need this — it reads annotations straight into
+        Rust — but ``computeIoU`` / ``evaluateImg`` do, and so does anything
+        that subclasses ``COCOeval`` and reaches into ``self._gts``. Building
+        it is therefore deferred until something asks.
+
+        Unlike pycocotools this does **not** rewrite ``ann['segmentation']``
+        to RLE in place. Upstream mutates the caller's annotations there;
+        :meth:`computeIoU` converts on the fly instead, which produces the
+        same masks without editing data we do not own.
+        """
+        gts, dts, _ = self._collect()
+        self._gts = defaultdict(list)
+        self._dts = defaultdict(list)
+        for gt in gts:
+            gt.setdefault("ignore", 0)
+            gt["ignore"] = bool(gt.get("iscrowd", 0))
+            if self.params.iouType.startswith("keypoints"):
+                gt["ignore"] = (gt.get("num_keypoints", 0) == 0) or gt["ignore"]
+            self._gts[gt["image_id"], gt["category_id"]].append(gt)
+        for dt in dts:
+            self._dts[dt["image_id"], dt["category_id"]].append(dt)
+
+    def _ensure_prepared(self) -> None:
+        if not isinstance(self._gts, defaultdict):
+            self._prepare()
+
+    # ------------------------------------------------------------------
+    # per-image entry points
+    #
+    # The engine never calls these; it does the same work in Rust over all
+    # images at once. They exist because they are public API — code
+    # subclasses ``COCOeval`` to override ``evaluateImg``, and calls
+    # ``computeIoU`` directly — so they are kept as faithful ports that
+    # produce the same values the engine does.
+    # ------------------------------------------------------------------
+
+    def computeIoU(self, imgId, catId):
+        """IoU between every detection and ground truth of one (image, category)."""
+        self._ensure_prepared()
+        p = self.params
+        if p.useCats:
+            gt = self._gts[imgId, catId]
+            dt = self._dts[imgId, catId]
+        else:
+            gt = [g for cId in p.catIds for g in self._gts[imgId, cId]]
+            dt = [d for cId in p.catIds for d in self._dts[imgId, cId]]
+        if len(gt) == 0 and len(dt) == 0:
+            return []
+        inds = np.argsort([-d["score"] for d in dt], kind="mergesort")
+        dt = [dt[i] for i in inds]
+        if len(dt) > p.maxDets[-1]:
+            dt = dt[0 : p.maxDets[-1]]
+
+        if p.iouType in ("segm", "boundary"):
+            g = [self.cocoGt.annToRLE(x) for x in gt]
+            d = [self.cocoDt.annToRLE(x) for x in dt]
+        elif p.iouType == "bbox":
+            g = [x["bbox"] for x in gt]
+            d = [x["bbox"] for x in dt]
+        else:
+            raise Exception("unknown iouType for iou computation")
+
+        iscrowd = [int(o.get("iscrowd", 0)) for o in gt]
+        ious = maskUtils.iou(d, g, iscrowd)
+        if p.iouType == "boundary" and len(ious) > 0:
+            # Same rule the engine uses: min(mask, boundary), except against
+            # crowd ground truth, which keeps the plain mask IoU.
+            gb = maskUtils.toBoundary(g, self.boundary_dilation_ratio)
+            db = maskUtils.toBoundary(d, self.boundary_dilation_ratio)
+            boundary = np.asarray(maskUtils.iou(db, gb, iscrowd))
+            ious = np.asarray(ious)
+            keep = np.asarray(iscrowd) == 0
+            ious[:, keep] = np.minimum(ious[:, keep], boundary[:, keep])
+        return ious
+
+    def computeOks(self, imgId, catId):
+        """Object keypoint similarity for one (image, category)."""
+        self._ensure_prepared()
+        p = self.params
+        gts = self._gts[imgId, catId]
+        dts = self._dts[imgId, catId]
+        inds = np.argsort([-d["score"] for d in dts], kind="mergesort")
+        dts = [dts[i] for i in inds]
+        if len(dts) > p.maxDets[-1]:
+            dts = dts[0 : p.maxDets[-1]]
+        if len(gts) == 0 or len(dts) == 0:
+            return []
+        ious = np.zeros((len(dts), len(gts)))
+        sigmas = p.kpt_oks_sigmas
+        variances = (sigmas * 2) ** 2
+        k = len(sigmas)
+        for j, gt in enumerate(gts):
+            g = np.array(gt["keypoints"])
+            xg, yg, vg = g[0::3], g[1::3], g[2::3]
+            k1 = np.count_nonzero(vg > 0)
+            bb = gt["bbox"]
+            x0, x1 = bb[0] - bb[2], bb[0] + bb[2] * 2
+            y0, y1 = bb[1] - bb[3], bb[1] + bb[3] * 2
+            for i, dt in enumerate(dts):
+                d = np.array(dt["keypoints"])
+                xd, yd = d[0::3], d[1::3]
+                if k1 > 0:
+                    dx = xd - xg
+                    dy = yd - yg
+                else:
+                    z = np.zeros(k)
+                    dx = np.max((z, x0 - xd), axis=0) + np.max((z, xd - x1), axis=0)
+                    dy = np.max((z, y0 - yd), axis=0) + np.max((z, yd - y1), axis=0)
+                area = gt["area"] if self.use_area else bb[3] * bb[2] * 0.53
+                e = (dx**2 + dy**2) / variances / (area + np.spacing(1)) / 2
+                if k1 > 0:
+                    e = e[vg > 0]
+                ious[i, j] = np.sum(np.exp(-e)) / e.shape[0]
+        return ious
+
+    def evaluateImg(self, imgId, catId, aRng, maxDet):
+        """Greedy match for one (image, category, area range).
+
+        Returns the same dict pycocotools returns, so code that overrides or
+        post-processes it keeps working.
+        """
+        self._ensure_prepared()
+        p = self.params
+        if p.useCats:
+            gt = self._gts[imgId, catId]
+            dt = self._dts[imgId, catId]
+        else:
+            gt = [g for cId in p.catIds for g in self._gts[imgId, cId]]
+            dt = [d for cId in p.catIds for d in self._dts[imgId, cId]]
+        if len(gt) == 0 and len(dt) == 0:
+            return None
+
+        for g in gt:
+            g["_ignore"] = 1 if (g["ignore"] or g["area"] < aRng[0] or g["area"] > aRng[1]) else 0
+
+        gtind = np.argsort([g["_ignore"] for g in gt], kind="mergesort")
+        gt = [gt[i] for i in gtind]
+        dtind = np.argsort([-d["score"] for d in dt], kind="mergesort")
+        dt = [dt[i] for i in dtind[0:maxDet]]
+        iscrowd = [int(o.get("iscrowd", 0)) for o in gt]
+        ious = self.ious[imgId, catId]
+        ious = ious[:, gtind] if len(ious) > 0 else ious
+
+        T, G, D = len(p.iouThrs), len(gt), len(dt)
+        gtm = np.zeros((T, G))
+        dtm = np.zeros((T, D))
+        gtIg = np.array([g["_ignore"] for g in gt])
+        dtIg = np.zeros((T, D))
+        if len(ious) != 0:
+            for tind, t in enumerate(p.iouThrs):
+                for dind, d in enumerate(dt):
+                    iou = min([t, 1 - 1e-10])
+                    m = -1
+                    for gind, _g in enumerate(gt):
+                        if gtm[tind, gind] > 0 and not iscrowd[gind]:
+                            continue
+                        if m > -1 and gtIg[m] == 0 and gtIg[gind] == 1:
+                            break
+                        if ious[dind, gind] < iou:
+                            continue
+                        iou = ious[dind, gind]
+                        m = gind
+                    if m == -1:
+                        continue
+                    dtIg[tind, dind] = gtIg[m]
+                    dtm[tind, dind] = gt[m]["id"]
+                    gtm[tind, m] = d["id"]
+        a = np.array([d["area"] < aRng[0] or d["area"] > aRng[1] for d in dt]).reshape((1, len(dt)))
+        dtIg = np.logical_or(dtIg, np.logical_and(dtm == 0, np.repeat(a, T, 0)))
+        return {
+            "image_id": imgId,
+            "category_id": catId,
+            "aRng": aRng,
+            "maxDet": maxDet,
+            "dtIds": [d["id"] for d in dt],
+            "gtIds": [g["id"] for g in gt],
+            "dtMatches": dtm,
+            "gtMatches": gtm,
+            "dtScores": [d["score"] for d in dt],
+            "gtIgnore": gtIg,
+            "dtIgnore": dtIg,
+        }
+
+    @property
+    def ious(self) -> dict:
+        """``{(imgId, catId): IoU matrix}``, computed on first access.
+
+        pycocotools fills this during ``evaluate()``; we do not, because
+        materialising every matrix is a large part of what makes its memory
+        profile bad and nothing in the fast path reads it. Touching this
+        attribute computes them, at pycocotools' cost — the point is that code
+        which needs it keeps working, not that it is free.
+        """
+        if self._ious is None:
+            p = self.params
+            compute = (
+                self.computeOks if p.iouType.startswith("keypoints") else self.computeIoU
+            )
+            cat_ids = p.catIds if p.useCats else [-1]
+            self._ious = {
+                (imgId, catId): compute(imgId, catId)
+                for imgId in p.imgIds
+                for catId in cat_ids
+            }
+        return self._ious
+
+    @ious.setter
+    def ious(self, value: dict) -> None:
+        self._ious = value
+
     def evaluate(self) -> None:
         """Run per-image evaluation.
 
@@ -214,8 +444,9 @@ class COCOeval:
         p.maxDets = sorted(p.maxDets)
         self.params = p
 
-        gts, dts, img_sizes = self._prepare()
-        self._gts, self._dts = gts, dts
+        gts, dts, img_sizes = self._collect()
+        # A fresh run must not serve stale per-image views.
+        self._gts, self._dts, self._ious = {}, {}, None
 
         sigmas = getattr(p, "kpt_oks_sigmas", np.zeros(0))
         self._engine = _ufcoco.Evaluator(

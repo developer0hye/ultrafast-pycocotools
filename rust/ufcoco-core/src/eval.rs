@@ -952,3 +952,389 @@ struct CatOut {
     scores: Vec<f64>,
     eval_imgs: Vec<Option<ImgEval>>,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Scenarios small enough that the expected numbers can be worked out by
+    /// hand. The Python suite proves we agree with pycocotools on real data;
+    /// these pin the individual rules, so a failure says *which* rule broke
+    /// instead of "AP moved".
+    fn boxes(
+        ids: &[i64],
+        scores: &[f64],
+        rects: &[[f64; 4]],
+        cat_slots: &[u32],
+        iscrowd: &[bool],
+    ) -> Instances {
+        let n = ids.len();
+        assert_eq!(scores.len(), n);
+        assert_eq!(rects.len(), n);
+        Instances {
+            ids: ids.to_vec(),
+            scores: scores.to_vec(),
+            areas: rects.iter().map(|b| b[2] * b[3]).collect(),
+            iscrowd: iscrowd.to_vec(),
+            // pycocotools derives `ignore` from `iscrowd`; do the same here so
+            // the fixtures cannot drift from the Python layer.
+            ignore: iscrowd.to_vec(),
+            lvis_mark: vec![false; n],
+            bboxes: Vec::new(),
+            img_slot: vec![0; n],
+            cat_slot: cat_slots.to_vec(),
+            geom: GeomStore::Bboxes(rects.to_vec()),
+        }
+    }
+
+    fn no_boxes() -> Instances {
+        boxes(&[], &[], &[], &[], &[])
+    }
+
+    /// One image, one category, one IoU threshold, three recall thresholds.
+    /// Keeps every output array indexable as `precision[r]` / `recall[0]`.
+    fn params() -> EvalParams {
+        EvalParams {
+            img_ids: vec![100],
+            cat_ids: vec![7],
+            iou_thrs: vec![0.5],
+            rec_thrs: vec![0.0, 0.5, 1.0],
+            max_dets: vec![10],
+            area_rng: vec![[0.0, 1e10]],
+            use_cats: true,
+            iou_type: IouType::Bbox,
+            kpt_sigmas: Vec::new(),
+            use_area: true,
+        }
+    }
+
+    const UNIT: [f64; 4] = [0.0, 0.0, 10.0, 10.0];
+
+    #[test]
+    fn precision_keeps_the_np_spacing_epsilon() {
+        // The single most-copied divergence: `tp / (fp + tp)` instead of
+        // `tp / (fp + tp + np.spacing(1))`. They differ only when fp + tp == 1
+        // — the first point of every curve — so a test on a one-detection
+        // scenario is exactly where it shows.
+        let gt = boxes(&[1], &[0.0], &[UNIT], &[0], &[false]);
+        let dt = boxes(&[11], &[0.9], &[UNIT], &[0], &[false]);
+        let (res, _) = Evaluator::new(params(), gt, dt).run(false);
+
+        assert_eq!(res.precision[0], 1.0 / (1.0 + EPS));
+        assert_ne!(res.precision[0], 1.0, "the epsilon was dropped");
+        assert_eq!(res.recall[0], 1.0);
+        assert_eq!(res.scores[0], 0.9);
+    }
+
+    #[test]
+    fn ground_truth_with_no_detections_scores_zero_not_absent() {
+        // 0.0 and -1.0 mean different things: -1 is "this category has no
+        // ground truth here" and summarize() filters it out of the mean, so
+        // reporting -1 here would quietly delete a category from mAP.
+        let gt = boxes(&[1], &[0.0], &[UNIT], &[0], &[false]);
+        let (res, _) = Evaluator::new(params(), gt, no_boxes()).run(false);
+
+        assert_eq!(res.recall[0], 0.0);
+        assert!(
+            res.precision.iter().all(|&v| v == 0.0),
+            "{:?}",
+            res.precision
+        );
+    }
+
+    #[test]
+    fn detections_with_no_ground_truth_are_absent_not_zero() {
+        let dt = boxes(&[11], &[0.9], &[UNIT], &[0], &[false]);
+        let (res, _) = Evaluator::new(params(), no_boxes(), dt).run(false);
+
+        assert_eq!(res.recall[0], -1.0);
+        assert!(
+            res.precision.iter().all(|&v| v == -1.0),
+            "{:?}",
+            res.precision
+        );
+    }
+
+    #[test]
+    fn crowd_ground_truth_absorbs_extra_detections() {
+        // A detection landing inside a crowd region is ignored, not counted
+        // as a false positive. Without that the second detection below would
+        // be an FP and precision would fall.
+        let gt = boxes(
+            &[1, 2],
+            &[0.0, 0.0],
+            &[UNIT, [50.0, 0.0, 50.0, 50.0]],
+            &[0, 0],
+            &[false, true],
+        );
+        let dt = boxes(
+            &[11, 12],
+            &[0.9, 0.8],
+            &[UNIT, [60.0, 10.0, 10.0, 10.0]],
+            &[0, 0],
+            &[false, false],
+        );
+        let (res, imgs) = Evaluator::new(params(), gt, dt).run(true);
+
+        let e = imgs.iter().flatten().next().expect("one image evaluated");
+        assert_eq!(
+            e.gt_ignore,
+            vec![false, true],
+            "crowd sorts last and is ignored"
+        );
+        assert_eq!(
+            e.dt_matches,
+            vec![1, 2],
+            "second detection matched the crowd"
+        );
+        assert_eq!(
+            e.dt_ignore,
+            vec![false, true],
+            "a crowd match is neither TP nor FP"
+        );
+        assert_eq!(res.recall[0], 1.0);
+        assert_eq!(res.precision[0], 1.0 / (1.0 + EPS));
+    }
+
+    #[test]
+    fn tied_scores_resolve_to_annotation_order() {
+        // The greedy matcher takes detections in order, so with equal scores
+        // the annotation order decides which ground truth gets claimed. An
+        // unstable sort would make this arbitrary — and the totals can stay
+        // the same while the *assignment* changes, which is why this asserts
+        // ids rather than counts.
+        let gt = boxes(&[1], &[0.0], &[UNIT], &[0], &[false]);
+        let forward = boxes(
+            &[11, 12],
+            &[0.5, 0.5],
+            &[UNIT, UNIT],
+            &[0, 0],
+            &[false, false],
+        );
+        let (_, imgs) = Evaluator::new(params(), gt, forward).run(true);
+        let e = imgs.iter().flatten().next().unwrap();
+        assert_eq!(e.dt_ids, [11, 12]);
+
+        let gt = boxes(&[1], &[0.0], &[UNIT], &[0], &[false]);
+        let reversed = boxes(
+            &[12, 11],
+            &[0.5, 0.5],
+            &[UNIT, UNIT],
+            &[0, 0],
+            &[false, false],
+        );
+        let (_, imgs) = Evaluator::new(params(), gt, reversed).run(true);
+        let e = imgs.iter().flatten().next().unwrap();
+        assert_eq!(
+            e.dt_ids,
+            vec![12, 11],
+            "order follows the input, not the ids"
+        );
+    }
+
+    #[test]
+    fn max_dets_truncates_by_score() {
+        let gt = boxes(&[1], &[0.0], &[UNIT], &[0], &[false]);
+        let dt = boxes(
+            &[11, 12, 13],
+            &[0.7, 0.9, 0.8],
+            &[UNIT, UNIT, UNIT],
+            &[0, 0, 0],
+            &[false, false, false],
+        );
+        let mut p = params();
+        p.max_dets = vec![2];
+        let (_, imgs) = Evaluator::new(p, gt, dt).run(true);
+
+        let e = imgs.iter().flatten().next().unwrap();
+        assert_eq!(
+            e.dt_ids,
+            vec![12, 13],
+            "the two highest scores, in score order"
+        );
+    }
+
+    #[test]
+    fn area_range_excludes_ground_truth_from_the_denominator() {
+        let gt = boxes(&[1], &[0.0], &[UNIT], &[0], &[false]); // area 100
+        let dt = boxes(&[11], &[0.9], &[UNIT], &[0], &[false]);
+        let mut p = params();
+        p.area_rng = vec![[0.0, 50.0]];
+        let (res, _) = Evaluator::new(p, gt, dt).run(false);
+
+        // The only ground truth is outside the range, so the category has
+        // nothing to score against.
+        assert_eq!(res.recall[0], -1.0);
+    }
+
+    #[test]
+    fn area_range_bounds_are_inclusive() {
+        // pycocotools ignores when `area < lo || area > hi`, so a ground truth
+        // sitting exactly on a bound stays in. COCO's boundaries are 32^2 and
+        // 96^2 and real annotations do land on them.
+        let gt = boxes(&[1], &[0.0], &[UNIT], &[0], &[false]); // area exactly 100
+        let dt = boxes(&[11], &[0.9], &[UNIT], &[0], &[false]);
+        let mut p = params();
+        p.area_rng = vec![[100.0, 100.0]];
+        let (res, _) = Evaluator::new(p, gt, dt).run(false);
+        assert_eq!(res.recall[0], 1.0);
+    }
+
+    #[test]
+    fn iou_below_threshold_does_not_match() {
+        let gt = boxes(&[1], &[0.0], &[UNIT], &[0], &[false]);
+        // Overlap 5x5 = 25, union 100 + 100 - 25 = 175, IoU = 0.1428...
+        let dt = boxes(&[11], &[0.9], &[[5.0, 5.0, 10.0, 10.0]], &[0], &[false]);
+        let (res, _) = Evaluator::new(params(), gt, dt).run(false);
+
+        assert_eq!(
+            res.recall[0], 0.0,
+            "0.14 IoU must not clear a 0.5 threshold"
+        );
+        assert!(res.precision.iter().all(|&v| v == 0.0));
+    }
+
+    #[test]
+    fn use_cats_off_merges_categories() {
+        // Class-agnostic (proposal) scoring: a detection of the wrong class
+        // may match. With categories on, these two never meet.
+        let make = || {
+            (
+                boxes(&[1], &[0.0], &[UNIT], &[0], &[false]),
+                boxes(&[11], &[0.9], &[UNIT], &[1], &[false]),
+            )
+        };
+        let mut p = params();
+        p.cat_ids = vec![7, 8];
+
+        let (gt, dt) = make();
+        let (with_cats, _) = Evaluator::new(p.clone(), gt, dt).run(false);
+        // Category 7 has the ground truth and no detection of its own.
+        assert_eq!(with_cats.recall[0], 0.0);
+
+        let (gt, dt) = make();
+        p.use_cats = false;
+        let (without_cats, _) = Evaluator::new(p, gt, dt).run(false);
+        assert_eq!(
+            without_cats.counts[2], 1,
+            "categories collapse to one group"
+        );
+        assert_eq!(without_cats.recall[0], 1.0);
+    }
+
+    #[test]
+    fn result_is_independent_of_how_the_work_was_split() {
+        // Runs are parallel over categories and over images inside them; the
+        // output must not depend on how rayon happened to chunk it.
+        let gt = boxes(
+            &[1, 2, 3],
+            &[0.0; 3],
+            &[UNIT, [20.0, 20.0, 10.0, 10.0], [40.0, 40.0, 30.0, 30.0]],
+            &[0, 0, 0],
+            &[false; 3],
+        );
+        let dt = boxes(
+            &[11, 12, 13, 14],
+            &[0.9, 0.8, 0.8, 0.1],
+            &[
+                UNIT,
+                [21.0, 21.0, 10.0, 10.0],
+                [41.0, 41.0, 30.0, 30.0],
+                [80.0, 80.0, 5.0, 5.0],
+            ],
+            &[0; 4],
+            &[false; 4],
+        );
+        let ev = Evaluator::new(params(), gt, dt);
+        let (a, _) = ev.run(false);
+        let (b, _) = ev.run(false);
+        assert_eq!(a.precision, b.precision);
+        assert_eq!(a.recall, b.recall);
+        assert_eq!(a.scores, b.scores);
+    }
+
+    #[test]
+    fn output_arrays_have_the_documented_shape() {
+        let gt = boxes(&[1], &[0.0], &[UNIT], &[0], &[false]);
+        let dt = boxes(&[11], &[0.9], &[UNIT], &[0], &[false]);
+        let mut p = params();
+        p.iou_thrs = vec![0.5, 0.75];
+        p.area_rng = vec![[0.0, 1e10], [0.0, 50.0]];
+        p.max_dets = vec![1, 10];
+        let (res, _) = Evaluator::new(p, gt, dt).run(false);
+
+        let [t, r, k, a, m] = res.counts;
+        assert_eq!([t, r, k, a, m], [2, 3, 1, 2, 2]);
+        assert_eq!(res.precision.len(), t * r * k * a * m);
+        assert_eq!(res.scores.len(), t * r * k * a * m);
+        assert_eq!(res.recall.len(), t * k * a * m);
+    }
+
+    #[test]
+    fn per_instance_reports_ignored_detections_separately() {
+        // Everything diagnostic is built on this, and it is only trustworthy
+        // if a crowd match is reported as ignored rather than as a hit.
+        let gt = boxes(
+            &[1, 2],
+            &[0.0, 0.0],
+            &[UNIT, [50.0, 0.0, 50.0, 50.0]],
+            &[0, 0],
+            &[false, true],
+        );
+        let dt = boxes(
+            &[11, 12],
+            &[0.9, 0.8],
+            &[UNIT, [60.0, 10.0, 10.0, 10.0]],
+            &[0, 0],
+            &[false, false],
+        );
+        let ev = Evaluator::new(params(), gt, dt);
+        let (dets, gts) = ev.per_instance(0, 0, 10);
+
+        assert_eq!(dets.len(), 2);
+        let tp: Vec<_> = dets.iter().filter(|d| d.gt_id >= 0 && !d.ignore).collect();
+        assert_eq!(tp.len(), 1);
+        assert_eq!(tp[0].dt_id, 11);
+        assert_eq!(tp[0].gt_id, 1);
+        assert_eq!(tp[0].iou, 1.0);
+
+        let ignored: Vec<_> = dets.iter().filter(|d| d.ignore).collect();
+        assert_eq!(ignored.len(), 1);
+        assert_eq!(ignored[0].dt_id, 12);
+
+        assert_eq!(gts.len(), 2);
+        assert_eq!(gts.iter().filter(|g| g.ignore).count(), 1);
+        assert_eq!(gts.iter().filter(|g| g.matched).count(), 2);
+    }
+
+    #[test]
+    fn timings_are_recorded() {
+        let gt = boxes(&[1], &[0.0], &[UNIT], &[0], &[false]);
+        let dt = boxes(&[11], &[0.9], &[UNIT], &[0], &[false]);
+        let ev = Evaluator::new(params(), gt, dt);
+        let _ = ev.run(false);
+        let [_group, iou, matching, accumulate] = ev.timings().as_secs();
+        assert!(iou >= 0.0 && matching >= 0.0 && accumulate >= 0.0);
+    }
+
+    #[test]
+    fn descending_score_order_puts_nan_last() {
+        // numpy's argsort sends NaN to the end; a score column with a NaN in
+        // it should not reorder the finite entries around it.
+        let mut v = [0.5, f64::NAN, 0.9, 0.1];
+        v.sort_by(|&a, &b| cmp_desc_score(a, b));
+        assert_eq!(v[0], 0.9);
+        assert_eq!(v[1], 0.5);
+        assert_eq!(v[2], 0.1);
+        assert!(v[3].is_nan());
+    }
+
+    #[test]
+    fn negative_zero_ties_with_zero() {
+        // pycocotools sorts the negated scores, where -0.0 and 0.0 compare
+        // equal; a total order over bit patterns would separate them and
+        // change tie-breaking.
+        assert_eq!(cmp_desc_score(0.0, -0.0), Ordering::Equal);
+        assert_eq!(cmp_desc_score(-0.0, 0.0), Ordering::Equal);
+    }
+}

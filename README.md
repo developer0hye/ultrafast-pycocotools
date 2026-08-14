@@ -42,6 +42,7 @@ pycocotools를 바꿀 이유는 보통 셋 중 하나다. 자기 증상에서 �
 | eval 한 번이 epoch보다 오래 걸린다 | `evaluate()`가 (image × category) Python 루프 | [§속도](#속도) |
 | 대형 데이터셋 eval에서 메모리가 터진다 | `evalImgs`가 K×A×I개 dict + numpy 배열을 전부 들고 있음 | [§메모리](#메모리) |
 | 빠른 구현으로 바꿨더니 AP가 소수점 5~6자리에서 달라졌다 | threshold grid를 `np.linspace`가 아닌 방식으로 재구성 | [§동치 보장](#동치-보장) |
+| 구현을 바꿨더니 서브클래스나 후처리 코드가 깨졌다 | 공개 메서드가 빠졌거나 반환 타입이 다름 | [§drop-in 호환](#drop-in-호환) |
 | Windows에서 `pip install pycocotools`가 컴파일 에러 | Cython + MSVC 빌드 필요 | prebuilt wheel |
 | detection이 tie score를 가질 때 구현마다 AP가 다르다 | greedy matcher가 정렬 순서에 민감한데 stable sort가 아님 | [§동치 보장](#동치-보장) |
 
@@ -49,6 +50,7 @@ pycocotools를 바꿀 이유는 보통 셋 중 하나다. 자기 증상에서 �
 
 - 그냥 빠르게 돌리고 싶다 → 위 설치/사용 예제까지면 충분하다.
 - 논문 수치를 재현해야 한다 / CI에서 AP를 회귀 테스트한다 → [§동치 보장](#동치-보장)을 읽어야 한다.
+- `COCOeval`을 상속했거나 `evalImgs`/`ious`를 직접 읽는다 → [§drop-in 호환](#drop-in-호환).
 - 자체 metric을 붙이거나 오류 분석을 한다 → [§확장 기능](#확장-기능).
 - 구현을 고치거나 기여한다 → [`DESIGN.md`](DESIGN.md).
 
@@ -121,20 +123,72 @@ pycocotools는 `pr = tp / (fp + tp + np.spacing(1))`이다. `np.spacing(1)`을 �
 
 ### 검증 범위
 
-`pytest tests/` 93개가 전부 실제 pycocotools와 비교한다 (golden 파일이 아니라 live 비교).
+`pytest tests/` 128개와 `cargo test` 44개가 전부 실제 pycocotools와 비교한다
+(golden 파일이 아니라 live 비교).
+
+**Rust 44개** — Python 없이 도는 crate 단위 검증. 손으로 답을 낼 수 있는 크기의
+시나리오로 규칙을 하나씩 못박는다. 실패했을 때 "AP가 움직였다"가 아니라 **어느 규칙이
+깨졌는지**가 나온다.
+
+```rust
+assert_eq!(res.precision[0], 1.0 / (1.0 + EPS));
+assert_ne!(res.precision[0], 1.0, "the epsilon was dropped");
+```
+
+`c_i32`가 Rust가 아니라 하드웨어 의미론을 따르는지(NaN → `INT_MIN`), tie가
+annotation 순서로 풀리는지(개수가 아니라 **id**를 확인 — 총 TP/FP는 같으면서 배정만
+바뀔 수 있다), crowd가 detection을 흡수하는지, `0.0`과 `-1.0` sentinel 구분,
+area 경계 포함 여부, 병렬 분할 방식과 무관한 결과, IoU 행렬의 축 방향.
+
+**Python 128개**
 
 - **mask API 47개** — `encode`/`decode`/`merge`/`area`/`toBbox`/`iou`/`frPyObjects`를
   1×1 이미지, 빈 마스크, 꽉 찬 마스크, 이미지 밖으로 나간 polygon, **꼭짓점이 중복된
   polygon**(`rleFrPoly`가 0으로 나눠 NaN을 int로 캐스팅하는 지점), crowd flag까지.
-- **평가 16개** — synthetic bbox/segm, 실제 COCO val2017 subset bbox/segm, keypoints,
-  `useCats=0`, custom areaRng/maxDets/iouThrs, image/category subset, detection이 하나도
-  없는 경우, **모든 score가 동점인 경우**, `derive_segmentation=False`, `evalImgs` 전체.
+- **평가 parity 16개** — 배열 전체를 바이트 비교. synthetic bbox/segm, 실제 COCO
+  val2017 subset, keypoints, `useCats=0`, custom areaRng/maxDets/iouThrs,
+  image/category subset, detection이 하나도 없는 경우, **모든 score가 동점인 경우**,
+  `derive_segmentation=False`, `evalImgs` 전체.
+- **drop-in 34개** — [§drop-in 호환](#drop-in-호환) 참조.
 - **JSON loader 15개** — `json.load`와 float 비트까지 같은지. 실제 COCO 파일로 확인한다
   (이 테스트가 `serde_json`의 기본 float 파서가 1 ULP 틀리는 것을 잡았다).
-- **확장 API 13개** — per-class AP가 mAP로 되돌아오는지, confusion matrix가 AP 회계와
+- **확장 API 14개** — per-class AP가 mAP로 되돌아오는지, confusion matrix가 AP 회계와
   화해되는지 같은 불변식.
 - **결정성 2개** — rayon 스레드 수(1 vs 8)가 결과 바이트를 바꾸지 않는지. 한 머신에서
   pycocotools와만 비교해서는 절대 못 잡는 실패 모드다.
+
+---
+
+## drop-in 호환
+
+AP가 같은 것과 **코드가 그대로 도는 것**은 다른 문제다. 같은 숫자를 내면서도 `bytes`
+대신 `str`을 돌려주거나, 서브클래스가 오버라이드하는 메서드가 없어서 깨질 수 있다.
+
+그래서 `bench/audit_api.py`가 pycocotools의 공개 표면을 **열거해서** 대조한다. 우리가
+손으로 적은 목록이 아니다 — 손으로 적은 목록엔 "기억한 것"만 들어간다. 현재 결과는
+`0 incompatibilities`이고, 처음 돌렸을 때는 `COCOeval.computeIoU`,
+`computeOks`, `evaluateImg` 셋이 없다고 나왔다. mmdetection 계열이 `evaluateImg`를
+오버라이드하는 게 흔한 패턴이라, 없으면 오버라이드가 **조용히 아무것도 안 한다.**
+
+`tests/test_dropin.py` 34개가 확인하는 것:
+
+| 무엇을 | 왜 |
+|---|---|
+| 공개 메서드·속성 전부 존재 | 레퍼런스에서 열거하므로 우리가 몰랐던 것도 잡힌다 |
+| 시그니처에서 인자가 빠지거나 필수 인자가 늘지 않음 | 기본값 있는 추가 kwarg는 가산적이라 허용 |
+| `getAnnIds` 13가지 필터 조합의 **순서까지** | 순서가 score tie를 가른다 |
+| `loadAnns`가 저장된 dict **그 자체**를 반환 (`is` 비교) | 호출자가 그걸 수정한다 |
+| `counts`가 `str`이 아니라 `bytes` | drop-in이 깨지는 가장 흔한 방식 |
+| `summarize()` 출력이 **문자 단위로 동일** | 사람들이 이걸 grep한다 |
+| `computeIoU`/`computeOks`/`evaluateImg`/`ious`/`_gts`가 같은 값 | 서브클래스가 여기 의존한다 |
+| torchvision `CocoEvaluator` 루프, numpy Nx7 `loadRes` | 실제 호출 패턴 |
+| 서브클래스의 `evaluateImg` 오버라이드가 **실제로 호출됨** | 안 불리면 조용히 망가진다 |
+| `init_as_pycocotools()` 후 `from pycocotools.coco import COCO` 전체 실행 | 서드파티가 밟는 경로 |
+| **의도한 차이도 차이로 assert** | 어느 쪽이든 조용히 바뀌면 알려준다 |
+
+성능 비용은 없다. `computeIoU`/`evaluateImg`/`ious`/`_gts`는 **처음 접근할 때** 만들어져서
+안 쓰면 0이다 (호환 작업 전후 실측: bbox 0.1043s → 0.1059s, segm 0.1999s → 0.1979s,
+메모리 동일 — 전부 노이즈 범위).
 
 ---
 
@@ -202,6 +256,9 @@ annotation 파일 로딩도 Rust로 한다(`json.load`와 **비트까지 동일�
 숫자가 이걸로 나왔다.
 
 ```bash
+# 공개 API 표면이 pycocotools와 어긋나는 곳이 있는가
+python bench/audit_api.py
+
 # 어느 단계에 시간이 가는가 — engine 내부 phase timer를 직접 읽는다
 python bench/profile_engine.py --gt gt.json --dt dt.json --iou-type segm
 
@@ -280,7 +337,7 @@ ev.params.iouThrs    = np.linspace(0.3, 0.9, 7)
 |---|---|
 | `evaluate()`가 매칭·누적까지 하고 `accumulate()`는 결과를 게시만 한다 | 그 사이에 K×A×I개 dict를 만드는 것이 pycocotools 메모리의 정체다. API 분리는 유지하되 메모리 프로파일은 따라가지 않는다 |
 | annotation dict를 수정하지 않는다 | pycocotools는 `ann['segmentation']`을 RLE로, `ann['ignore']`를 in-place로 덮어쓴다. 남의 데이터를 망가뜨리지 않는 쪽이 맞다 |
-| `self.ious`가 기본으로 채워지지 않는다 | 전부 materialise하면 메모리 이점이 사라진다 |
+| `self.ious` / `_gts` / `_dts`가 처음 접근할 때 만들어진다 | 전부 materialise하면 메모리 이점이 사라진다. 값은 동일하고, 안 쓰면 비용이 0이다 |
 | `frPyObjects`가 list-of-boxes와 단일 object 형태를 받는다 | pycocotools는 `len(pyobj[0])`을 float에 호출해서 `TypeError`를 낸다(문서화된 분기가 죽은 코드다). 우리는 문서대로 동작한다 |
 | `COCO(..., verbose=False)`로 진행 로그를 끌 수 있다 | pycocotools에는 방법이 없다 |
 

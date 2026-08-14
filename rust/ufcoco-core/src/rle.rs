@@ -786,4 +786,174 @@ mod tests {
         assert_eq!(rle.area(), 100);
         assert_eq!(rle.to_bbox(), [0.0, 0.0, 10.0, 10.0]);
     }
+
+    #[test]
+    fn c_int_cast_follows_the_hardware_not_rust() {
+        // Rust's `as i32` saturates and sends NaN to 0; the C this ports from
+        // lowers to `cvttsd2si`, which sends both NaN and out-of-range to
+        // INT_MIN. `rleFrPoly` reaches the NaN case on a repeated vertex, so
+        // the difference is observable on real annotations.
+        assert_eq!(c_i32(3.9), 3);
+        assert_eq!(c_i32(-3.9), -3, "truncation is toward zero, not down");
+        assert_eq!(c_i32(0.0), 0);
+        assert_eq!(c_i32(f64::NAN), i32::MIN);
+        assert_eq!(c_i32(f64::INFINITY), i32::MIN);
+        assert_eq!(c_i32(f64::NEG_INFINITY), i32::MIN);
+        assert_eq!(c_i32(2147483647.5), 2147483647);
+        assert_eq!(c_i32(2147483648.0), i32::MIN);
+        assert_eq!(c_i32(-2147483649.0), i32::MIN);
+    }
+
+    #[test]
+    fn polygon_with_a_repeated_vertex_stays_a_valid_rle() {
+        // A zero-length edge makes rleFrPoly divide by zero. The result is
+        // whatever the C produces; what must hold is that we do not panic and
+        // that the run lengths still tile the image.
+        let poly = [5.0, 5.0, 5.0, 5.0, 5.0, 20.0, 20.0, 20.0, 20.0, 5.0];
+        let r = rle_fr_poly(&poly, 32, 32);
+        assert_eq!((r.h, r.w), (32, 32));
+        assert_eq!(r.cnts.iter().map(|&c| c as u64).sum::<u64>(), 32 * 32);
+    }
+
+    #[test]
+    fn polygon_outside_the_image_is_clipped() {
+        let r = rle_fr_poly(&[-50.0, -50.0, -50.0, 5.0, 5.0, 5.0, 5.0, -50.0], 20, 20);
+        assert_eq!(r.cnts.iter().map(|&c| c as u64).sum::<u64>(), 400);
+        assert!(r.area() <= 400);
+    }
+
+    #[test]
+    fn string_round_trip_survives_the_delta_rule() {
+        // `rleToString` subtracts cnts[i-2] from index 3 onward, so most
+        // encoded values are signed deltas. Anything that mishandles the sign
+        // extension breaks here rather than on some rare mask.
+        for cnts in [
+            vec![0u32],
+            vec![0, 1],
+            vec![5, 3, 5, 3, 5],
+            vec![1_000_000, 1, 999_999, 2],
+            vec![0, 1, 0, 1, 0, 1],
+            vec![u32::MAX / 4, 7, 3, 100_000],
+        ] {
+            let r = Rle::new(64, 64, cnts.clone());
+            assert_eq!(Rle::from_str(&r.to_string(), 64, 64).cnts, cnts, "{cnts:?}");
+        }
+    }
+
+    #[test]
+    fn encode_compares_bytes_not_truthiness() {
+        // A mask holding a 2 produces a transition between 1 and 2, exactly as
+        // the C does. Treating it as "non-zero" would merge the runs.
+        let r = Rle::encode(&[0u8, 0, 2, 2, 1, 1], 6, 1);
+        assert_eq!(r.cnts, vec![2, 2, 2]);
+    }
+
+    #[test]
+    fn area_sums_the_odd_runs() {
+        assert_eq!(Rle::new(4, 4, vec![2, 3, 4, 5, 2]).area(), 8);
+        assert_eq!(Rle::new(4, 4, vec![16]).area(), 0);
+    }
+
+    #[test]
+    fn bbox_of_degenerate_rles() {
+        // An odd count means the trailing run of ones is not closed; the C
+        // drops it, and so do we.
+        assert_eq!(Rle::new(10, 10, vec![]).to_bbox(), [0.0, 0.0, 0.0, 0.0]);
+        assert_eq!(Rle::new(10, 10, vec![100]).to_bbox(), [0.0, 0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn merge_of_one_is_a_copy_and_of_none_is_empty() {
+        let a = Rle::new(4, 4, vec![2, 14]);
+        assert_eq!(merge(std::slice::from_ref(&a), false), a);
+        assert_eq!(merge(&[], false), Rle::default());
+    }
+
+    #[test]
+    fn merge_of_mismatched_sizes_collapses() {
+        let a = Rle::new(4, 4, vec![16]);
+        let b = Rle::new(5, 5, vec![25]);
+        assert_eq!(merge(&[a, b], false), Rle::default());
+    }
+
+    #[test]
+    fn iou_of_mismatched_sizes_is_negative_one() {
+        // The bounding boxes overlap, so the pair survives the bbox pre-pass
+        // and reaches the size check — which is the branch under test.
+        let a = Rle::encode(&[1u8; 100], 10, 10);
+        let b = Rle::encode(&[1u8; 144], 12, 12);
+        let mut out = vec![0.0f64; 1];
+        rle_iou(&[a], &[b], &[0], &mut out);
+        assert_eq!(out[0], -1.0);
+    }
+
+    #[test]
+    fn disjoint_boxes_are_exactly_zero() {
+        let dt = [[0.0, 0.0, 5.0, 5.0]];
+        let gt = [[100.0, 100.0, 5.0, 5.0]];
+        let mut out = vec![9.0; 1];
+        bb_iou(&dt, &gt, &[0], &mut out);
+        assert_eq!(out[0], 0.0);
+    }
+
+    #[test]
+    fn iou_matrix_is_row_major_over_detections() {
+        // out[d * n + g]: callers index [detection, ground truth], and a
+        // transposed matrix would silently pair the wrong objects.
+        let dt = [[0.0, 0.0, 10.0, 10.0], [100.0, 100.0, 10.0, 10.0]];
+        let gt = [[0.0, 0.0, 10.0, 10.0], [50.0, 50.0, 10.0, 10.0]];
+        let mut out = vec![0.0; 4];
+        bb_iou(&dt, &gt, &[0, 0], &mut out);
+        assert_eq!(out[0], 1.0, "dt0 vs gt0");
+        assert_eq!(out[1], 0.0, "dt0 vs gt1");
+        assert_eq!(out[2], 0.0, "dt1 vs gt0");
+        assert_eq!(out[3], 0.0, "dt1 vs gt1");
+    }
+
+    #[test]
+    fn boundary_is_the_rim_of_the_mask() {
+        let (h, w) = (20u32, 20u32);
+        let mut mask = vec![0u8; (h * w) as usize];
+        for x in 5..15u32 {
+            for y in 5..15u32 {
+                mask[(x * h + y) as usize] = 1;
+            }
+        }
+        let solid = Rle::encode(&mask, h, w);
+        assert_eq!(solid.area(), 100);
+
+        // dilation = round(0.02 * sqrt(20^2 + 20^2)) = 1, so a 10x10 block
+        // erodes to 8x8 and the rim is 100 - 64.
+        let boundary = rle_to_boundary(&solid, 0.02);
+        assert_eq!(boundary.area(), 36);
+    }
+
+    #[test]
+    fn run_arrays_carry_no_capacity_slack() {
+        // The RLEs are the bulk of live memory on a segmentation run, and they
+        // are built by pushing, so trimming is what keeps them from costing
+        // twice what they need.
+        let r = rle_fr_poly(&[0.0, 0.0, 0.0, 10.0, 10.0, 10.0, 10.0, 0.0], 64, 64);
+        assert_eq!(r.cnts.len(), r.cnts.capacity());
+        let s = Rle::from_str(&r.to_string(), 64, 64);
+        assert_eq!(s.cnts.len(), s.cnts.capacity());
+    }
+
+    #[test]
+    fn scratch_reuse_does_not_change_results() {
+        // PolyScratch is shared across polygons for speed; a stale buffer
+        // would leak one polygon's trace into the next.
+        let polys: [&[f64]; 3] = [
+            &[0.0, 0.0, 0.0, 10.0, 10.0, 10.0, 10.0, 0.0],
+            &[2.0, 3.0, 2.0, 19.0, 17.0, 19.0, 17.0, 3.0],
+            &[1.0, 1.0, 1.0, 4.0, 4.0, 4.0],
+        ];
+        let fresh: Vec<Rle> = polys.iter().map(|p| rle_fr_poly(p, 32, 32)).collect();
+        let mut scratch = PolyScratch::default();
+        let reused: Vec<Rle> = polys
+            .iter()
+            .map(|p| rle_fr_poly_into(p, 32, 32, &mut scratch))
+            .collect();
+        assert_eq!(fresh, reused);
+    }
 }

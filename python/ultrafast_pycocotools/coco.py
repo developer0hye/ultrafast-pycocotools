@@ -436,3 +436,19 @@ class COCO:
 
 # pycocotools exposes this module-level constant; some code checks it.
 PYTHON_VERSION = sys.version_info[0]
+
+
+def __getattr__(name: str):
+    """Serve names pycocotools leaks from its own imports.
+
+    ``pycocotools.coco`` does ``from urllib.request import urlretrieve`` at
+    module scope, so the name is reachable as ``pycocotools.coco.urlretrieve``.
+    Resolving it lazily keeps the name available without paying ~10 ms of
+    ``urllib`` import on every ``import ultrafast_pycocotools``, which nothing
+    but :meth:`COCO.download` needs.
+    """
+    if name == "urlretrieve":
+        from urllib.request import urlretrieve
+
+        return urlretrieve
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

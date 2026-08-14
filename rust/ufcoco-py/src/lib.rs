@@ -253,6 +253,9 @@ fn raw_to_rle(raw: &RawSegm, h: u32, w: u32, scratch: &mut rle::PolyScratch) -> 
 }
 
 #[allow(clippy::too_many_arguments)]
+/// A rasterised mask, plus its boundary when `iouType` is `boundary`.
+type BuiltMask = (Rle, Option<Rle>);
+
 /// An empty `Instances` sized for `n` annotations of `iou_type`.
 fn new_instances(n: usize, iou_type: IouType) -> Instances {
     Instances {
@@ -280,10 +283,13 @@ fn new_instances(n: usize, iou_type: IouType) -> Instances {
     }
 }
 
-fn attach_masks(geom: &mut GeomStore, masks: Vec<(Rle, Option<Rle>)>) {
+fn attach_masks(geom: &mut GeomStore, masks: Vec<BuiltMask>) {
     match geom {
         GeomStore::Masks(v) => v.extend(masks.into_iter().map(|(m, _)| m)),
-        GeomStore::Boundaries { masks: ms, boundaries } => {
+        GeomStore::Boundaries {
+            masks: ms,
+            boundaries,
+        } => {
             for (m, b) in masks {
                 ms.push(m);
                 boundaries.push(b.expect("boundary requested but not built"));
@@ -328,16 +334,15 @@ fn extract_both(
     // in play, so this is where the worker's output splits.
     let gt_mask_count = if needs_mask { gt_anns.len() } else { 0 };
 
-    let (gt_masks, dt_masks) = std::thread::scope(
-        |scope| -> PyResult<(Vec<(Rle, Option<Rle>)>, Vec<(Rle, Option<Rle>)>)> {
-            let (tx_raw, rx_raw) =
-                std::sync::mpsc::sync_channel::<Vec<(RawSegm, u32, u32)>>(2);
+    let (gt_masks, dt_masks) =
+        std::thread::scope(|scope| -> PyResult<(Vec<BuiltMask>, Vec<BuiltMask>)> {
+            let (tx_raw, rx_raw) = std::sync::mpsc::sync_channel::<Vec<(RawSegm, u32, u32)>>(2);
             let worker_timings = Arc::clone(&timings);
             let worker = scope.spawn(move || {
-                let mut out: Vec<(Rle, Option<Rle>)> = Vec::new();
+                let mut out: Vec<BuiltMask> = Vec::new();
                 while let Ok(chunk) = rx_raw.recv() {
                     let t = Instant::now();
-                    let built: Vec<(Rle, Option<Rle>)> = chunk
+                    let built: Vec<BuiltMask> = chunk
                         .par_iter()
                         // One scratch per worker: polygon rasterisation
                         // otherwise spends its time allocating and freeing the
@@ -359,13 +364,35 @@ fn extract_both(
 
             let mut raw_chunk: Vec<(RawSegm, u32, u32)> = Vec::with_capacity(CHUNK);
             let outcome = read_annotations(
-                gt_anns, true, iou_type, img_sizes, img_slot, cat_slot, &keys, needs_mask,
-                &mut gt, &mut raw_chunk, &tx_raw, &timings, true,
+                gt_anns,
+                true,
+                iou_type,
+                img_sizes,
+                img_slot,
+                cat_slot,
+                &keys,
+                needs_mask,
+                &mut gt,
+                &mut raw_chunk,
+                &tx_raw,
+                &timings,
+                true,
             )
             .and_then(|()| {
                 read_annotations(
-                    dt_anns, false, iou_type, img_sizes, img_slot, cat_slot, &keys, needs_mask,
-                    &mut dt, &mut raw_chunk, &tx_raw, &timings, false,
+                    dt_anns,
+                    false,
+                    iou_type,
+                    img_sizes,
+                    img_slot,
+                    cat_slot,
+                    &keys,
+                    needs_mask,
+                    &mut dt,
+                    &mut raw_chunk,
+                    &tx_raw,
+                    &timings,
+                    false,
                 )
             });
             if outcome.is_ok() && !raw_chunk.is_empty() {
@@ -378,8 +405,7 @@ fn extract_both(
             outcome?;
             let dt_masks = built.split_off(gt_mask_count.min(built.len()));
             Ok((built, dt_masks))
-        },
-    )?;
+        })?;
 
     attach_masks(&mut gt.geom, gt_masks);
     attach_masks(&mut dt.geom, dt_masks);
