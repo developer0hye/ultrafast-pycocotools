@@ -74,10 +74,27 @@ def _uncompressed_rle_box(x: float, y: float, w: float, h: float, H: int, W: int
     return {"size": [H, W], "counts": counts}
 
 
-def _keypoints(x: float, y: float, w: float, h: float, rng: random.Random, k: int = 17) -> list[float]:
+def _keypoints(
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    rng: random.Random,
+    k: int = 17,
+    all_invisible: bool = False,
+) -> list[float]:
+    """Keypoint triplets, occasionally with nothing visible at all.
+
+    ``all_invisible`` is not decoration. An instance with ``num_keypoints ==
+    0`` is *ignored* by the evaluator, and OKS takes a completely different
+    branch when no ground-truth keypoint is visible — it measures distance to
+    a doubled bounding box instead of to the keypoints. Drawing visibility
+    independently per keypoint makes that branch essentially unreachable
+    ((1/5)^17), so it has to be chosen deliberately.
+    """
     kp: list[float] = []
     for _ in range(k):
-        v = rng.choice([0, 1, 2, 2, 2])
+        v = 0 if all_invisible else rng.choice([0, 1, 2, 2, 2])
         kp.extend([
             round(x + rng.random() * w, 1) if v else 0.0,
             round(y + rng.random() * h, 1) if v else 0.0,
@@ -147,7 +164,9 @@ def build(
                 "segmentation": [_polygon(bx, by, bw, bh, rng)],
             }
             if with_keypoints:
-                ann["keypoints"] = _keypoints(bx, by, bw, bh, rng, 17)
+                ann["keypoints"] = _keypoints(
+                    bx, by, bw, bh, rng, 17, all_invisible=rng.random() < 0.08
+                )
                 ann["num_keypoints"] = sum(1 for j in range(2, 51, 3) if ann["keypoints"][j] > 0)
             if iscrowd:
                 # Crowd ground truth is stored as uncompressed RLE in COCO,

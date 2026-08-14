@@ -123,10 +123,34 @@ pycocotools는 `pr = tp / (fp + tp + np.spacing(1))`이다. `np.spacing(1)`을 �
 
 ### 검증 범위
 
-`pytest tests/` 128개와 `cargo test` 44개가 전부 실제 pycocotools와 비교한다
+`pytest tests/` 136개와 `cargo test` 57개가 전부 실제 pycocotools와 비교한다
 (golden 파일이 아니라 live 비교).
 
-**Rust 44개** — Python 없이 도는 crate 단위 검증. 손으로 답을 낼 수 있는 크기의
+### 통과 여부가 아니라 mutation score로 잰다
+
+테스트가 초록인 것은 증거가 아니다. **구현을 일부러 망가뜨렸을 때 실제로 빨개지는가**가
+증거다. `bench/mutation_check.py`가 21가지 mutation을 core에 넣었다 빼면서 그걸 잰다:
+
+```bash
+python bench/mutation_check.py
+# caught 21/21
+```
+
+처음 돌렸을 때는 **21개 중 절반 가까이가 살아남았다.** 대표적으로:
+
+| 살아남았던 mutation | 왜 안 잡혔나 |
+|---|---|
+| `bb_iou` 출력을 **transpose** | transpose를 잡으려고 만든 테스트의 fixture가 transpose에 대칭이었다 (`[[1,0],[0,0]]`) |
+| `from_str`의 **sign extension 삭제** | round-trip corpus에 음수 delta가 하나도 없어 해당 분기에 진입조차 안 했다 |
+| precision **envelope 통째로 삭제** | 모든 fixture가 detection 1~2개라 curve가 점이었다 |
+| **crowd 재매칭 예외 삭제** | crowd 테스트의 detection들이 서로 다른 GT에 붙어서 "여러 개 흡수"를 안 밟았다 |
+| OKS의 **평균 나눗셈 삭제** | keypoint에 Rust 테스트가 아예 없었다 |
+
+전부 fixture를 고쳐서 잡히게 만들었다. 특히 sign extension은 corpus에 `vec![10, 5, 3, 2]`
+한 줄을 넣는 것으로 끝났다 — 실제 마스크에서는 run이 짧아지는 게 흔한 일인데
+corpus가 우연히 전부 증가하는 값이었다.
+
+**Rust 57개** — Python 없이 도는 crate 단위 검증. 손으로 답을 낼 수 있는 크기의
 시나리오로 규칙을 하나씩 못박는다. 실패했을 때 "AP가 움직였다"가 아니라 **어느 규칙이
 깨졌는지**가 나온다.
 
@@ -135,16 +159,18 @@ assert_eq!(res.precision[0], 1.0 / (1.0 + EPS));
 assert_ne!(res.precision[0], 1.0, "the epsilon was dropped");
 ```
 
-`c_i32`가 Rust가 아니라 하드웨어 의미론을 따르는지(NaN → `INT_MIN`), tie가
-annotation 순서로 풀리는지(개수가 아니라 **id**를 확인 — 총 TP/FP는 같으면서 배정만
-바뀔 수 있다), crowd가 detection을 흡수하는지, `0.0`과 `-1.0` sentinel 구분,
-area 경계 포함 여부, 병렬 분할 방식과 무관한 결과, IoU 행렬의 축 방향.
+`c_i32`가 Rust가 아니라 하드웨어 의미론을 따르는지(NaN → `INT_MIN`), tie가 annotation
+순서로 풀리는지(개수가 아니라 **id**를 확인 — 총 TP/FP는 같으면서 배정만 바뀔 수 있다),
+crowd가 detection을 **여러 개** 흡수하는지, IoU가 threshold에 **정확히** 걸릴 때 매칭되는지,
+precision envelope이 오른쪽에서 왼쪽으로 전파되는지(그래서 fixture가 *올라가는* curve여야
+한다), `0.0`과 `-1.0` sentinel 구분, OKS의 나눗셈 순서.
 
 **Python 128개**
 
 - **mask API 47개** — `encode`/`decode`/`merge`/`area`/`toBbox`/`iou`/`frPyObjects`를
   1×1 이미지, 빈 마스크, 꽉 찬 마스크, 이미지 밖으로 나간 polygon, **꼭짓점이 중복된
   polygon**(`rleFrPoly`가 0으로 나눠 NaN을 int로 캐스팅하는 지점), crowd flag까지.
+- **fixture 구성 7개** — 다른 모든 테스트가 전제하는 어려운 케이스가 fixture에 **실제로 들어 있는지**. crowd 확률이 0으로 바뀌어도 parity 테스트는 전부 통과한다(crowd 없는 데이터에서는 양쪽이 완벽히 일치하니까). 스위트가 조용해지는 것이 parity 스위트의 최악의 실패 모드라 따로 못박았다. **이 가드가 바로 생성기의 실제 결함을 찾았다** — keypoint 가시성을 독립적으로 뽑느라 `num_keypoints == 0` 인스턴스가 (1/5)^17 확률이라 사실상 없었고, OKS의 해당 분기가 한 번도 안 밟히고 있었다.
 - **평가 parity 16개** — 배열 전체를 바이트 비교. synthetic bbox/segm, 실제 COCO
   val2017 subset, keypoints, `useCats=0`, custom areaRng/maxDets/iouThrs,
   image/category subset, detection이 하나도 없는 경우, **모든 score가 동점인 경우**,
@@ -152,7 +178,7 @@ area 경계 포함 여부, 병렬 분할 방식과 무관한 결과, IoU 행렬�
 - **drop-in 34개** — [§drop-in 호환](#drop-in-호환) 참조.
 - **JSON loader 15개** — `json.load`와 float 비트까지 같은지. 실제 COCO 파일로 확인한다
   (이 테스트가 `serde_json`의 기본 float 파서가 1 ULP 틀리는 것을 잡았다).
-- **확장 API 14개** — per-class AP가 mAP로 되돌아오는지, confusion matrix가 AP 회계와
+- **확장 API 15개** — per-class AP가 mAP로 되돌아오는지, confusion matrix가 AP 회계와
   화해되는지 같은 불변식.
 - **결정성 2개** — rayon 스레드 수(1 vs 8)가 결과 바이트를 바꾸지 않는지. 한 머신에서
   pycocotools와만 비교해서는 절대 못 잡는 실패 모드다.

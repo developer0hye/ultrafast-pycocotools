@@ -834,10 +834,27 @@ mod tests {
             vec![1_000_000, 1, 999_999, 2],
             vec![0, 1, 0, 1, 0, 1],
             vec![u32::MAX / 4, 7, 3, 100_000],
+            // A *shrinking* run: cnts[3] < cnts[1] makes the delta negative,
+            // which is the only way into the sign-extension branch. Every
+            // other case above happens to produce non-negative deltas, so
+            // without this line the branch is never executed and the test
+            // passes with sign extension deleted. Real masks hit it
+            // constantly — a run getting shorter is the common case.
+            vec![10, 5, 3, 2],
+            vec![7, 200, 3, 1, 500, 2],
         ] {
             let r = Rle::new(64, 64, cnts.clone());
             assert_eq!(Rle::from_str(&r.to_string(), 64, 64).cnts, cnts, "{cnts:?}");
         }
+        // Guard the guard: at least one case must actually go negative.
+        let has_negative = {
+            let c = [10i64, 5, 3, 2];
+            (3..c.len()).any(|i| c[i] - c[i - 2] < 0)
+        };
+        assert!(
+            has_negative,
+            "the corpus no longer exercises negative deltas"
+        );
     }
 
     #[test]
@@ -900,14 +917,61 @@ mod tests {
     fn iou_matrix_is_row_major_over_detections() {
         // out[d * n + g]: callers index [detection, ground truth], and a
         // transposed matrix would silently pair the wrong objects.
-        let dt = [[0.0, 0.0, 10.0, 10.0], [100.0, 100.0, 10.0, 10.0]];
+        //
+        // The off-diagonal entries must differ from each other, or the matrix
+        // is symmetric and a transpose is invisible. A permutation of the same
+        // boxes is not enough — it gives [[0,1],[1,0]], which is symmetric —
+        // so dt1 overlaps gt0 only partially.
+        let dt = [[50.0, 50.0, 10.0, 10.0], [0.0, 0.0, 10.0, 20.0]];
         let gt = [[0.0, 0.0, 10.0, 10.0], [50.0, 50.0, 10.0, 10.0]];
         let mut out = vec![0.0; 4];
         bb_iou(&dt, &gt, &[0, 0], &mut out);
-        assert_eq!(out[0], 1.0, "dt0 vs gt0");
-        assert_eq!(out[1], 0.0, "dt0 vs gt1");
-        assert_eq!(out[2], 0.0, "dt1 vs gt0");
+        assert_eq!(out[0], 0.0, "dt0 vs gt0");
+        assert_eq!(out[1], 1.0, "dt0 vs gt1");
+        assert_eq!(out[2], 0.5, "dt1 vs gt0: 100 of 200");
         assert_eq!(out[3], 0.0, "dt1 vs gt1");
+        assert_ne!(out[1], out[2], "fixture must not be transpose-symmetric");
+    }
+
+    #[test]
+    fn bbox_widens_to_the_full_column_when_a_run_crosses() {
+        // `rleToBbox` sets ys = 0, ye = h-1 as soon as a run of ones spans a
+        // column boundary, because the run then covers every row in between.
+        // A mask built from a single block never triggers it.
+        let (h, w) = (8u32, 8u32);
+        let mut mask = vec![0u8; 64];
+        // Column-major: a run from (x=2, y=6) through (x=4, y=1) wraps two
+        // column boundaries.
+        for i in (2 * 8 + 6)..(4 * 8 + 2) {
+            mask[i] = 1;
+        }
+        let r = Rle::encode(&mask, h, w);
+        let bb = r.to_bbox();
+        assert_eq!(bb[0], 2.0, "x start");
+        assert_eq!(bb[2], 3.0, "spans columns 2..4");
+        assert_eq!([bb[1], bb[3]], [0.0, 8.0], "y extent widens to the column");
+    }
+
+    #[test]
+    fn boundary_dilation_never_rounds_down_to_zero() {
+        // round(0.02 * diag) is 0 for a small image; without the floor of 1
+        // nothing erodes and the boundary comes out empty.
+        let (h, w) = (10u32, 10u32);
+        assert_eq!(
+            (0.02f64 * ((h * h + w * w) as f64).sqrt()).round() as i64,
+            0,
+            "fixture must be small enough that the floor is what saves it"
+        );
+        let mut mask = vec![0u8; 100];
+        for x in 2..8u32 {
+            for y in 2..8u32 {
+                mask[(x * h + y) as usize] = 1;
+            }
+        }
+        let solid = Rle::encode(&mask, h, w);
+        let boundary = rle_to_boundary(&solid, 0.02);
+        // 6x6 block eroded once leaves 4x4; the rim is 36 - 16.
+        assert_eq!(boundary.area(), 20);
     }
 
     #[test]

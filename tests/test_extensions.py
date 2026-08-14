@@ -60,6 +60,9 @@ def test_pr_curve_shape_and_monotonicity(evaluated):
     p = curve["precision"][valid]
     # Interpolated precision is non-increasing in recall by construction.
     assert np.all(np.diff(p) <= 1e-12), "precision must not increase with recall"
+    # A constant or all-zero curve would satisfy monotonicity too.
+    assert p[0] > p[-1], "the curve must actually decay"
+    assert p[0] > 0.0
 
 
 def test_pr_curve_single_category(evaluated):
@@ -68,11 +71,13 @@ def test_pr_curve_single_category(evaluated):
     assert curve["precision"].shape == np.asarray(evaluated.params.recThrs).shape
 
 
-def test_matches_are_consistent_with_recall(evaluated):
-    """Matched pairs are exactly the true positives behind AR.
+def test_matches_reproduce_the_recall_the_engine_reported(evaluated):
+    """Recompute AR from the match list and compare it to ``eval['recall']``.
 
-    ``AR@[0.5]`` over all categories is (matched non-ignored GT) / (non-ignored
-    GT), so the match list has to be able to reproduce it.
+    The invariant is the point: per-category recall at IoU 0.5 is
+    (matched non-ignored GT) / (non-ignored GT). If ``matches()`` came from a
+    different matching than the AP numbers, this is where it shows — and the
+    whole value of the extension API is that it cannot.
     """
     m = evaluated.matches(iou_thr=0.5, area="all", max_dets=100)
     for key in ("image_id", "category_id", "dt_id", "gt_id", "score", "iou"):
@@ -82,8 +87,25 @@ def test_matches_are_consistent_with_recall(evaluated):
     assert len(set(zip(m["image_id"].tolist(), m["dt_id"].tolist()))) == n, (
         "a detection may be matched at most once per setting"
     )
-    # Every reported IoU must clear the threshold it was matched at.
-    assert np.all(m["iou"] >= 0.5 - 1e-12)
+    # The matcher's own condition is `iou >= thr`, so no tolerance is due.
+    assert np.all(m["iou"] >= 0.5)
+
+    _, gts = evaluated.per_instance(iou_thr=0.5, area="all", max_dets=100)
+    p = evaluated.params
+    t50 = int(np.where(np.isclose(p.iouThrs, 0.5))[0][0])
+    mind = p.maxDets.index(100)
+
+    checked = 0
+    for k, cat_id in enumerate(p.catIds):
+        in_cat = gts["category_id"] == cat_id
+        npig = int((in_cat & ~gts["ignore"]).sum())
+        if npig == 0:
+            continue
+        found = len(set(m["gt_id"][m["category_id"] == cat_id].tolist()))
+        want = evaluated.eval["recall"][t50, k, 0, mind]
+        assert want == found / npig, f"category {cat_id}: {want} vs {found}/{npig}"
+        checked += 1
+    assert checked > 5, "too few categories exercised to mean anything"
 
 
 def test_matches_ious_agree_with_mask_api(evaluated):
@@ -101,9 +123,19 @@ def test_matches_ious_agree_with_mask_api(evaluated):
         assert want == m["iou"][i], f"row {i}: {want} vs {m['iou'][i]}"
 
 
-def test_mean_iou_in_range(evaluated):
-    v = evaluated.mean_iou(iou_thr=0.5)
-    assert 0.5 <= v <= 1.0
+def test_mean_iou_is_the_mean_of_the_matched_ious(evaluated):
+    """`0.5 <= v <= 1.0` would be a theorem, not a test.
+
+    `matches()` only returns pairs accepted at the threshold, so any
+    implementation — including one returning a constant — satisfies the range.
+    Recompute the value instead, and check it moves the way it must when the
+    threshold rises.
+    """
+    m = evaluated.matches(iou_thr=0.5)
+    assert evaluated.mean_iou(iou_thr=0.5) == float(np.mean(m["iou"]))
+    # A stricter threshold can only drop the loosest matches, so the mean of
+    # what survives cannot fall.
+    assert evaluated.mean_iou(iou_thr=0.75) >= evaluated.mean_iou(iou_thr=0.5)
 
 
 def test_per_instance_covers_every_evaluated_instance(evaluated):
@@ -139,16 +171,30 @@ def test_confusion_matrix_reconciles_with_ap_accounting(evaluated):
     assert len(evaluated.matches(iou_thr=0.5)["dt_id"]) == tp
 
 
-def test_confusion_matrix_score_threshold_monotone(evaluated):
+def test_confusion_matrix_honours_the_score_threshold(evaluated):
+    """`<=` alone would pass if the threshold were ignored entirely.
+
+    Scores are spread over [0, 1], so a 0.9 cut must remove true positives,
+    and the survivors must be exactly the matches above it.
+    """
     low, _ = evaluated.confusion_matrix(score_thr=0.0)
     high, _ = evaluated.confusion_matrix(score_thr=0.9)
     n = len(evaluated.params.catIds)
-    # Raising the score threshold cannot create true positives.
-    assert np.trace(high[:n, :n]) <= np.trace(low[:n, :n])
+    assert np.trace(high[:n, :n]) < np.trace(low[:n, :n])
+
+    m = evaluated.matches(iou_thr=0.5)
+    assert int(np.trace(high[:n, :n])) == int((m["score"] >= 0.9).sum())
 
 
-def test_boundary_iou_runs_and_is_not_looser_than_mask(synthetic):
-    """Boundary IoU is min(mask IoU, boundary IoU), so it cannot exceed segm AP."""
+def test_boundary_iou_is_strictly_tighter_than_mask_iou(synthetic):
+    """`boundary <= segm` would pass if boundary IoU were a no-op.
+
+    That is the failure mode worth guarding: an implementation that forgot the
+    `min()` and returned the mask IoU unchanged gives `boundary == segm` and
+    sails through an inequality. Boundary IoU is by construction no larger
+    than mask IoU and on jittered detections it is strictly smaller, so assert
+    that.
+    """
     gt_path, dt_path = synthetic
     out = {}
     for iou_type in ("segm", "boundary"):
@@ -157,7 +203,26 @@ def test_boundary_iou_runs_and_is_not_looser_than_mask(synthetic):
         ev = ufc.COCOeval(gt, dt, iou_type, print_function=lambda *_: None)
         ev.run()
         out[iou_type] = float(ev.stats[0])
-    assert out["boundary"] <= out["segm"] + 1e-12
+    assert out["boundary"] < out["segm"], out
+
+
+def test_boundary_iou_drops_below_a_perfect_mask_match(synthetic):
+    """A detection whose mask matches exactly still has a thinner boundary
+    agreement once it is nudged, so the pairwise IoU must fall."""
+    from ultrafast_pycocotools import mask as mask_util
+
+    a = np.zeros((60, 60), dtype=np.uint8)
+    a[10:50, 10:50] = 1
+    b = np.zeros((60, 60), dtype=np.uint8)
+    b[12:52, 12:52] = 1
+    ra = mask_util.encode(np.asfortranarray(a))
+    rb = mask_util.encode(np.asfortranarray(b))
+
+    mask_iou = float(np.asarray(mask_util.iou([rb], [ra], [0]))[0, 0])
+    ba = mask_util.toBoundary(ra, 0.02)
+    bb = mask_util.toBoundary(rb, 0.02)
+    boundary_iou = float(np.asarray(mask_util.iou([bb], [ba], [0]))[0, 0])
+    assert 0.0 < boundary_iou < mask_iou, (boundary_iou, mask_iou)
 
 
 def test_init_as_pycocotools_registers_modules():

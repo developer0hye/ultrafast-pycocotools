@@ -1222,6 +1222,341 @@ mod tests {
         assert_eq!(without_cats.recall[0], 1.0);
     }
 
+    /// Four well-separated ground truths and six detections that land, in
+    /// score order, as TP FP TP TP FP FP.
+    ///
+    /// Everything else in this module uses one or two detections, which makes
+    /// the precision/recall curve a single point — and a point cannot detect a
+    /// broken envelope, a wrong recall readout, or an off-by-one in the
+    /// threshold walk. This is the fixture that gives the curve a shape.
+    fn curve_scenario() -> (Instances, Instances) {
+        let gt = boxes(
+            &[1, 2, 3, 4],
+            &[0.0; 4],
+            &[
+                [0.0, 0.0, 10.0, 10.0],
+                [100.0, 0.0, 10.0, 10.0],
+                [200.0, 0.0, 10.0, 10.0],
+                [300.0, 0.0, 10.0, 10.0], // never found
+            ],
+            &[0; 4],
+            &[false; 4],
+        );
+        let dt = boxes(
+            &[11, 12, 13, 14, 15, 16],
+            &[0.9, 0.8, 0.7, 0.6, 0.5, 0.4],
+            &[
+                [0.0, 0.0, 10.0, 10.0],     // TP, gt 1
+                [0.0, 100.0, 10.0, 10.0],   // FP
+                [100.0, 0.0, 10.0, 10.0],   // TP, gt 2
+                [200.0, 0.0, 10.0, 10.0],   // TP, gt 3
+                [100.0, 100.0, 10.0, 10.0], // FP
+                [200.0, 100.0, 10.0, 10.0], // FP
+            ],
+            &[0; 6],
+            &[false; 6],
+        );
+        (gt, dt)
+    }
+
+    #[test]
+    fn precision_recall_curve_is_built_point_by_point() {
+        // Hand-computed against pycocotools' arithmetic, with npig = 4:
+        //
+        //   n | verdict | tp fp |   rc  | raw pr
+        //   0 |   TP    |  1  0 | 0.25  | 1/(1+eps)
+        //   1 |   FP    |  1  1 | 0.25  | 0.5
+        //   2 |   TP    |  2  1 | 0.50  | 2/3
+        //   3 |   TP    |  3  1 | 0.75  | 0.75
+        //   4 |   FP    |  3  2 | 0.75  | 0.6
+        //   5 |   FP    |  3  3 | 0.75  | 0.5
+        //
+        // The backward max lifts pr[1] and pr[2] to 0.75. Sampling at
+        // recall 0.0/0.25/0.50/0.75/1.00 with side='left' then reads indices
+        // 0, 0, 2, 3, and past the end.
+        let (gt, dt) = curve_scenario();
+        let mut p = params();
+        p.rec_thrs = vec![0.0, 0.25, 0.5, 0.75, 1.0];
+        let (res, _) = Evaluator::new(p, gt, dt).run(false);
+
+        let first = 1.0 / (1.0 + EPS);
+        assert_eq!(
+            res.precision,
+            vec![first, first, 0.75, 0.75, 0.0],
+            "the envelope, the sampling side, and the run-off-the-end fill"
+        );
+        assert_eq!(
+            res.scores,
+            vec![0.9, 0.9, 0.7, 0.6, 0.0],
+            "scores are sampled at the same indices as precision"
+        );
+        assert_eq!(
+            res.recall[0], 0.75,
+            "recall is the *last* point, not the first"
+        );
+    }
+
+    #[test]
+    fn precision_envelope_is_monotone_and_not_the_raw_curve() {
+        // Stated separately from the exact values because it is the property
+        // people rely on: raw precision at index 2 is 2/3, and the reported
+        // value must be the 0.75 that comes later in the curve.
+        let (gt, dt) = curve_scenario();
+        let mut p = params();
+        p.rec_thrs = vec![0.5];
+        let (res, _) = Evaluator::new(p, gt, dt).run(false);
+
+        assert_eq!(res.precision[0], 0.75);
+        assert_ne!(res.precision[0], 2.0 / 3.0, "the envelope was not applied");
+    }
+
+    #[test]
+    fn precision_envelope_propagates_leftward_not_rightward() {
+        // The curve above only ever falls, so sweeping the envelope the wrong
+        // way happens to give the same answer at every sampled index. This one
+        // *rises*: two false positives first, then four true positives, so the
+        // best precision is at the very end and has to travel left.
+        //
+        //   n | verdict | tp fp |  rc  | raw pr
+        //   0 |   FP    |  0  1 | 0.00 | 0
+        //   1 |   FP    |  0  2 | 0.00 | 0
+        //   2 |   TP    |  1  2 | 0.25 | 1/3
+        //   3 |   TP    |  2  2 | 0.50 | 0.5
+        //   4 |   TP    |  3  2 | 0.75 | 0.6
+        //   5 |   TP    |  4  2 | 1.00 | 2/3
+        //
+        // Sweeping right-to-left makes every entry 2/3. Sweeping left-to-right
+        // would leave 0, 1/3, 0.5 and 0.6 in place — all of them sampled.
+        let gt = boxes(
+            &[1, 2, 3, 4],
+            &[0.0; 4],
+            &[
+                [0.0, 0.0, 10.0, 10.0],
+                [100.0, 0.0, 10.0, 10.0],
+                [200.0, 0.0, 10.0, 10.0],
+                [300.0, 0.0, 10.0, 10.0],
+            ],
+            &[0; 4],
+            &[false; 4],
+        );
+        let dt = boxes(
+            &[11, 12, 13, 14, 15, 16],
+            &[0.9, 0.8, 0.7, 0.6, 0.5, 0.4],
+            &[
+                [0.0, 500.0, 10.0, 10.0],   // FP
+                [100.0, 500.0, 10.0, 10.0], // FP
+                [0.0, 0.0, 10.0, 10.0],     // TP
+                [100.0, 0.0, 10.0, 10.0],   // TP
+                [200.0, 0.0, 10.0, 10.0],   // TP
+                [300.0, 0.0, 10.0, 10.0],   // TP
+            ],
+            &[0; 6],
+            &[false; 6],
+        );
+        let mut p = params();
+        p.rec_thrs = vec![0.0, 0.25, 0.5, 0.75, 1.0];
+        let (res, _) = Evaluator::new(p, gt, dt).run(false);
+
+        assert_eq!(res.precision, vec![2.0 / 3.0; 5]);
+        assert_eq!(res.recall[0], 1.0);
+    }
+
+    #[test]
+    fn an_iou_exactly_on_the_threshold_matches() {
+        // The matcher's condition is `if v < best { continue }`, i.e. it
+        // accepts `v >= best`. Flipping it to `<=` — which reads just as
+        // naturally — rejects a detection sitting exactly on the threshold.
+        // Box areas of 200 and 100 with a 100 overlap give exactly 0.5, no
+        // rounding involved.
+        let gt = boxes(&[1], &[0.0], &[[0.0, 0.0, 10.0, 10.0]], &[0], &[false]);
+        let dt = boxes(&[11], &[0.9], &[[0.0, 0.0, 10.0, 20.0]], &[0], &[false]);
+        let (res, _) = Evaluator::new(params(), gt, dt).run(false);
+
+        assert_eq!(res.recall[0], 1.0, "IoU == threshold must match");
+    }
+
+    #[test]
+    fn tied_ious_go_to_the_last_ground_truth_scanned() {
+        // Two ground truths at exactly the same IoU. `v >= best` keeps
+        // overwriting, so the highest index wins — observable through
+        // `dtMatches`, and worth pinning because it is the kind of detail a
+        // rewrite silently changes.
+        let gt = boxes(
+            &[1, 2],
+            &[0.0, 0.0],
+            &[[0.0, 0.0, 10.0, 10.0], [0.0, 10.0, 10.0, 10.0]],
+            &[0, 0],
+            &[false, false],
+        );
+        let dt = boxes(&[11], &[0.9], &[[0.0, 0.0, 10.0, 20.0]], &[0], &[false]);
+        let (_, imgs) = Evaluator::new(params(), gt, dt).run(true);
+
+        let e = imgs.iter().flatten().next().unwrap();
+        assert_eq!(
+            e.dt_matches,
+            [2],
+            "the later ground truth wins an exact tie"
+        );
+    }
+
+    #[test]
+    fn each_max_dets_setting_sees_its_own_slice() {
+        // Detections are truncated to max_dets.last() once, then each maxDets
+        // entry cuts the sorted list again. Using `first()` for the initial
+        // truncation would starve every larger setting.
+        let (gt, dt) = curve_scenario();
+        let mut p = params();
+        p.max_dets = vec![2, 10];
+        p.rec_thrs = vec![0.0];
+        let (res, _) = Evaluator::new(p, gt, dt).run(false);
+
+        assert_eq!(res.counts[4], 2);
+        // maxDets = 2 sees TP, FP -> one of four ground truths found.
+        assert_eq!(res.recall[0], 0.25);
+        // maxDets = 10 sees all six -> three of four.
+        assert_eq!(res.recall[1], 0.75);
+    }
+
+    #[test]
+    fn a_crowd_region_absorbs_more_than_one_detection() {
+        // The rule crowd regions exist for. A crowd ground truth stays
+        // available after it has been claimed, so every detection landing in
+        // it is ignored rather than counted as a false positive.
+        let gt = boxes(
+            &[1, 2],
+            &[0.0, 0.0],
+            &[UNIT, [50.0, 0.0, 50.0, 50.0]],
+            &[0, 0],
+            &[false, true],
+        );
+        let dt = boxes(
+            &[11, 12, 13],
+            &[0.9, 0.8, 0.7],
+            &[
+                UNIT,
+                [60.0, 10.0, 10.0, 10.0], // inside the crowd
+                [80.0, 30.0, 10.0, 10.0], // also inside the crowd
+            ],
+            &[0, 0, 0],
+            &[false, false, false],
+        );
+        let (res, imgs) = Evaluator::new(params(), gt, dt).run(true);
+
+        let e = imgs.iter().flatten().next().unwrap();
+        assert_eq!(
+            e.dt_matches,
+            [1, 2, 2],
+            "the crowd must still be matchable after the first claim"
+        );
+        assert_eq!(e.dt_ignore, [false, true, true]);
+        assert_eq!(res.recall[0], 1.0);
+    }
+
+    #[test]
+    fn a_real_match_is_not_given_up_for_a_better_ignored_one() {
+        // Ground truths are ignore-sorted, so once a detection holds a real
+        // match the scan stops at the first ignored entry. Without that break
+        // the higher-IoU crowd below would steal the match and the detection
+        // would be ignored instead of counted.
+        let gt = boxes(
+            &[1, 2],
+            &[0.0, 0.0],
+            &[
+                [3.0, 0.0, 10.0, 10.0], // real, IoU 70/130 = 0.538
+                UNIT,                   // crowd, IoU 1.0
+            ],
+            &[0, 0],
+            &[false, true],
+        );
+        let dt = boxes(&[11], &[0.9], &[UNIT], &[0], &[false]);
+        let (res, imgs) = Evaluator::new(params(), gt, dt).run(true);
+
+        let e = imgs.iter().flatten().next().unwrap();
+        assert_eq!(
+            e.dt_matches,
+            [1],
+            "matched the real ground truth, not the crowd"
+        );
+        assert_eq!(e.dt_ignore, [false]);
+        assert_eq!(res.recall[0], 1.0);
+    }
+
+    #[test]
+    fn a_threshold_of_one_still_matches_a_near_perfect_overlap() {
+        // pycocotools clamps the match floor to 1 - 1e-10 so that a threshold
+        // of exactly 1.0 is reachable at all. Nothing else in the suite uses
+        // a 1.0 threshold, which is the only place the clamp is observable.
+        let gt = boxes(
+            &[1],
+            &[0.0],
+            &[[0.0, 0.0, 1.0, 1.000_000_000_01]],
+            &[0],
+            &[false],
+        );
+        let dt = boxes(&[11], &[0.9], &[[0.0, 0.0, 1.0, 1.0]], &[0], &[false]);
+        let mut p = params();
+        p.iou_thrs = vec![1.0];
+        let (res, _) = Evaluator::new(p, gt, dt).run(false);
+
+        assert_eq!(res.recall[0], 1.0, "the 1 - 1e-10 clamp was dropped");
+    }
+
+    /// Keypoint instances with `k` triplets each; `gt` needs boxes for the
+    /// OKS fall-back and the CrowdPose area substitute.
+    fn keypoints(ids: &[i64], scores: &[f64], kps: &[Vec<f64>], k: usize) -> Instances {
+        let n = ids.len();
+        Instances {
+            ids: ids.to_vec(),
+            scores: scores.to_vec(),
+            areas: vec![100.0; n],
+            iscrowd: vec![false; n],
+            ignore: vec![false; n],
+            lvis_mark: vec![false; n],
+            bboxes: vec![[0.0, 0.0, 10.0, 10.0]; n],
+            img_slot: vec![0; n],
+            cat_slot: vec![0; n],
+            geom: GeomStore::Keypoints {
+                data: kps.concat(),
+                k,
+            },
+        }
+    }
+
+    #[test]
+    fn oks_is_the_mean_of_the_per_keypoint_terms() {
+        // Two visible keypoints, each one unit away, sigma 0.05, area 100:
+        //   vars = (0.05 * 2)^2 = 0.01
+        //   e    = 1 / 0.01 / 100 / 2 = 0.5
+        //   OKS  = (exp(-0.5) + exp(-0.5)) / 2 = exp(-0.5)
+        // Every step is exact in binary floating point, so this is an
+        // equality, not an approximation. Two keypoints rather than one so
+        // that dropping the division by the count is visible.
+        let gt = keypoints(&[1], &[0.0], &[vec![0.0, 0.0, 2.0, 0.0, 0.0, 2.0]], 2);
+        let dt = keypoints(&[11], &[0.9], &[vec![1.0, 0.0, 1.0, 1.0, 0.0, 1.0]], 2);
+        let mut p = params();
+        p.iou_type = IouType::Keypoints;
+        p.kpt_sigmas = vec![0.05, 0.05];
+        p.iou_thrs = vec![0.5];
+
+        let ev = Evaluator::new(p, gt, dt);
+        let (dets, _) = ev.per_instance(0, 0, 10);
+        assert_eq!(dets.len(), 1);
+        assert_eq!(dets[0].iou, (-0.5f64).exp());
+    }
+
+    #[test]
+    fn oks_of_identical_keypoints_is_exactly_one() {
+        let kp = vec![3.0, 4.0, 2.0, 7.0, 1.0, 2.0];
+        let gt = keypoints(&[1], &[0.0], std::slice::from_ref(&kp), 2);
+        let dt = keypoints(&[11], &[0.9], &[kp], 2);
+        let mut p = params();
+        p.iou_type = IouType::Keypoints;
+        p.kpt_sigmas = vec![0.05, 0.07];
+        let ev = Evaluator::new(p, gt, dt);
+        let (dets, _) = ev.per_instance(0, 0, 10);
+        assert_eq!(dets[0].iou, 1.0);
+    }
+
     #[test]
     fn result_is_independent_of_how_the_work_was_split() {
         // Runs are parallel over categories and over images inside them; the

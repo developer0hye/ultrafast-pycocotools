@@ -331,7 +331,12 @@ def test_compute_oks_matches(synthetic_kp):
             a = np.asarray(ref.computeOks(img_id, cat_id), dtype=np.float64)
             b = np.asarray(ours.computeOks(img_id, cat_id), dtype=np.float64)
             assert a.shape == b.shape, (img_id, cat_id)
-            np.testing.assert_allclose(a, b, rtol=0, atol=1e-12)
+            # Bit-exact, like the bbox sibling above. `atol=1e-12` used to sit
+            # here and it let a real divergence through: OKS applies its three
+            # divisions one at a time *because* fusing them is not the same in
+            # floating point (see eval.rs), and that difference is ~1 ULP —
+            # comfortably inside the old tolerance.
+            assert a.tobytes() == b.tobytes(), (img_id, cat_id)
             checked += a.size
     assert checked > 0
 
