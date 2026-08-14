@@ -4,6 +4,18 @@ Each implementation runs in its own process so the timings are not polluted by
 another library's warm caches or allocator state, and so peak RSS means what it
 says.
 
+**Wall-clock alone is not a fair comparison on a busy machine.** pycocotools is
+single-threaded and barely notices background load; anything using rayon is
+competing for the same cores and loses wall-clock that has nothing to do with
+its own efficiency. Two things here address that:
+
+* ``--threads N`` pins the thread pool, and ``--threads 1`` removes the
+  parallelism from the comparison entirely — what is left is the algorithmic
+  difference, which is the part that does not depend on whose machine it is.
+* CPU time is reported next to wall time. Under contention wall inflates and
+  CPU does not, so a gap between them is the measurement telling you it was
+  disturbed.
+
 Usage:
     python bench/run_impl.py --impl pycocotools --gt GT.json --dt DT.json --iou-type bbox
 """
@@ -13,12 +25,15 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import platform
 import sys
 import time
 from pathlib import Path
 
 import numpy as np
+
+LOAD_BEFORE = float("nan")
 
 
 def peak_rss_mb() -> float:
@@ -68,6 +83,35 @@ def peak_rss_mb() -> float:
     return ru / 1e3 if sys.platform.startswith("linux") else ru / 1e6
 
 
+def cpu_load_percent() -> float:
+    """Whole-machine CPU utilisation over a short sample."""
+    if sys.platform == "win32":
+        import subprocess
+
+        try:
+            out = subprocess.run(
+                ["wmic", "cpu", "get", "loadpercentage"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            ).stdout
+            vals = [int(x) for x in out.split() if x.isdigit()]
+            return float(sum(vals) / len(vals)) if vals else float("nan")
+        except Exception:  # noqa: BLE001
+            return float("nan")
+    try:
+        with open("/proc/stat") as f:
+            a = [float(x) for x in f.readline().split()[1:]]
+        time.sleep(0.2)
+        with open("/proc/stat") as f:
+            b = [float(x) for x in f.readline().split()[1:]]
+        busy = (sum(b) - sum(a)) - (b[3] - a[3])
+        total = sum(b) - sum(a)
+        return 100.0 * busy / total if total else float("nan")
+    except Exception:  # noqa: BLE001
+        return float("nan")
+
+
 def run(impl: str, gt_path: str, dt_path: str, iou_type: str) -> dict:
     timings: dict[str, float] = {}
 
@@ -95,13 +139,17 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str) -> dict:
     timings["load_dt"] = time.perf_counter() - t
 
     t = time.perf_counter()
+    c = time.process_time()
     ev = COCOeval(gt, dt, iou_type)
     ev.evaluate()
     timings["evaluate"] = time.perf_counter() - t
+    cpu_eval = time.process_time() - c
 
     t = time.perf_counter()
+    c = time.process_time()
     ev.accumulate()
     timings["accumulate"] = time.perf_counter() - t
+    cpu_eval += time.process_time() - c
 
     t = time.perf_counter()
     ev.summarize()
@@ -124,6 +172,10 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str) -> dict:
         "iou_type": iou_type,
         "timings": timings,
         "eval_total": timings["evaluate"] + timings["accumulate"] + timings["summarize"],
+        "eval_cpu": cpu_eval,
+        "threads": os.environ.get("RAYON_NUM_THREADS", "default"),
+        "cpu_load_before": LOAD_BEFORE,
+        "cpu_load_after": cpu_load_percent(),
         "wall_total": sum(timings.values()),
         "stats": stats,
         "digests": digests,
@@ -135,12 +187,25 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--impl", required=True)
+    ap.add_argument(
+        "--threads",
+        type=int,
+        help="pin the rayon pool; 1 removes parallelism from the comparison",
+    )
     ap.add_argument("--gt", required=True)
     ap.add_argument("--dt", required=True)
     ap.add_argument("--iou-type", default="bbox")
     ap.add_argument("--json-out", type=Path)
     args = ap.parse_args()
 
+    # Must happen before the extension is imported: rayon reads this when it
+    # builds its global pool, which is on the first parallel call.
+    if args.threads:
+        os.environ["RAYON_NUM_THREADS"] = str(args.threads)
+        os.environ["OMP_NUM_THREADS"] = str(args.threads)
+
+    global LOAD_BEFORE
+    LOAD_BEFORE = cpu_load_percent()
     res = run(args.impl, args.gt, args.dt, args.iou_type)
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)

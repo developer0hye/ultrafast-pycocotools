@@ -65,11 +65,19 @@ pycocotools를 바꿀 이유는 보통 셋 중 하나다. 자기 증상에서 �
 
 실제 COCO val2017과 Objects365 val에서 측정한 결과:
 
-| 구현 | COCO bbox | COCO segm | O365 bbox | 비고 |
-|---|---|---|---|---|
-| **ultrafast-pycocotools** | **bit-identical** | **bit-identical** | **bit-identical** | 전체 배열도 바이트 동일 |
-| faster-coco-eval 1.7.2 | bit-identical | bit-identical | bit-identical | |
-| hotcoco 0.5.0 | 최대 1.0e-5 | 최대 2.0e-6 | 최대 1.8e-6 | 아래 원인 |
+YOLO11m 예측(431,145 detection)으로 잰 결과다. **요약 수치가 아니라 배열 전체**를
+비교한다:
+
+| 구현 | 다른 precision cell | 최대 cell 오차 | 최대 stat 오차 |
+|---|---|---|---|
+| **ultrafast-pycocotools** | **0** | **0.0e+00** | **0.0e+00** |
+| faster-coco-eval 1.7.2 | 5,744 | 2.2e-16 | **0.0e+00** |
+| hotcoco 0.5.0 | 6,069 | 8.5e-01 | 3.9e-05 |
+
+**faster-coco-eval의 stat 오차가 0인 것이 함정이다.** 969,600개 cell 중 5,744개가
+1 ULP씩 틀렸는데, 12개 요약으로 평균 내니 같은 double로 반올림된다. 요약만 보면
+"완전히 일치"로 읽히고, 그건 이 저장소가 처음부터 경고해 온 바로 그 착시다 —
+우리도 한동안 그렇게 잘못 판정했다.
 
 실무적으로 AP를 소수점 3자리로 보고하면 1e-5는 안 보인다. 하지만 **개별 cell은
 0.85까지 틀린다** — 평균이 감춰줄 뿐이다. YOLO11m 예측에서 hotcoco의 차이를 셀 단위로
@@ -243,10 +251,36 @@ AP가 같은 것과 **코드가 그대로 도는 것**은 다른 문제다. 같�
 
 ## 속도와 메모리
 
-전부 실측이다. 재현 절차는 [§직접 해보기](#직접-해보기)에 있다. 각 구현은 별도
-프로세스에서 돌렸고(peak RSS가 섞이지 않도록), 구현마다 3회 돌려 **best**를 적었다
-— 이 정도 시간대에서는 단발 측정의 분산이 15%라 한 번만 재면 아무 결론도 못 낸다.
-`eval`은 `evaluate + accumulate + summarize` 합계다.
+전부 실측이다. 재현은 `bench/compare.py`.
+
+**바쁜 머신에서 wall-clock만 비교하면 불공정하다.** pycocotools는 단일 스레드라 배경
+부하를 거의 안 타는데, rayon을 쓰는 구현은 같은 코어를 두고 경쟁하다 자기 효율과
+무관한 wall을 잃는다. 그래서 이렇게 잰다:
+
+- **`--threads 1`** — 전 구현을 단일 스레드로. 코어 수와 배경 부하를 질문에서 빼고
+  알고리즘 차이만 남긴다. 이 수치가 머신을 건너서도 통한다.
+- **CPU 시간을 wall 옆에 같이** — 경합에서 wall은 부풀지만 CPU는 안 부푼다. 둘이
+  벌어지면 측정이 방해받았다는 신호다.
+- **반복을 교차 실행** — A를 다 돌리고 B를 돌리면 드리프트가 뒤에 실행된 쪽에 몰린다.
+- **머신 부하를 같이 기록**하고 spread를 보고한다. 0.1초대 측정은 단발 분산이 쉽게
+  15%라 한 번 재고 "빨라졌다"를 판정하면 노이즈를 쫓게 된다.
+
+**단일 스레드, YOLO11m 실제 예측** (5회, 부하 15–48%):
+
+| 구현 | wall best | median | spread | cpu best | wall × | cpu × | peak RSS | 동치 |
+|---|---|---|---|---|---|---|---|---|
+| pycocotools | 22.135s | 22.478s | 22% | 21.672s | 1.0× | 1.0× | 1.29 GB | (기준) |
+| faster-coco-eval | 3.527s | 3.559s | 4% | 3.516s | 6.3× | 6.2× | 1.24 GB | 배열 1 ULP |
+| hotcoco | 1.168s | 1.349s | 33% | 1.156s | 18.9× | 18.7× | 1.25 GB | 최대 3.9e-05 |
+| **ultrafast-pycocotools** | **0.548s** | 0.551s | 16% | **0.531s** | **40.4×** | **40.8×** | **641 MB** | **bit-identical** |
+
+**단일 스레드에서 hotcoco보다 2.1× 빠르다.** wall ×와 cpu ×가 40.4/40.8로 일치하니
+이 측정은 부하에 크게 흔들리지 않았다. 병렬을 켜면 격차가 더 벌어지지만 그 수치는
+측정 머신의 유휴 코어 수에 좌우되므로, 아래 표들은 참고용으로 읽어야 한다.
+
+아래는 기본(병렬) 설정이다. 각 구현은 별도 프로세스에서 돌렸고(peak RSS가 섞이지
+않도록), 구현마다 3회 돌려 **best**를 적었다. `eval`은
+`evaluate + accumulate + summarize` 합계다.
 
 ### 실제 모델 출력으로 검증
 
@@ -259,14 +293,16 @@ prior에서 나오며, 이미지당 개수가 훨씬 많다. 둘 다에서 맞�
 세 개의 구조적으로 다른 detector를 COCO val2017에 직접 돌려 확인했다
 (`bench/predict_coco*.py`):
 
-| 모델 | 구조 | detection | 이미지당 | 측정 AP | 공식 수치 |
-|---|---|---|---|---|---|
-| YOLO11m | anchor-free + NMS | 431,145 | 86.2 | 0.507 | 51.5 |
-| YOLO11m-seg | + prototype mask | 431,006 | 86.2 | segm | |
-| RF-DETR base | DETR query, NMS 없음 | 1,500,000 | 300.0 | 0.532 | ~53-54 |
-| Keypoint R-CNN | two-stage, OKS | 74,143 | 14.8 | 0.600 | 61.1 |
+| 모델 | 구조 | iouType | detection | 이미지당 | 측정 AP | 공식 |
+|---|---|---|---|---|---|---|
+| YOLO11m | anchor-free + NMS | bbox | 431,145 | 86.2 | 0.507 | 51.5 |
+| YOLO11m-seg | + prototype mask | segm | 431,006 | 86.2 | — | |
+| RF-DETR base | DETR query, NMS 없음 | bbox | 1,500,000 | 300.0 | 0.532 | ~53–54 |
+| Mask R-CNN | two-stage, per-RoI mask | segm | 171,031 | 34.2 | **0.346** | **34.6** |
+| Keypoint R-CNN | two-stage, OKS | keypoints | 74,143 | 14.8 | 0.600 | 61.1 |
 
-AP가 공식 수치와 맞으므로 파이프라인 자체가 옳다. **네 경우 모두 bit-identical**이다.
+AP가 공식 수치와 맞으므로 파이프라인 자체가 옳다(Mask R-CNN은 34.6에 정확히 일치).
+**다섯 경우 모두 bit-identical**이다.
 keypoints가 특히 의미 있는데, OKS는 `exp()`를 쓰는 유일한 경로라 numpy의 벡터화된
 `exp`와 Rust libm의 `exp`가 갈릴 수 있다고 처음부터 위험으로 적어뒀던 곳이다.
 

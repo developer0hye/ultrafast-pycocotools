@@ -187,6 +187,17 @@ python bench/check_params.py <gt.json> {hotcoco,faster,ufcoco}   # 격자 bit �
 
 측정할 때 지킬 것:
 
+- **단일 스레드 수치를 같이 낸다** (`bench/compare.py --threads 1`). pycocotools는
+  단일 스레드라 배경 부하를 거의 안 타는데 rayon을 쓰는 구현은 코어를 두고 경쟁하다
+  자기 효율과 무관한 wall을 잃는다. 부하 37%인 데스크톱에서 잰 병렬 speedup은 그
+  머신의 유휴 코어 수를 재는 것에 가깝다. 단일 스레드 수치가 머신을 건너서도 통한다.
+- **CPU 시간을 wall 옆에 같이 본다.** 경합에서 wall은 부풀고 CPU는 안 부푼다. 둘의
+  비가 어긋나면 측정이 방해받았다는 신호다.
+- **판정은 요약이 아니라 배열로 한다.** 이건 남 얘기가 아니다 — 우리는 12개 stat만
+  보고 faster-coco-eval을 "bit-identical"이라 여러 번 보고했다가, 배열 digest를
+  붙이고 나서야 5,744개 cell이 1 ULP씩 다르다는 걸 알았다. 969,600개로 평균 내면
+  같은 double로 반올림된다. `bench/run_impl.py`가 배열 digest를 함께 내는 이유다.
+
 - **구현마다 별도 프로세스.** 같은 프로세스에서 재면 다른 라이브러리의 warm cache와
   allocator 상태가 섞이고 peak RSS가 의미를 잃는다.
 - **최소 3회 돌려 best를 쓴다.** 0.1~0.3초대 측정의 분산이 15%다. 한 번만 재고
