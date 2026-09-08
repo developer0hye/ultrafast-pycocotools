@@ -1,0 +1,20 @@
+
+phase                          wall    RSS delta       Python    Rust live    Rust peak       allocs
+----------------------------------------------------------------------------------------------------
+COCO(gt) load                0.052s      30.8 MB         n/a      22.9 MB      25.8 MB      113,920
+loadRes(dt)                  0.337s     387.9 MB         n/a     371.9 MB     390.0 MB           43
+_prepare                     0.001s       0.3 MB         n/a       0.0 MB       0.0 MB            0
+engine build                 0.763s     526.9 MB         n/a     361.2 MB     364.3 MB    1,814,778
+evaluate + accumulate        0.467s      34.9 MB         n/a      15.6 MB      39.6 MB      451,026
+
+process RSS at start        :      36.8 MB
+process RSS at end          :    1019.4 MB
+rust live at end            :     771.6 MB
+rust peak overall           :     795.6 MB
+rust total allocated        :    1391.1 MB
+rust allocations            : 2,379,785
+
+gt / dt annotations         : 36781 / 724953
+retained complete arrays    :      15.6 MB
+note: RSS deltas include the allocator's own slack, so they exceed
+      the Rust/Python figures and do not sum to the process total.

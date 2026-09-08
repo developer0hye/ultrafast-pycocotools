@@ -1,0 +1,124 @@
+{
+  "compiler": "rustc 1.97.1 (8bab26f4f 2026-07-14)\nbinary: rustc\ncommit-hash: 8bab26f4f68e0e26f0bb7960be334d5b520ea452\ncommit-date: 2026-07-14\nhost: x86_64-unknown-linux-gnu\nrelease: 1.97.1\nLLVM version: 22.1.6\n",
+  "builds": {
+    "baseline": {
+      "installed_sha256": {
+        "__init__.py": "57a10789ab09d38d748bc38ed7e7b2e8b098d59a79ff1c080b7e3046825816d1",
+        "_lvis.py": "b85899f28b8dc8d233c3cd0fa539606f464690e4b32e90e731fe8cc873359b32",
+        "_ufcoco.cpython-312-x86_64-linux-gnu.so": "896ee999dd5183ccd0837b37c8bd5f8370795314a7018da12e8f9b21554d5466",
+        "coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "cocoeval.py": "420b5f20a8333d943c9f61c72b6cf553ace94d0cd8eb9cbfa4ea3f2455a785d0",
+        "integrations/__init__.py": "4524f7b6430b935682bc6bfea6e2cfab5878ab7166cab19db3b15bbecf720d31",
+        "integrations/rfdetr.py": "0f8af2a39a93bc77da088cea23e7e33082686db9adc5d98741bda1daa103cc8d",
+        "mask.py": "f8f25b4e61591d7cabaca8831bfe60bf9b160bd5866ab19d8f237b781ac34d20"
+      },
+      "wheels": {}
+    },
+    "preparation": {
+      "installed_sha256": {
+        "__init__.py": "57a10789ab09d38d748bc38ed7e7b2e8b098d59a79ff1c080b7e3046825816d1",
+        "_lvis.py": "15621076b0ee549d0d045a8ad0b7e96ce70692618ecfdc32d782bbd34bce2515",
+        "_ufcoco.cpython-312-x86_64-linux-gnu.so": "b654b450468583eb8aedda55846890879809ae1cb6558b15773aa255ba30e9b7",
+        "coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "cocoeval.py": "420b5f20a8333d943c9f61c72b6cf553ace94d0cd8eb9cbfa4ea3f2455a785d0",
+        "integrations/__init__.py": "4524f7b6430b935682bc6bfea6e2cfab5878ab7166cab19db3b15bbecf720d31",
+        "integrations/rfdetr.py": "0f8af2a39a93bc77da088cea23e7e33082686db9adc5d98741bda1daa103cc8d",
+        "mask.py": "f8f25b4e61591d7cabaca8831bfe60bf9b160bd5866ab19d8f237b781ac34d20"
+      },
+      "wheels": {
+        "ultrafast_pycocotools-0.1.7-cp312-cp312-manylinux_2_34_x86_64.whl": {
+          "sha256": "22a763b07ae36474f048b5af46652f3355e6d097f53f26d8895b88ddca8a711d",
+          "installed_files_match": true
+        }
+      }
+    },
+    "summary": {
+      "installed_sha256": {
+        "__init__.py": "57a10789ab09d38d748bc38ed7e7b2e8b098d59a79ff1c080b7e3046825816d1",
+        "_lvis.py": "59b4c2e2d73efcbe32fd935624c3e8c6c1b5a159fa2cb2edb011503753a17c72",
+        "_ufcoco.cpython-312-x86_64-linux-gnu.so": "ddfe68cf3ad462a66798469fa3993930ea5b29c3ed0e8207ffdb39b7b034cb83",
+        "coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "cocoeval.py": "5be220b38a82901934a8fdb014c901e537ae2fabae54ea50b476822424f7604c",
+        "integrations/__init__.py": "4524f7b6430b935682bc6bfea6e2cfab5878ab7166cab19db3b15bbecf720d31",
+        "integrations/rfdetr.py": "0f8af2a39a93bc77da088cea23e7e33082686db9adc5d98741bda1daa103cc8d",
+        "mask.py": "f8f25b4e61591d7cabaca8831bfe60bf9b160bd5866ab19d8f237b781ac34d20"
+      },
+      "wheels": {
+        "ultrafast_pycocotools-0.1.7-cp312-cp312-manylinux_2_34_x86_64.whl": {
+          "sha256": "7d4f9a02c133bd58ddf5189d1d6158d23233ab37c27d8f78b9ae1bf922bf2da0",
+          "installed_files_match": true
+        }
+      }
+    },
+    "counted": {
+      "installed_sha256": {
+        "__init__.py": "57a10789ab09d38d748bc38ed7e7b2e8b098d59a79ff1c080b7e3046825816d1",
+        "_lvis.py": "59b4c2e2d73efcbe32fd935624c3e8c6c1b5a159fa2cb2edb011503753a17c72",
+        "_ufcoco.cpython-312-x86_64-linux-gnu.so": "a58149b6655ad616444937bc241b985ab96c939a41e9cc9bb7f2fb103e48d2ff",
+        "coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "cocoeval.py": "5be220b38a82901934a8fdb014c901e537ae2fabae54ea50b476822424f7604c",
+        "integrations/__init__.py": "4524f7b6430b935682bc6bfea6e2cfab5878ab7166cab19db3b15bbecf720d31",
+        "integrations/rfdetr.py": "0f8af2a39a93bc77da088cea23e7e33082686db9adc5d98741bda1daa103cc8d",
+        "mask.py": "f8f25b4e61591d7cabaca8831bfe60bf9b160bd5866ab19d8f237b781ac34d20"
+      },
+      "wheels": {
+        "ultrafast_pycocotools-0.1.7-cp312-cp312-manylinux_2_34_x86_64.whl": {
+          "sha256": "17848fdff9bd0ee191a02080ab22516564050500403717f43897d677f4173089",
+          "installed_files_match": true
+        }
+      }
+    }
+  },
+  "npz": {
+    "mask-cap-lvis-preparation/lvis_segment-6-candidate.npz": {
+      "sha256": "62056cdc8a0368f1d8218f31c07cb38c846f60016f69898a3dde682482366b85",
+      "public_archive_path": "formal/lvis_segment-diagnostic-0-replacement.npz",
+      "byte_identical": true
+    },
+    "mask-cap-lvis-preparation/lvis_segment-6-baseline.npz": {
+      "sha256": "62056cdc8a0368f1d8218f31c07cb38c846f60016f69898a3dde682482366b85",
+      "public_archive_path": "formal/lvis_segment-diagnostic-0-replacement.npz",
+      "byte_identical": true
+    },
+    "mask-cap-lvis-final/segment-6-candidate.npz": {
+      "sha256": "f37ee9eff81447c64bb9128ddf4beee533a09c035f9f8861e32cadcde6ee5f6d",
+      "public_archive_path": "formal/segment-diagnostic-0-replacement.npz",
+      "byte_identical": true
+    },
+    "mask-cap-lvis-final/lvis_segment-6-candidate.npz": {
+      "sha256": "62056cdc8a0368f1d8218f31c07cb38c846f60016f69898a3dde682482366b85",
+      "public_archive_path": "formal/lvis_segment-diagnostic-0-replacement.npz",
+      "byte_identical": true
+    },
+    "mask-cap-lvis-final/lvis_segment-6-baseline.npz": {
+      "sha256": "62056cdc8a0368f1d8218f31c07cb38c846f60016f69898a3dde682482366b85",
+      "public_archive_path": "formal/lvis_segment-diagnostic-0-replacement.npz",
+      "byte_identical": true
+    },
+    "mask-cap-lvis-final/segment-6-baseline.npz": {
+      "sha256": "f37ee9eff81447c64bb9128ddf4beee533a09c035f9f8861e32cadcde6ee5f6d",
+      "public_archive_path": "formal/segment-diagnostic-0-replacement.npz",
+      "byte_identical": true
+    },
+    "mask-cap-lvis-counted/segment-6-candidate.npz": {
+      "sha256": "f37ee9eff81447c64bb9128ddf4beee533a09c035f9f8861e32cadcde6ee5f6d",
+      "public_archive_path": "formal/segment-diagnostic-0-replacement.npz",
+      "byte_identical": true
+    },
+    "mask-cap-lvis-counted/lvis_segment-6-candidate.npz": {
+      "sha256": "62056cdc8a0368f1d8218f31c07cb38c846f60016f69898a3dde682482366b85",
+      "public_archive_path": "formal/lvis_segment-diagnostic-0-replacement.npz",
+      "byte_identical": true
+    },
+    "mask-cap-lvis-counted/lvis_segment-6-baseline.npz": {
+      "sha256": "62056cdc8a0368f1d8218f31c07cb38c846f60016f69898a3dde682482366b85",
+      "public_archive_path": "formal/lvis_segment-diagnostic-0-replacement.npz",
+      "byte_identical": true
+    },
+    "mask-cap-lvis-counted/segment-6-baseline.npz": {
+      "sha256": "f37ee9eff81447c64bb9128ddf4beee533a09c035f9f8861e32cadcde6ee5f6d",
+      "public_archive_path": "formal/segment-diagnostic-0-replacement.npz",
+      "byte_identical": true
+    }
+  }
+}

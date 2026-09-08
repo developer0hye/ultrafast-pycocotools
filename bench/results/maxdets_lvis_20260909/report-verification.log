@@ -1,0 +1,8 @@
+PASS: complete arrays, every metric/statistic, source/runtime hashes and public NPZ identity
+m2-final-v019 {'median_cpu_percent': 100.0, 'max_cpu_percent': 100.0, 'min_available_ram_bytes': 3448569856}
+lvis_mask {'baseline': {'load_and_evaluate_seconds': 0.33436285401694477, 'summary_seconds': 0.05351233299006708, 'peak_rss_decimal_mb': 350.666752}, 'candidate': {'load_and_evaluate_seconds': 0.26006460553617217, 'summary_seconds': 0.027532208507182077, 'peak_rss_decimal_mb': 305.299456}}
+lvis_official {'baseline': {'load_and_evaluate_seconds': 0.195478792040376, 'summary_seconds': 0.024125646508764476, 'peak_rss_decimal_mb': 165.658624}, 'candidate': {'load_and_evaluate_seconds': 0.13895308403880335, 'summary_seconds': 0.01289302101940848, 'peak_rss_decimal_mb': 135.217152}}
+segm {'baseline': {'load_and_evaluate_seconds': 5.416125063464278, 'summary_seconds': 0.003179457999067381, 'peak_rss_decimal_mb': 1048.5186560000002}, 'candidate': {'load_and_evaluate_seconds': 5.072159729024861, 'summary_seconds': 0.003120687004411593, 'peak_rss_decimal_mb': 1016.66816}}
+server-counted {'median_cpu_percent': 9.7, 'max_cpu_percent': 100.0, 'min_available_ram_bytes': 28991668224}
+lvis_segment {'baseline': {'cold_seconds': 0.4728604843840003, 'cached_seconds': 0.4392414577305317, 'peak_rss_mib': 1039.826171875}, 'candidate': {'cold_seconds': 0.4031480095582083, 'cached_seconds': 0.3760750046931207, 'peak_rss_mib': 1017.865234375}}
+segment {'baseline': {'cold_seconds': 3.460552337463014, 'cached_seconds': 2.776320391742047, 'peak_rss_mib': 2470.134765625}, 'candidate': {'cold_seconds': 3.4781138725811616, 'cached_seconds': 2.7910703207016923, 'peak_rss_mib': 2453.005859375}}

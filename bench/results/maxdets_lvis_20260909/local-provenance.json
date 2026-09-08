@@ -1,0 +1,23 @@
+{
+  "runtime_revision": "0a0de58d11f8b7404f5f2885ee72f7385e61d2e7",
+  "release_preparation_revision": "577e28151fd188a3779eed389d6b7631a0cbb734",
+  "alloc_native_sha256": "d5732549185d0850df15b129ae918d8808f3fc618989e7bf1198b1a37d264279",
+  "rust_compiler": "rustc 1.98.0 (88d9e12ae 2026-08-18)\nbinary: rustc\ncommit-hash: 88d9e12ae178fab0fb5cc050a94da85685d449ea\ncommit-date: 2026-08-18\nhost: aarch64-apple-darwin\nrelease: 1.98.0\nLLVM version: 22.1.8\n",
+  "dfine_check": {
+    "log": "dfine-tests.log",
+    "runtime_revision": "9e22d89",
+    "tests": 11
+  },
+  "m2_superseded_overlap": {
+    "scope": "m2-final",
+    "reason": "Some LVIS mask timed processes overlapped our D-FINE checks; retained but superseded by m2-counted-quiet.",
+    "dfine_started_epoch": 1788898444.9492292,
+    "dfine_log_last_modified_epoch": 1788898454.6548018
+  },
+  "earlier_normal_native_sha256": "0d2f7c86462dc096592cb5e709cf160c38f7adb52782af6a9f4ee9b8b6afbb0a",
+  "final_m2_build": {
+    "revision": "26cec60da379422ab9c8e4b7e05f495dcc55f396",
+    "version": "0.1.9",
+    "native_sha256": "69d03baac14b57b50b4d97faea9863ffc0eab421d09ea33a785d116f6e81a07d"
+  }
+}
