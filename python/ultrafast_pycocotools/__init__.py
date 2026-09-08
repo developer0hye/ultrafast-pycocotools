@@ -34,7 +34,7 @@ from . import coco, cocoeval, mask
 from .coco import COCO
 from .cocoeval import COCOeval, Params
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 __all__ = [
     "COCO",

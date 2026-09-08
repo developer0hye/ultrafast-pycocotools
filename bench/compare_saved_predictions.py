@@ -55,6 +55,7 @@ def main():
     else:
         parse_seconds = None  # File parsing is included in the load timings below.
     storage = None
+    native_timings = []
     runs = []
     previous = None
     for repeat in range(a.repeats):
@@ -87,6 +88,10 @@ def main():
                 t = time.perf_counter()
                 getattr(ev, method)()
                 times[method + '_seconds'] = time.perf_counter() - t
+        engine = getattr(ev, '_engine', None)
+        if engine is not None:
+            native_timings.append(engine.timings())
+        del engine
         arrays = {k: np.ascontiguousarray(ev.eval[k], dtype=np.float64)
                   for k in ('precision', 'recall', 'scores')}
         arrays['stats'] = np.ascontiguousarray(ev.stats, dtype=np.float64)
@@ -102,6 +107,7 @@ def main():
               'gt_sha256': digest(a.gt), 'pred_sha256': digest(a.pred),
               'input_json_parse_seconds': parse_seconds, 'runs': runs,
               'input_mode': a.input_mode, 'compact_storage': storage,
+              'native_timings': native_timings,
               'output_array_bytes': sum(v.nbytes for v in previous.values()),
               'stats': previous['stats'].tolist(),
               'array_sha256': {k: hashlib.sha256(v.tobytes()).hexdigest() for k, v in previous.items()},

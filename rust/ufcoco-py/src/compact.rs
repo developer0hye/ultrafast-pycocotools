@@ -16,6 +16,37 @@ enum Crowd {
     Int(i64),
 }
 
+// Decode directly to f64 without retaining a tagged Number for every coordinate.
+// Integer bounds preserve Python's exact multiplication before conversion to f64.
+struct BboxNumber(f64);
+impl<'de> Deserialize<'de> for BboxNumber {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        struct NumberVisitor;
+        impl<'de> Visitor<'de> for NumberVisitor {
+            type Value = BboxNumber;
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("a bbox coordinate with an exactly representable integer part")
+            }
+            fn visit_i64<E: serde::de::Error>(self, v: i64) -> Result<BboxNumber, E> {
+                if v.unsigned_abs() > (1u64 << 53) {
+                    return Err(E::custom("bbox integer exceeds exact float64 range"));
+                }
+                Ok(BboxNumber(v as f64))
+            }
+            fn visit_u64<E: serde::de::Error>(self, v: u64) -> Result<BboxNumber, E> {
+                if v > (1u64 << 53) {
+                    return Err(E::custom("bbox integer exceeds exact float64 range"));
+                }
+                Ok(BboxNumber(v as f64))
+            }
+            fn visit_f64<E: serde::de::Error>(self, v: f64) -> Result<BboxNumber, E> {
+                Ok(BboxNumber(v))
+            }
+        }
+        d.deserialize_any(NumberVisitor)
+    }
+}
+
 #[derive(Deserialize)]
 struct Record {
     #[serde(default, deserialize_with = "field_present")]
@@ -24,7 +55,7 @@ struct Record {
     id: Option<i64>,
     image_id: i64,
     category_id: i64,
-    bbox: [serde_json::Number; 4],
+    bbox: [BboxNumber; 4],
     #[serde(default)]
     area: Option<f64>,
     #[serde(default)]
@@ -38,16 +69,20 @@ fn field_present<'de, D: serde::Deserializer<'de>>(d: D) -> Result<bool, D::Erro
     Ok(true)
 }
 
+// Detection IDs and areas are derived by loadRes; retain only independent values.
 struct Row {
-    id: i64,
     image: i64,
     category: i64,
-    area: f64,
     score: f64,
+}
+
+struct GroundTruth {
+    id: i64,
+    area: f64,
     crowd: bool,
 }
 
-type Columns = (Vec<Row>, Vec<[f64; 4]>);
+type Columns = (Vec<Row>, Option<Vec<GroundTruth>>, Vec<[f64; 4]>);
 
 struct Rows(bool);
 impl<'de> DeserializeSeed<'de> for Rows {
@@ -63,6 +98,7 @@ impl<'de> Visitor<'de> for Rows {
     }
     fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
         let mut rows = Vec::new();
+        let mut ground_truth = if self.0 { None } else { Some(Vec::new()) };
         let mut boxes = Vec::new();
         let mut ids = HashSet::new();
         while let Some(record) = seq.next_element::<Record>()? {
@@ -83,19 +119,7 @@ impl<'de> Visitor<'de> for Rows {
                     "duplicate GT ids require dictionary indexing",
                 ));
             }
-            // Avoid changing Python integer multiplication for enormous bbox dimensions.
-            for number in &record.bbox {
-                if number
-                    .as_i64()
-                    .is_some_and(|x| x.unsigned_abs() > (1u64 << 53))
-                    || number.as_u64().is_some_and(|x| x > (1u64 << 53))
-                {
-                    return Err(serde::de::Error::custom(
-                        "bbox integer exceeds exact float64 range",
-                    ));
-                }
-            }
-            let bbox = record.bbox.map(|x| x.as_f64().expect("finite JSON number"));
+            let bbox = record.bbox.map(|x| x.0);
             let area = if self.0 {
                 bbox[2] * bbox[3]
             } else {
@@ -109,17 +133,20 @@ impl<'de> Visitor<'de> for Rows {
                 };
             boxes.push(bbox);
             rows.push(Row {
-                id,
                 image: record.image_id,
                 category: record.category_id,
-                area,
                 score: record.score.unwrap_or(0.0),
-                crowd,
             });
+            if let Some(fields) = &mut ground_truth {
+                fields.push(GroundTruth { id, area, crowd });
+            }
         }
         rows.shrink_to_fit();
         boxes.shrink_to_fit();
-        Ok((rows, boxes))
+        if let Some(fields) = &mut ground_truth {
+            fields.shrink_to_fit();
+        }
+        Ok((rows, ground_truth, boxes))
     }
 }
 
@@ -169,6 +196,7 @@ pub struct CompactBbox {
     // Keep an owned snapshot: changing or deleting the input file cannot change later API reads.
     raw: Vec<u8>,
     rows: Vec<Row>,
+    ground_truth: Option<Vec<GroundTruth>>,
     boxes: Arc<Vec<[f64; 4]>>,
     results: bool,
 }
@@ -197,13 +225,24 @@ impl CompactBbox {
             else {
                 continue;
             };
-            out.ids.push(row.id);
+            let (id, area, crowd) = match &self.ground_truth {
+                Some(fields) => {
+                    let gt = &fields[index];
+                    (gt.id, gt.area, gt.crowd)
+                }
+                None => (
+                    index as i64 + 1,
+                    self.boxes[index][2] * self.boxes[index][3],
+                    false,
+                ),
+            };
+            out.ids.push(id);
             out.img_slot.push(image);
             out.cat_slot.push(category);
             out.scores.push(row.score);
-            out.areas.push(row.area);
-            out.iscrowd.push(row.crowd);
-            out.ignore.push(is_gt && row.crowd);
+            out.areas.push(area);
+            out.iscrowd.push(crowd);
+            out.ignore.push(is_gt && crowd);
             out.lvis_mark.push(false);
             if let GeomStore::Bboxes(ref mut boxes) = out.geom {
                 boxes.push(self.boxes[index]);
@@ -242,6 +281,10 @@ impl CompactBbox {
     #[getter]
     fn column_bytes(&self) -> usize {
         self.rows.capacity() * std::mem::size_of::<Row>()
+            + self
+                .ground_truth
+                .as_ref()
+                .map_or(0, |v| v.capacity() * std::mem::size_of::<GroundTruth>())
             + self.boxes.capacity() * std::mem::size_of::<[f64; 4]>()
     }
 }
@@ -262,13 +305,15 @@ pub fn load_compact_bbox(
     } else {
         Dataset { py }.deserialize(&mut de)
     };
-    let (metadata, (rows, boxes)) = parsed.map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let (metadata, (rows, ground_truth, boxes)) =
+        parsed.map_err(|e| PyValueError::new_err(e.to_string()))?;
     de.end().map_err(|e| PyValueError::new_err(e.to_string()))?;
     Ok((
         metadata,
         CompactBbox {
             raw,
             rows,
+            ground_truth,
             boxes: Arc::new(boxes),
             results,
         },

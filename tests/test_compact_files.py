@@ -193,3 +193,50 @@ def test_subclass_dataset_access_is_respected(tmp_path):
     before = gt.reads
     gt.loadRes(dp)
     assert gt.reads > before
+
+
+def test_compact_detection_defaults_and_ids_survive_filtering(tmp_path):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    # loadRes overwrites these fields; compact storage must derive the same values.
+    for d in dets:
+        d.update(id=999, area=-1, iscrowd=1)
+    dp.write_text(json.dumps(dets))
+    gt = ufc.COCO(gp, verbose=False)
+    dt = gt.loadRes(dp)
+    ev = ufc.COCOeval(gt, dt, 'bbox', print_function=lambda *_: None)
+    ev.params.imgIds = [2]
+    ev.run()
+    predictions, _ = ev.per_instance(iou_thr=.5)
+    assert sorted(predictions['dt_id'].tolist()) == [1, 3]
+    assert gt._compact is not None and dt._compact is not None
+    ref = run_reference(gp, dp, 'bbox', lambda p: setattr(p, 'imgIds', [2]))
+    assert_bit_identical(ref, ev, 'derived detection fields')
+    assert dt.anns[3]['id'] == 3
+    assert dt.anns[3]['area'] == 20
+    assert dt.anns[3]['iscrowd'] == 0
+
+
+@pytest.mark.parametrize('thresholds', [[0., 0., .25, .5, 1.], [.01, .2, .3, .99]])
+def test_compact_recall_samples_with_custom_grids(tmp_path, thresholds):
+    import numpy as np
+    gp, dp, data, dets = write_inputs(tmp_path)
+    def tweak(p):
+        p.recThrs = np.array(thresholds)
+        p.maxDets = [1, 3, 7]
+    ref = run_reference(gp, dp, 'bbox', tweak)
+    gt = ufc.COCO(gp, verbose=False)
+    ev = ufc.COCOeval(gt, gt.loadRes(dp), 'bbox', print_function=lambda *_: None)
+    tweak(ev.params)
+    ev.run()
+    assert_bit_identical(ref, ev, 'custom recall samples')
+
+
+@pytest.mark.parametrize('coordinate', [2**53 + 1, -(2**53 + 1), 2**63])
+def test_large_integer_coordinates_keep_ordinary_json_semantics(tmp_path, coordinate):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    data['annotations'][0]['bbox'][0] = coordinate
+    gp.write_text(json.dumps(data))
+    gt = ufc.COCO(gp, verbose=False)
+    assert gt._compact is None
+    assert gt.anns[3]['bbox'][0] == coordinate
+    assert isinstance(gt.anns[3]['bbox'][0], int)

@@ -253,9 +253,9 @@ fn cmp_desc_score(a: f64, b: f64) -> Ordering {
 }
 
 /// Everything one image contributes to one category.
-struct CatImage {
+struct CatImage<'a> {
     img_slot: u32,
-    gt_idx: Vec<u32>,
+    gt_idx: &'a [u32],
     /// Score-sorted, truncated to `max_dets.last()`.
     dt_idx: Vec<u32>,
     /// Row-major `D x G`; empty when either side is empty, which is the `[]`
@@ -352,7 +352,7 @@ impl Evaluator {
     }
 
     /// `computeIoU` / `computeOks` for every image of one category.
-    fn prepare_category(&self, k: usize) -> Vec<CatImage> {
+    fn prepare_category(&self, k: usize) -> Vec<CatImage<'_>> {
         let max_det = self.params.max_dets.last().copied().unwrap_or(0);
         let gt_runs = self.gt_groups.group(k);
         let dt_runs = self.dt_groups.group(k);
@@ -366,8 +366,8 @@ impl Evaluator {
             .par_iter()
             .with_min_len(PAR_MIN_IMAGES)
             .map(|&(img_slot, gr, dr)| {
-                let gt_idx: Vec<u32> = gr
-                    .map(|r: Run| self.gt_groups.indices(&r).to_vec())
+                let gt_idx: &[u32] = gr
+                    .map(|r: Run| self.gt_groups.indices(&r))
                     .unwrap_or_default();
                 let mut dt_idx: Vec<u32> = dr
                     .map(|r: Run| self.dt_groups.indices(&r).to_vec())
@@ -378,7 +378,7 @@ impl Evaluator {
                 if dt_idx.len() > max_det {
                     dt_idx.truncate(max_det);
                 }
-                let ious = self.compute_iou(&dt_idx, &gt_idx);
+                let ious = self.compute_iou(&dt_idx, gt_idx);
                 CatImage {
                     img_slot,
                     gt_idx,
@@ -412,17 +412,15 @@ impl Evaluator {
             return Vec::new();
         }
         let (m, n) = (dt_idx.len(), gt_idx.len());
+        let mut out = vec![0.0f64; m * n];
+        if let (Some(dv), Some(gv)) = (self.dt.geom.bbox_slice(), self.gt.geom.bbox_slice()) {
+            rle::bb_iou_indexed(dv, gv, dt_idx, gt_idx, &self.gt.iscrowd, &mut out);
+            return out;
+        }
         let iscrowd: Vec<u8> = gt_idx
             .iter()
             .map(|&g| self.gt.iscrowd[g as usize] as u8)
             .collect();
-        let mut out = vec![0.0f64; m * n];
-        if let (Some(dv), Some(gv)) = (self.dt.geom.bbox_slice(), self.gt.geom.bbox_slice()) {
-            let d: Vec<[f64; 4]> = dt_idx.iter().map(|&i| dv[i as usize]).collect();
-            let g: Vec<[f64; 4]> = gt_idx.iter().map(|&i| gv[i as usize]).collect();
-            rle::bb_iou(&d, &g, &iscrowd, &mut out);
-            return out;
-        }
         let floor = self.match_floor();
 
         match (&self.dt.geom, &self.gt.geom) {
@@ -531,7 +529,7 @@ impl Evaluator {
     }
 
     /// `evaluateImg` for one image and area range.
-    fn evaluate_img(&self, ci: &CatImage, area_idx: usize) -> Option<ImgMatch> {
+    fn evaluate_img(&self, ci: &CatImage<'_>, area_idx: usize) -> Option<ImgMatch> {
         let mut out = ImgMatch::default();
         let mut scratch = MatchScratch::default();
         self.evaluate_img_into(ci, area_idx, &mut out, &mut scratch)
@@ -548,7 +546,7 @@ impl Evaluator {
     /// matching itself.
     fn evaluate_img_into(
         &self,
-        ci: &CatImage,
+        ci: &CatImage<'_>,
         area_idx: usize,
         out: &mut ImgMatch,
         scratch: &mut MatchScratch,
@@ -579,8 +577,9 @@ impl Evaluator {
             self.gt.ignore[g] || a < a_rng[0] || a > a_rng[1]
         }));
         gt_perm.clear();
-        gt_perm.extend(0..g_n as u32);
-        gt_perm.sort_by_key(|&i| ignore[i as usize] as u8);
+        // Stable binary partition without a comparison sort or its scratch allocation.
+        gt_perm.extend((0..g_n as u32).filter(|&i| !ignore[i as usize]));
+        gt_perm.extend((0..g_n as u32).filter(|&i| ignore[i as usize]));
         gt_ignore.clear();
         gt_ignore.extend(gt_perm.iter().map(|&i| ignore[i as usize]));
 
@@ -770,7 +769,7 @@ impl Evaluator {
     /// detections so positional indexing still works.
     fn materialise_eval_imgs(
         &self,
-        work: &[CatImage],
+        work: &[CatImage<'_>],
         matches: &[Option<ImgMatch>],
         k: usize,
         a: usize,
@@ -873,25 +872,34 @@ impl Evaluator {
         }
         // `d` is the detection's rank inside its own image, so keeping
         // `d < max_det` is exactly pycocotools' per-image `[0:maxDet]` cut.
-        buf.flat.clear();
-        buf.flat.extend(
+        // The largest limit uses the existing sorted slice directly. Only smaller
+        // per-image prefixes need a filtered buffer, whose capacity stays small.
+        let flat = if max_det >= self.params.max_dets.last().copied().unwrap_or(0) {
             order
-                .iter()
-                .copied()
-                .filter(|&(_, _, d)| (d as usize) < max_det),
-        );
-        let nd = buf.flat.len();
+        } else {
+            buf.flat.clear();
+            buf.flat.extend(
+                order
+                    .iter()
+                    .copied()
+                    .filter(|&(_, _, d)| (d as usize) < max_det),
+            );
+            &buf.flat
+        };
+        let nd = flat.len();
         buf.pr.clear();
         buf.pr.resize(nd, 0.0);
-        buf.rc.clear();
-        buf.rc.resize(nd, 0.0);
 
         let rec_thrs = &self.params.rec_thrs;
         let npig_f = npig as f64;
 
         for t in 0..t_n {
             let (mut tp, mut fp) = (0i64, 0i64);
-            for (n, &(_, i, d)) in buf.flat.iter().enumerate() {
+            let mut recall = 0.0;
+            let mut next_sample = 0;
+            buf.rec_indices.clear();
+            buf.rec_indices.resize(r_n, nd);
+            for (n, (precision, &(_, i, d))) in buf.pr.iter_mut().zip(flat).enumerate() {
                 let mm = matches[i as usize].as_ref().unwrap();
                 let d_full = mm.dt_scores.len();
                 let idx = t * d_full + d as usize;
@@ -904,13 +912,19 @@ impl Evaluator {
                 }
                 let tpf = tp as f64;
                 let fpf = fp as f64;
-                buf.rc[n] = tpf / npig_f;
+                recall = tpf / npig_f;
+                // Record searchsorted's first eligible index while recall is produced.
+                // Keep the original comparison, including unusual threshold values.
+                while next_sample < r_n && !(recall < rec_thrs[next_sample]) {
+                    buf.rec_indices[next_sample] = n;
+                    next_sample += 1;
+                }
                 // `+ EPS` is np.spacing(1) in the reference. Dropping it
                 // changes the first point of every curve by one ULP.
-                buf.pr[n] = tpf / (fpf + tpf + EPS);
+                *precision = tpf / (fpf + tpf + EPS);
             }
 
-            out.recall[(t * a_n + a) * m_n + m] = if nd > 0 { buf.rc[nd - 1] } else { 0.0 };
+            out.recall[(t * a_n + a) * m_n + m] = recall;
 
             // Make precision monotonically non-increasing in recall.
             for i in (1..nd).rev() {
@@ -919,19 +933,13 @@ impl Evaluator {
                 }
             }
 
-            // np.searchsorted(rc, recThrs, side='left'). Both sides are
-            // non-decreasing, so one merge walk replaces R binary searches.
-            // Thresholds past the achieved recall read 0, not the -1
-            // sentinel: this category is present, it just ran out of recall.
-            let mut pi = 0usize;
-            for (ri, &thr) in rec_thrs.iter().enumerate() {
-                while pi < nd && buf.rc[pi] < thr {
-                    pi += 1;
-                }
+            // Apply the recorded indices after the backward precision envelope.
+            // This needs O(R) index storage instead of O(D) recall values.
+            for (ri, &pi) in buf.rec_indices.iter().enumerate() {
                 let dst = (t * r_n + ri) * a_n * m_n + a * m_n + m;
                 if pi < nd {
                     out.precision[dst] = buf.pr[pi];
-                    out.scores[dst] = buf.flat[pi].0;
+                    out.scores[dst] = flat[pi].0;
                 } else {
                     out.precision[dst] = 0.0;
                     out.scores[dst] = 0.0;
@@ -1029,7 +1037,7 @@ struct MatchScratch {
 struct AccumBuf {
     flat: Vec<(f64, u32, u32)>,
     pr: Vec<f64>,
-    rc: Vec<f64>,
+    rec_indices: Vec<usize>,
 }
 
 struct CatOut {

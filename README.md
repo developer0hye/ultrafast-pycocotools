@@ -13,7 +13,7 @@ Benchmarks cover public pretrained detector outputs on COCO and a separate
 synthetic scalability workload on the public Objects365 dataset. Both compare
 complete evaluation arrays against pycocotools.
 
-**Status:** 0.1.3, alpha. The installation instructions below build from source.
+**Status:** 0.1.4, alpha. The installation instructions below build from source.
 Validate your application's
 parameters and subclass behavior before replacing its reference evaluator.
 
@@ -95,6 +95,10 @@ previous representation and show no demonstrated speed/memory improvement.
 [Measurements, API behavior and lower bounds](docs/efficiency-v013.md).
 
 ![YOLO26n file evaluation time and peak memory versus pycocotools and faster-coco-eval](docs/assets/compact-yolo26n.svg)
+
+Version 0.1.4 further reduces Rust allocations with borrowed index/coordinate
+slices, smaller detection records and a smaller recall workspace.
+[Repeated measurements and implementation details](docs/efficiency-v014.md).
 
 ### LVIS and metric names
 

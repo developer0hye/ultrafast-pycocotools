@@ -328,28 +328,54 @@ pub fn merge(rles: &[Rle], intersect: bool) -> Rle {
 /// The C writes column-major into `o[g*m+d]` and Cython reshapes with
 /// `order='F'`, so the *logical* layout is `[dt, gt]` either way; we store it
 /// row-major so the numpy view is C-contiguous.
+#[inline]
+fn bbox_overlap(dbox: &[f64; 4], gbox: &[f64; 4], ga: f64, crowd: bool) -> f64 {
+    let da = dbox[2] * dbox[3];
+    let mut o = 0.0f64;
+    let w = f64::min(dbox[2] + dbox[0], gbox[2] + gbox[0]) - f64::max(dbox[0], gbox[0]);
+    if w > 0.0 {
+        let h = f64::min(dbox[3] + dbox[1], gbox[3] + gbox[1]) - f64::max(dbox[1], gbox[1]);
+        if h > 0.0 {
+            let i = w * h;
+            let u = if crowd { da } else { da + ga - i };
+            o = i / u;
+        }
+    }
+    o
+}
+
 pub fn bb_iou(dt: &[[f64; 4]], gt: &[[f64; 4]], iscrowd: &[u8], out: &mut [f64]) {
-    let m = dt.len();
     let n = gt.len();
     for (g, gbox) in gt.iter().enumerate() {
         let ga = gbox[2] * gbox[3];
         let crowd = iscrowd.get(g).is_some_and(|&c| c != 0);
         for (d, dbox) in dt.iter().enumerate() {
-            let da = dbox[2] * dbox[3];
-            let mut o = 0.0f64;
-            let w = f64::min(dbox[2] + dbox[0], gbox[2] + gbox[0]) - f64::max(dbox[0], gbox[0]);
-            if w > 0.0 {
-                let h = f64::min(dbox[3] + dbox[1], gbox[3] + gbox[1]) - f64::max(dbox[1], gbox[1]);
-                if h > 0.0 {
-                    let i = w * h;
-                    let u = if crowd { da } else { da + ga - i };
-                    o = i / u;
-                }
-            }
-            out[d * n + g] = o;
+            out[d * n + g] = bbox_overlap(dbox, gbox, ga, crowd);
         }
     }
-    debug_assert_eq!(out.len(), m * n);
+    debug_assert_eq!(out.len(), dt.len() * n);
+}
+
+/// IoU over borrowed columns: do not gather per-image boxes or crowd flags.
+/// Indices preserve the caller's stable order, including repeated indices.
+pub fn bb_iou_indexed(
+    dt: &[[f64; 4]],
+    gt: &[[f64; 4]],
+    dt_idx: &[u32],
+    gt_idx: &[u32],
+    iscrowd: &[bool],
+    out: &mut [f64],
+) {
+    let n = gt_idx.len();
+    for (g, &gi) in gt_idx.iter().enumerate() {
+        let gbox = &gt[gi as usize];
+        let ga = gbox[2] * gbox[3];
+        let crowd = iscrowd[gi as usize];
+        for (d, &di) in dt_idx.iter().enumerate() {
+            out[d * n + g] = bbox_overlap(&dt[di as usize], gbox, ga, crowd);
+        }
+    }
+    debug_assert_eq!(out.len(), dt_idx.len() * n);
 }
 
 /// `rleIou`, writing a row-major `m x n` matrix (`out[d * n + g]`).
@@ -396,13 +422,7 @@ pub fn rle_iou_refs(dt: &[&Rle], gt: &[&Rle], iscrowd: &[u8], out: &mut [f64]) {
 /// `min_thr <= 0.0` disables it. That is not an optimisation switch: with a
 /// threshold of zero the matcher no longer skips low values, it ranks them, and
 /// substituting `0.0` for a true `0.37` would change which ground truth wins.
-pub fn rle_iou_refs_above(
-    dt: &[&Rle],
-    gt: &[&Rle],
-    iscrowd: &[u8],
-    min_thr: f64,
-    out: &mut [f64],
-) {
+pub fn rle_iou_refs_above(dt: &[&Rle], gt: &[&Rle], iscrowd: &[u8], min_thr: f64, out: &mut [f64]) {
     let n = gt.len();
     let db: Vec<[f64; 4]> = dt.iter().map(|r| r.to_bbox()).collect();
     let gb: Vec<[f64; 4]> = gt.iter().map(|r| r.to_bbox()).collect();
@@ -1176,5 +1196,32 @@ mod tests {
             .map(|p| rle_fr_poly_into(p, 32, 32, &mut scratch))
             .collect();
         assert_eq!(fresh, reused);
+    }
+    #[test]
+    fn indexed_bbox_iou_preserves_permutations_repeats_and_crowds() {
+        let boxes = [
+            [0.0, 0.0, 8.0, 8.0],
+            [2.0, 1.0, 3.0, 4.0],
+            [-1.0, -2.0, 0.0, 3.0],
+            [50.0, 60.0, 2.0, 2.0],
+        ];
+        let crowd = [false, true, false, true];
+        for (di, gi) in [
+            (vec![3u32, 1, 0, 1], vec![1u32, 0, 2, 1]),
+            (vec![], vec![0]),
+            (vec![1], vec![]),
+        ] {
+            let d: Vec<_> = di.iter().map(|&i| boxes[i as usize]).collect();
+            let g: Vec<_> = gi.iter().map(|&i| boxes[i as usize]).collect();
+            let c: Vec<_> = gi.iter().map(|&i| crowd[i as usize] as u8).collect();
+            let mut gathered = vec![0.0; di.len() * gi.len()];
+            let mut borrowed = gathered.clone();
+            bb_iou(&d, &g, &c, &mut gathered);
+            bb_iou_indexed(&boxes, &boxes, &di, &gi, &crowd, &mut borrowed);
+            assert!(gathered
+                .iter()
+                .zip(&borrowed)
+                .all(|(a, b)| a.to_bits() == b.to_bits()));
+        }
     }
 }

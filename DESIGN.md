@@ -7,7 +7,7 @@ constrained by numerical equivalence.
 
 Profiling numbers below are historical development measurements, with the input
 and timing scope described in each section. For the current default behavior,
-see the [0.1.3 efficiency report](docs/efficiency-v013.md).
+see the [0.1.4 efficiency report](docs/efficiency-v014.md).
 
 ## Where to start
 
@@ -37,6 +37,21 @@ valid after file modification/deletion. Pickling and deepcopy materialize first.
 Subclasses, unsupported schemas and non-bbox evaluators use the ordinary path.
 The [0.1.3 report](docs/efficiency-v013.md) separates output-storage lower bounds
 from optional representation costs and measured process RSS.
+
+## Borrowed workspaces in 0.1.4
+
+Per-image work borrows GT index slices from the evaluator's grouping storage.
+Rayon can share these immutable slices without copying them. Bbox IoU reads the
+original columns through the selected indices, retaining the same arithmetic
+for contiguous and indexed calls. Detection-only derived fields are omitted
+from compact input records and reconstructed with loadRes semantics.
+
+Accumulation borrows the existing order at the maximum detection limit. Smaller
+limits retain a filtered scratch vector. Recall sampling records O(R) positions
+during the forward count pass, then samples the unchanged precision envelope;
+it no longer retains an O(D) recall vector. Ground-truth ignore ordering uses a
+stable two-pass partition. All score sorts still preserve stable order. See the
+[measurements and validation](docs/efficiency-v014.md).
 
 ## Three equivalence rules
 
