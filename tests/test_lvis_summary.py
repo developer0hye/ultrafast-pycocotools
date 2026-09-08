@@ -37,3 +37,12 @@ def test_summary_leaves_non_float64_and_subclass_indexing_to_numpy():
     class Array(np.ndarray):
         pass
     assert valid_values(np.zeros((2, 3, 4, 1)).view(Array), [0], [0], 0, 0) is None
+
+
+def test_unaligned_summary_arrays_keep_numpy_indexing():
+    from ultrafast_pycocotools import _ufcoco
+    array = np.ndarray((2, 3, 4, 1), dtype=np.float64, buffer=bytearray(193), offset=1)
+    assert not array.flags.aligned
+    assert valid_values(array, [0], [0], 0, 0) is None
+    with pytest.raises(ValueError, match='aligned'):
+        _ufcoco.summary_values(array, [0], [0], 0, 0)

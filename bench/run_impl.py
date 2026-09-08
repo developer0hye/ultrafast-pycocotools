@@ -173,6 +173,10 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool 
     ev.summarize()
     timings["summarize"] = time.perf_counter() - t
 
+    # Array hashes can allocate a large contiguous byte buffer (notably LVIS).
+    # Capture evaluation memory before any result-verification/provenance work.
+    peak = peak_rss_mb()
+
     stats = [float(x) for x in ev.stats]
     # Digests of the full arrays, not just the twelve summary numbers, so two
     # machines can be compared without shipping ~8 MB of doubles around. A
@@ -185,8 +189,6 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool 
         ).hexdigest()[:16]
         for k in ("precision", "recall", "scores")
     }
-    # Capture the peak before provenance I/O, which is outside the benchmark.
-    peak = peak_rss_mb()
     if arrays_out is not None:
         np.savez_compressed(arrays_out, **{k: ev.eval[k] for k in ("precision", "recall", "scores")})
     runtime_paths = [Path(sys.executable).resolve()]

@@ -7,7 +7,7 @@ import numpy as np
 def valid_values(array, thresholds, categories, area, max_det):
     """Gather in NumPy's logical order; callers retain unusual array semantics."""
     if (type(array) is not np.ndarray or array.dtype != np.float64
-            or array.ndim not in (4, 5)):
+            or array.ndim not in (4, 5) or not array.flags.aligned):
         return None
     if (not 0 <= area < array.shape[-2] or not 0 <= max_det < array.shape[-1]
             or any(t < 0 or t >= array.shape[0] for t in thresholds)

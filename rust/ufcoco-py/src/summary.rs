@@ -2,7 +2,7 @@
 //! NumPy still performs the mean on this same C-order sequence, preserving its
 //! floating-point reduction order rather than introducing a different sum.
 use numpy::ndarray::{Ix4, Ix5};
-use numpy::{IntoPyArray, PyArray1, PyReadonlyArrayDyn};
+use numpy::{IntoPyArray, PyArray1, PyReadonlyArrayDyn, PyUntypedArrayMethods};
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
 
@@ -15,6 +15,9 @@ pub(crate) fn summary_values<'py>(
     area: usize,
     max_det: usize,
 ) -> PyResult<Bound<'py, PyArray1<f64>>> {
+    if !array.is_aligned() {
+        return Err(PyValueError::new_err("summary array must be aligned"));
+    }
     let a = array.as_array();
     let shape = a.shape();
     if !(shape.len() == 4 || shape.len() == 5) {
