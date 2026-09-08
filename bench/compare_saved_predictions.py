@@ -29,7 +29,7 @@ def main():
     p.add_argument('--gt', type=Path, required=True)
     p.add_argument('--pred', type=Path, required=True)
     p.add_argument('--out', type=Path, required=True)
-    p.add_argument('--backend', choices=['pycocotools', 'ultrafast'], required=True)
+    p.add_argument('--backend', choices=['pycocotools', 'faster-coco-eval', 'ultrafast'], required=True)
     p.add_argument('--repeats', type=int, default=1)
     a = p.parse_args()
     if a.repeats < 1:
@@ -37,6 +37,8 @@ def main():
     if a.backend == 'pycocotools':
         from pycocotools.coco import COCO
         from pycocotools.cocoeval import COCOeval
+    elif a.backend == 'faster-coco-eval':
+        from faster_coco_eval import COCO, COCOeval_faster as COCOeval
     else:
         from ultrafast_pycocotools import COCO, COCOeval
     a.out.mkdir(parents=True, exist_ok=False)

@@ -19,6 +19,14 @@ COCO's maxDets filtering. Increasing the dataset size increases both counts;
 this experiment does not independently vary box density or category count.
 Exact counts for each point are recorded below and in the raw JSON.
 
+## Additional baseline
+
+Faster-coco-eval 1.8.0 is measured afterward on the exact same inputs and CPU
+affinity. The figure now includes all three implementations; callout ratios
+compare ultrafast with faster-coco-eval. Ultrafast retains byte equality against
+pycocotools. Faster-coco-eval agrees within absolute tolerance 1e-12 but is not
+byte-identical. See the [full comparison](faster-coco-eval.md).
+
 ## Measurement controls
 
 Each scorer runs in a fresh process, with CPU affinity `0,1`, two Rayon/OpenMP
@@ -40,8 +48,8 @@ output serialization. It is not allocator-only memory or a baseline-subtracted
 increase. Both panels start at zero and use linear axes. Line segments connect
 measured points; there are no fitted, smoothed or extrapolated curves.
 
-All four evaluation outputs (`precision`, `recall`, `scores`, `stats`) must
-match byte for byte at every size. These are synthetic detections, so their AP
+Ultrafast’s four evaluation outputs (`precision`, `recall`, `scores`, `stats`)
+must match pycocotools byte for byte at every size. These are synthetic detections, so their AP
 is not a trained detector's accuracy. A lower curve demonstrates less time or
 memory for this workload; it does **not** establish exponential versus linear
 asymptotic complexity.
@@ -89,13 +97,17 @@ This reads the committed measurements and writes PNG, SVG and PDF assets.
 The published rendering uses Matplotlib 3.10.8. Chart labels and endpoint
 ratios are calculated from the JSON, not entered manually.
 
+To freshly reproduce the additional third curve, install
+`faster-coco-eval==1.8.0` and add `--include-faster` to the `scale.py` command.
+The complete [three-backend recipe](faster-coco-eval.md#reproduce) runs all scorers.
+
 ## Measured points
 
-| Images | GT boxes | Predictions | Reference time | Ultrafast time | Reference peak RSS | Ultrafast peak RSS |
-|---:|---:|---:|---:|---:|---:|---:|
-| 1,000 | 15,690 | 13,718 | 5.21 s | 0.17 s | 0.41 GiB | 0.24 GiB |
-| 5,000 | 77,222 | 67,850 | 26.40 s | 0.74 s | 1.52 GiB | 0.32 GiB |
-| 10,000 | 154,418 | 136,040 | 58.01 s | 1.36 s | 2.93 GiB | 0.46 GiB |
-| 20,000 | 310,333 | 273,157 | 120.20 s | 3.01 s | 5.74 GiB | 0.73 GiB |
-| 40,000 | 621,752 | 546,763 | 239.78 s | 5.93 s | 11.37 GiB | 1.29 GiB |
-| 80,000 | 1,240,587 | 1,090,984 | 520.26 s | 12.43 s | 22.62 GiB | 2.37 GiB |
+| Images | GT boxes | Predictions | pycocotools time / RSS | faster-coco-eval time / RSS | ultrafast time / RSS |
+|---:|---:|---:|---:|---:|---:|
+| 1,000 | 15,690 | 13,718 | 5.21 s / 0.41 GiB | 0.97 s / 0.57 GiB | 0.17 s / 0.24 GiB |
+| 5,000 | 77,222 | 67,850 | 26.40 s / 1.52 GiB | 4.97 s / 2.08 GiB | 0.74 s / 0.32 GiB |
+| 10,000 | 154,418 | 136,040 | 58.01 s / 2.93 GiB | 10.31 s / 3.95 GiB | 1.36 s / 0.46 GiB |
+| 20,000 | 310,333 | 273,157 | 120.20 s / 5.74 GiB | 21.51 s / 7.66 GiB | 3.01 s / 0.73 GiB |
+| 40,000 | 621,752 | 546,763 | 239.78 s / 11.37 GiB | 46.33 s / 15.25 GiB | 5.93 s / 1.29 GiB |
+| 80,000 | 1,240,587 | 1,090,984 | 520.26 s / 22.62 GiB | 100.51 s / 30.46 GiB | 12.43 s / 2.37 GiB |

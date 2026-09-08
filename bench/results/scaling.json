@@ -103,6 +103,75 @@
         "peak_rss_MiB": 243.94921875,
         "rayon_threads": "2",
         "omp_threads": "2"
+      },
+      "faster_coco_eval": {
+        "backend": "faster-coco-eval",
+        "images": 1000,
+        "detections": 13718,
+        "gt_sha256": "568427bdb9a952d45e6d68d8269f83b6ee1dd5ed74867b394170318ef0ec5bdf",
+        "pred_sha256": "ab7dd46a2e6f1562c70355394fb871d92ded5dab9999d6d8fb33c19645cafc6b",
+        "input_json_parse_seconds": 0.05971882864832878,
+        "runs": [
+          {
+            "gt_seconds": 0.004340395797044039,
+            "load_res_seconds": 0.021750810090452433,
+            "evaluate_seconds": 0.9225768046453595,
+            "accumulate_seconds": 2.0019710063934326e-05,
+            "summarize_seconds": 0.02142414078116417,
+            "total_scoring_seconds": 0.9701121710240841
+          }
+        ],
+        "stats": [
+          0.08370993106199497,
+          0.33055756855628715,
+          0.011982256331480527,
+          0.11789074081093222,
+          0.10383518661967159,
+          0.08991002517677396,
+          0.09908901849801215,
+          0.16089252796849976,
+          0.16579786191933352,
+          0.16470954354238596,
+          0.16768879094667577,
+          0.16654363865946245
+        ],
+        "array_sha256": {
+          "precision": "a0af1b195a2ceb1be15a9877b5ad8bbce37cba847f4acbb0b85f2af9e1258856",
+          "recall": "79133ceda1b9db736f105ebcb6c1db4e601886d9b749f215e9f3872c2889dfe9",
+          "scores": "334522a03f38dbe8fe04e3fa657cdb737d7c3b8bb9f41a6088c093663682d6b0",
+          "stats": "87df53eab56611dd37eeddd664aa73f66ef56d145eb264ada9399bdcc3bebba6"
+        },
+        "peak_rss_MiB": 580.16015625,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "faster_agreement": {
+        "absolute_tolerance": 1e-12,
+        "relative_tolerance": 0,
+        "byte_identical": {
+          "precision": false,
+          "recall": true,
+          "scores": true,
+          "stats": false
+        },
+        "max_abs_difference": {
+          "precision": 2.220446049250313e-16,
+          "recall": 0.0,
+          "scores": 0.0,
+          "stats": 1.734723475976807e-18
+        },
+        "different_elements": {
+          "precision": 61857,
+          "recall": 0,
+          "scores": 0,
+          "stats": 1
+        },
+        "within_absolute_tolerance": {
+          "precision": true,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        }
       }
     },
     {
@@ -198,6 +267,75 @@
         "peak_rss_MiB": 324.90234375,
         "rayon_threads": "2",
         "omp_threads": "2"
+      },
+      "faster_coco_eval": {
+        "backend": "faster-coco-eval",
+        "images": 5000,
+        "detections": 67850,
+        "gt_sha256": "fc906c56a99fd60249d1d3718f68fcb3b2b4b9efda8f671bd7b45644183317e8",
+        "pred_sha256": "a9a32e8e119b88a3bb5a9ab02d39e01454bebfab0ffaf766ff9f648d5a1f3381",
+        "input_json_parse_seconds": 0.269652031827718,
+        "runs": [
+          {
+            "gt_seconds": 0.022113753017038107,
+            "load_res_seconds": 0.2829559021629393,
+            "evaluate_seconds": 4.648938145022839,
+            "accumulate_seconds": 2.1723099052906036e-05,
+            "summarize_seconds": 0.016895034350454807,
+            "total_scoring_seconds": 4.970924557652324
+          }
+        ],
+        "stats": [
+          0.06825404360498442,
+          0.2818855701409513,
+          0.0064674672505795,
+          0.09232754340941277,
+          0.08099586138984907,
+          0.0642679065756127,
+          0.09648941696160733,
+          0.16232998420981115,
+          0.16725579019569048,
+          0.17032445381235783,
+          0.16442289335086607,
+          0.1680400276004084
+        ],
+        "array_sha256": {
+          "precision": "5d60e2f275d55eb1188cf55f0b64b7ccec3d5f36dca2fa834d66b736341a58cf",
+          "recall": "9456cb517dd8d7dbdbd52673873bedcdf89e15856fe812eb93b64d19a33d7f4e",
+          "scores": "9ee27c4d63236cfd8fcd182498759b0e0b2f27a76f31e2daa63c8d799022e404",
+          "stats": "fdd5083cef9caf4b1d30a8f4ec34ef9deeeab68390e2404bf4889443892146c3"
+        },
+        "peak_rss_MiB": 2133.5078125,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "faster_agreement": {
+        "absolute_tolerance": 1e-12,
+        "relative_tolerance": 0,
+        "byte_identical": {
+          "precision": false,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        },
+        "max_abs_difference": {
+          "precision": 2.220446049250313e-16,
+          "recall": 0.0,
+          "scores": 0.0,
+          "stats": 0.0
+        },
+        "different_elements": {
+          "precision": 24406,
+          "recall": 0,
+          "scores": 0,
+          "stats": 0
+        },
+        "within_absolute_tolerance": {
+          "precision": true,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        }
       }
     },
     {
@@ -293,6 +431,75 @@
         "peak_rss_MiB": 472.265625,
         "rayon_threads": "2",
         "omp_threads": "2"
+      },
+      "faster_coco_eval": {
+        "backend": "faster-coco-eval",
+        "images": 10000,
+        "detections": 136040,
+        "gt_sha256": "244f6a3070db81ba2a535eb6a8a0265070bef81824177df7b83db6186f6293b0",
+        "pred_sha256": "207b4f0259be860ffefd237ffd7b8e6619d087b6c34997372a95de44d8cd44c1",
+        "input_json_parse_seconds": 0.5911319451406598,
+        "runs": [
+          {
+            "gt_seconds": 0.1372941597364843,
+            "load_res_seconds": 0.5057464260607958,
+            "evaluate_seconds": 9.645124044269323,
+            "accumulate_seconds": 2.5117769837379456e-05,
+            "summarize_seconds": 0.019095956813544035,
+            "total_scoring_seconds": 10.307285704649985
+          }
+        ],
+        "stats": [
+          0.06541581353483883,
+          0.2763428010620088,
+          0.004909085885154312,
+          0.08049715614428415,
+          0.07498065461921609,
+          0.05835470846999849,
+          0.09399084924256633,
+          0.1611724131787071,
+          0.16690440465310066,
+          0.16936245272308997,
+          0.16652769453582203,
+          0.16691128491113363
+        ],
+        "array_sha256": {
+          "precision": "8b0cd95ac01098b00d4f72d2e990ac3808fd3c627353b2b5c0582161a2f22994",
+          "recall": "00493bbde3b8ea3466eae6dc10122ecbd6ed2285bdf8bffd26d1b15781bcdbc8",
+          "scores": "c048a2df981ad602b62aeae4ab32478472ab4419bf20f3c391785c83e88ac42d",
+          "stats": "b96fa1c6c2d46e4422e56d74be8c98d37e26022aaafd4edfef12e006bfc12b90"
+        },
+        "peak_rss_MiB": 4044.390625,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "faster_agreement": {
+        "absolute_tolerance": 1e-12,
+        "relative_tolerance": 0,
+        "byte_identical": {
+          "precision": false,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        },
+        "max_abs_difference": {
+          "precision": 2.220446049250313e-16,
+          "recall": 0.0,
+          "scores": 0.0,
+          "stats": 0.0
+        },
+        "different_elements": {
+          "precision": 13274,
+          "recall": 0,
+          "scores": 0,
+          "stats": 0
+        },
+        "within_absolute_tolerance": {
+          "precision": true,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        }
       }
     },
     {
@@ -388,6 +595,75 @@
         "peak_rss_MiB": 749.26953125,
         "rayon_threads": "2",
         "omp_threads": "2"
+      },
+      "faster_coco_eval": {
+        "backend": "faster-coco-eval",
+        "images": 20000,
+        "detections": 273157,
+        "gt_sha256": "b45bfe8b82864f8a867f31be89fecec8ff0aa417e8d1f38902b11558ae99f61d",
+        "pred_sha256": "a38349fe8aed267db522878e07354fa05673ff48f16712b6de86c693760ade34",
+        "input_json_parse_seconds": 1.165625121910125,
+        "runs": [
+          {
+            "gt_seconds": 0.28423687908798456,
+            "load_res_seconds": 1.414784578140825,
+            "evaluate_seconds": 19.79439904075116,
+            "accumulate_seconds": 3.239791840314865e-05,
+            "summarize_seconds": 0.01849031075835228,
+            "total_scoring_seconds": 21.511943206656724
+          }
+        ],
+        "stats": [
+          0.06275177393724504,
+          0.27009253073640954,
+          0.0042169077706366445,
+          0.07444417446971427,
+          0.07091192000764124,
+          0.052846535695869,
+          0.09220497607780169,
+          0.15985187743161608,
+          0.16601166577343218,
+          0.16757309810135534,
+          0.16680619677381936,
+          0.16603429844312104
+        ],
+        "array_sha256": {
+          "precision": "cffc28700edc8b95b6565eb966cae729b71f16ad6ce961c484328ba54d0886e7",
+          "recall": "b415fe1aa9d1dc239cfdeaeeaa8b15b9b5e042f107965b8643f58423bf59e2d1",
+          "scores": "00cef671bfc50e6495f8cee9a58d927367eb3f390f491344688b2c575340eafd",
+          "stats": "31fc4c456147995a705ae5b54eddd83cebda0ebb1c58b362dc10fdcaefdabbed"
+        },
+        "peak_rss_MiB": 7843.359375,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "faster_agreement": {
+        "absolute_tolerance": 1e-12,
+        "relative_tolerance": 0,
+        "byte_identical": {
+          "precision": false,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        },
+        "max_abs_difference": {
+          "precision": 2.220446049250313e-16,
+          "recall": 0.0,
+          "scores": 0.0,
+          "stats": 0.0
+        },
+        "different_elements": {
+          "precision": 8523,
+          "recall": 0,
+          "scores": 0,
+          "stats": 0
+        },
+        "within_absolute_tolerance": {
+          "precision": true,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        }
       }
     },
     {
@@ -483,6 +759,75 @@
         "peak_rss_MiB": 1320.90234375,
         "rayon_threads": "2",
         "omp_threads": "2"
+      },
+      "faster_coco_eval": {
+        "backend": "faster-coco-eval",
+        "images": 40000,
+        "detections": 546763,
+        "gt_sha256": "f051eec87a3a82424ac480f3f8a283f9dc930725e779887f3fe0e37c0370025f",
+        "pred_sha256": "eca9b059a6d86ef35d4f5a59c048401c4cfd130ee74d21d399dc8fd2f14326fd",
+        "input_json_parse_seconds": 2.380662635434419,
+        "runs": [
+          {
+            "gt_seconds": 0.5697686769999564,
+            "load_res_seconds": 2.6771780597046018,
+            "evaluate_seconds": 43.07172486418858,
+            "accumulate_seconds": 2.5037210434675217e-05,
+            "summarize_seconds": 0.015476930886507034,
+            "total_scoring_seconds": 46.33417356899008
+          }
+        ],
+        "stats": [
+          0.06100216337822057,
+          0.26432581315569686,
+          0.003825296311618257,
+          0.07003787052960653,
+          0.06706603136014687,
+          0.04965133204132493,
+          0.09145102975587331,
+          0.15983940636258087,
+          0.16626592748208593,
+          0.16863815336063756,
+          0.16556733813152627,
+          0.16662647913180886
+        ],
+        "array_sha256": {
+          "precision": "26f9d2d292ef003ffc31c5957b74573f35713266f951ab671bd198af9bf17947",
+          "recall": "74d6c4812a56e2fb3a5cb07a61e51892a2d15daee745cc00e6592fb517224f6e",
+          "scores": "e8726cfba721b03cd74772f93032d40fbc6ecbf96358e4ee082b599a7e70101c",
+          "stats": "f7db98c0fbd62062e93fcdea134f5fff0be1cf55c80e26882277a51de44c63ca"
+        },
+        "peak_rss_MiB": 15611.79296875,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "faster_agreement": {
+        "absolute_tolerance": 1e-12,
+        "relative_tolerance": 0,
+        "byte_identical": {
+          "precision": false,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        },
+        "max_abs_difference": {
+          "precision": 2.220446049250313e-16,
+          "recall": 0.0,
+          "scores": 0.0,
+          "stats": 0.0
+        },
+        "different_elements": {
+          "precision": 5114,
+          "recall": 0,
+          "scores": 0,
+          "stats": 0
+        },
+        "within_absolute_tolerance": {
+          "precision": true,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        }
       }
     },
     {
@@ -580,7 +925,76 @@
         "omp_threads": "2"
       },
       "workload": "synthetic predictions on public annotations; not detector accuracy",
-      "speedup": 41.856107221414916
+      "speedup": 41.856107221414916,
+      "faster_coco_eval": {
+        "backend": "faster-coco-eval",
+        "images": 80000,
+        "detections": 1090984,
+        "gt_sha256": "b5b6a043f3b36c1865240a3e23fc4cbbf627052d72b6a4428a993bf2549d4424",
+        "pred_sha256": "d1a1db2ffc1afd15ee02b82672a83747b0518e7770491cdfdbb0098283df4542",
+        "input_json_parse_seconds": 5.164370249025524,
+        "runs": [
+          {
+            "gt_seconds": 2.0717708389274776,
+            "load_res_seconds": 4.499084068927914,
+            "evaluate_seconds": 93.92817474575713,
+            "accumulate_seconds": 2.4166889488697052e-05,
+            "summarize_seconds": 0.014340801164507866,
+            "total_scoring_seconds": 100.51339462166652
+          }
+        ],
+        "stats": [
+          0.06030084048502876,
+          0.26168735827995165,
+          0.003828009378613344,
+          0.06726780903958639,
+          0.06534415548295817,
+          0.04750469803411289,
+          0.09028229398920475,
+          0.1594475864758379,
+          0.16624303931713869,
+          0.1676666324801709,
+          0.16533728516480317,
+          0.16647753225552828
+        ],
+        "array_sha256": {
+          "precision": "493bc436aca3b5219073bd1d203c06bd0466ca60bc7fa4848a30ce4d7b6300c9",
+          "recall": "dd2c143922a45cc7daead948fa3a39e6e6f01d66c1f1fda344e54d0f28269101",
+          "scores": "b9cb9ff753ba98fb3d965f48590f8ad6e07a8203d72aeded1082ae1c5685be1f",
+          "stats": "dd79c9cdae4b7fcbea703567e888781fd22be61eed8f143d54f370523bb7de8c"
+        },
+        "peak_rss_MiB": 31195.76953125,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "faster_agreement": {
+        "absolute_tolerance": 1e-12,
+        "relative_tolerance": 0,
+        "byte_identical": {
+          "precision": false,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        },
+        "max_abs_difference": {
+          "precision": 2.220446049250313e-16,
+          "recall": 0.0,
+          "scores": 0.0,
+          "stats": 0.0
+        },
+        "different_elements": {
+          "precision": 4510,
+          "recall": 0,
+          "scores": 0,
+          "stats": 0
+        },
+        "within_absolute_tolerance": {
+          "precision": true,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        }
+      }
     }
   ],
   "endpoint_provenance": {
@@ -685,6 +1099,8 @@
   "versions": {
     "numpy": "2.4.4",
     "pycocotools": "2.0.11",
-    "ultrafast-pycocotools": "0.1.0"
-  }
+    "ultrafast-pycocotools": "0.1.0",
+    "faster-coco-eval": "1.8.0"
+  },
+  "faster_measurement_note": "Measured afterward on identical input files and CPU affinity; prior pycocotools and ultrafast runs reused. Faster-coco-eval 1.8.0 defaults; one run per size."
 }

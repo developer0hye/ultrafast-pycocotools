@@ -43,7 +43,7 @@ match the small reference case committed in this repository.
 A successful run ends with:
 
 ```text
-PASS: precision, recall, scores and stats are byte-identical.
+PASS: precision, recall, scores and stats are byte-identical (pycocotools vs ultrafast).
 ```
 
 Output directories must be new. To repeat, choose a different `--out`; previous
@@ -146,3 +146,12 @@ checks parity and gives an observed timing; use `--repeats 3` for a spread and
 [compare.py](../bench/compare.py) for interleaved comparisons. Hardware, workload,
 affinity and library versions affect time and memory. Metric parity and speed
 are separate claims.
+
+## Include faster-coco-eval
+
+Install `faster-coco-eval==1.8.0` and add `--include-faster` to any reproduction
+command to score the same inputs with all three implementations. Ultrafast's
+byte-equality gate remains strict. Faster-coco-eval's numerical differences
+are reported separately, with absolute tolerance 1e-12 and zero relative
+tolerance. See the [comparison report](faster-coco-eval.md) for results and
+full commands.

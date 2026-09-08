@@ -11,7 +11,7 @@ import random
 import subprocess
 import sys
 
-from reproduce import compare, digest
+from reproduce import compare, compare_numerically, digest
 
 HERE = Path(__file__).resolve().parent
 
@@ -50,6 +50,7 @@ def main():
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--sizes', type=int, nargs='+', default=[1000, 5000, 10000, 20000, 40000, 80000])
     parser.add_argument('--seed', type=int, default=20260908)
+    parser.add_argument('--include-faster', action='store_true', help='Also measure faster-coco-eval')
     parser.add_argument('--threads', type=int, default=2)
     parser.add_argument('--cpus', help='Optional Linux CPU affinity, e.g. 0,1')
     parser.add_argument('--reuse-full', type=Path, help='Reuse Objects365 endpoint from a public_benchmarks.json file after verifying input hashes')
@@ -57,6 +58,8 @@ def main():
     args = parser.parse_args()
     if args.threads < 1 or min(args.sizes) < 1:
         parser.error('threads and sizes must be positive')
+    if args.include_faster and args.reuse_full:
+        parser.error('--include-faster requires fresh reference arrays; omit --reuse-full')
     args.sizes = sorted(set(args.sizes))
     args.gt, args.pred, args.out = args.gt.resolve(), args.pred.resolve(), args.out.resolve()
     if not args.gt.is_file() or not args.pred.is_file():
@@ -112,10 +115,25 @@ def main():
                                     '--backend', backend], check=True, env=env, stdout=log, stderr=subprocess.STDOUT)
             measured = compare(args.out / f'{count}_pycocotools', args.out / f'{count}_ultrafast')
             source = 'new measurement'
+        if args.include_faster:
+            if cached:
+                raise ValueError('--include-faster requires a fresh reference run; omit --reuse-full')
+            destination = args.out / f'{count}_faster-coco-eval'
+            print(f'{count:,} images: faster-coco-eval', flush=True)
+            with (args.out / f'{count}_faster-coco-eval.log').open('w') as log:
+                subprocess.run([sys.executable, str(HERE / 'compare_saved_predictions.py'),
+                                '--gt', point['gt'], '--pred', point['pred'], '--out', str(destination),
+                                '--backend', 'faster-coco-eval'], check=True, env=env,
+                               stdout=log, stderr=subprocess.STDOUT)
+            measured['faster_coco_eval'] = json.loads((destination / 'result.json').read_text())
+            measured['faster_agreement'] = compare_numerically(args.out / f'{count}_pycocotools', destination)
+            result['versions']['faster-coco-eval'] = importlib.metadata.version('faster-coco-eval')
         result['points'].append({**{k: v for k, v in point.items() if k not in ('gt', 'pred')},
                                  'measurement_source': source, **measured})
         (args.out / 'scaling.json').write_text(json.dumps(result, indent=2) + '\n')
-        print(f'{count:,} images: PASS, all arrays byte-identical', flush=True)
+        print(f'{count:,} images: PASS, pycocotools/ultrafast arrays byte-identical', flush=True)
+        if args.include_faster and not all(measured['faster_agreement']['within_absolute_tolerance'].values()):
+            raise ValueError('faster-coco-eval differs beyond tolerance; see scaling.json')
 
 
 if __name__ == '__main__':

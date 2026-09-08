@@ -16,6 +16,7 @@ Actions are pinned to commit SHAs, and jobs have read-only repository access.
 | Edge cases and API | Crowds, tied scores, area boundaries, RLE/masks, query ordering, subclass overrides and diagnostics |
 | Determinism | Comparison across Rayon thread counts |
 | Reproduction | Fresh synthetic input generation, isolated backend processes, published hashes on the recorded reference environment |
+| Additional backend | Linux / Python 3.12 checks faster-coco-eval 1.8.0 on identical generated inputs; numerical agreement is distinct from byte identity |
 | Benchmark integrity | Changed inputs fail before scoring; one-ULP array changes fail; nested scaling subsets preserve input order and categories |
 
 The source distribution is compiled on every platform; importing the native

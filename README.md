@@ -97,38 +97,43 @@ processes when comparing the reference package and the replacement.
 ![Evaluation time and peak memory versus GT plus prediction count](docs/assets/scaling.png)
 
 Measured on nested Objects365 subsets with identical inputs for both scorers.
-Every point passes byte-level parity for all evaluation arrays.
+Ultrafast matches pycocotools byte for byte at every point. Faster-coco-eval
+passes a separate numerical tolerance check; its arrays are not byte-identical.
 [Method, counts and reproduction](docs/scaling.md) ·
 [SVG](docs/assets/scaling.svg) · [PDF](docs/assets/scaling.pdf) ·
 [Raw measurements](bench/results/scaling.json).
 
 ## Public benchmarks
 
-Both cases produced **byte-identical precision, recall, scores and summary
-statistics** against pycocotools 2.0.11. Timings below include GT indexing,
-result loading, evaluation, accumulation and summarization; they exclude input
-JSON parsing, detector inference and output serialization.
+The same saved inputs are scored by pycocotools 2.0.11, faster-coco-eval 1.8.0
+and ultrafast-pycocotools 0.1.0. Ultrafast matches the reference arrays **byte for
+byte**. Faster-coco-eval agrees within absolute tolerance 1e-12 (rtol=0), with
+small floating-point differences reported explicitly.
 
-| Workload | Images | Predictions | pycocotools | ultrafast | Speedup | Peak RSS, reference / ultrafast |
-|---|---:|---:|---:|---:|---:|---:|
-| COCO val2017 · public YOLO11m | 5,000 | 431,145 | 29.87 s | 2.61 s | 11.46× | 1.28 / 0.70 GiB |
-| Objects365 v2 val · synthetic predictions | 80,000 | 1,090,984 | 520.26 s | 12.43 s | 41.86× | 22.62 / 2.37 GiB |
+| Workload | pycocotools | faster-coco-eval | ultrafast | Ultrafast speedup vs faster-coco-eval |
+|---|---:|---:|---:|---:|
+| COCO val2017 / public YOLO11m | 29.87 s | 4.88 s | 2.61 s | 1.87× |
+| Objects365 v2 / synthetic predictions | 520.26 s | 100.51 s | 12.43 s | 8.09× |
 
-Measured with Python 3.12.3, NumPy 2.4.4 and ultrafast-pycocotools 0.1.0 on an
-AMD EPYC 9554 host, with **two CPU cores available to each scorer**, two Rayon
-threads and one OpenBLAS thread. These are single-run observations on a shared
-host, not timing guarantees. Peak RSS covers the whole process, including
-parsed inputs and result serialization.
+| Workload | pycocotools RSS | faster-coco-eval RSS | ultrafast RSS |
+|---|---:|---:|---:|
+| COCO val2017 / public YOLO11m | 1.28 GiB | 1.34 GiB | 0.70 GiB |
+| Objects365 v2 / synthetic predictions | 22.62 GiB | 30.46 GiB | 2.37 GiB |
 
-YOLO11m uses public pretrained weights and scores 50.695 AP on these saved COCO
-predictions with both backends. Objects365 uses reproducible, seeded jittered
-GT boxes plus false positives: **it measures evaluator scalability, not trained
-detector accuracy**. No GPU is used during either scorer comparison.
+Measured with Python 3.12.3 and NumPy 2.4.4 on an AMD EPYC 9554 host, with two
+CPU cores available to each scorer, two Rayon/OpenMP threads and one OpenBLAS
+thread. One run per case; prior reference/ultrafast results are reused and the
+additional backend is measured afterward. These are shared-host observations.
 
-[Reproduce the inputs and evaluation](docs/reproducibility.md) ·
-[Raw results, SHA-256 hashes and provenance](bench/results/public_benchmarks.json).
-The raw file records per-phase timings, all summary statistics, input and array
-hashes, source hashes, versions, CPU affinity and exact synthetic parameters.
+Time includes GT indexing, result loading, evaluation, accumulation and
+summarization. It excludes JSON parsing, inference and output serialization.
+Memory is whole-process peak RSS, including parsed inputs and serialization.
+Objects365 predictions are synthetic: this is evaluator scalability, not
+trained detector accuracy or end-to-end Ultralytics validation speed.
+
+[Three-backend comparison and reproduction](docs/faster-coco-eval.md) ·
+[Raw results and hashes](bench/results/public_benchmarks.json) ·
+[General reproduction guide](docs/reproducibility.md).
 
 ## Compatibility and intentional differences
 

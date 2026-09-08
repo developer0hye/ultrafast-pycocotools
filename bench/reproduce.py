@@ -1,4 +1,4 @@
-"""Generate inputs, score both backends, and require byte-identical COCO arrays."""
+"""Generate inputs and compare COCO scorers, keeping strict ultrafast parity."""
 from __future__ import annotations
 
 import argparse
@@ -40,12 +40,37 @@ def compare(reference, candidate):
     return {'byte_identical': equality, 'reference': ref, 'ultrafast': fast}
 
 
+def compare_numerically(reference, candidate, atol=1e-12):
+    """Report byte equality separately from numerical agreement; require identical inputs."""
+    import numpy as np
+    reference, candidate = Path(reference), Path(candidate)
+    ref = json.loads((reference / 'result.json').read_text())
+    other = json.loads((candidate / 'result.json').read_text())
+    for key in ('gt_sha256', 'pred_sha256', 'images', 'detections'):
+        if ref[key] != other[key]:
+            raise ValueError(f'Inputs differ: {key}')
+    result = {'absolute_tolerance': atol, 'relative_tolerance': 0,
+              'byte_identical': {}, 'max_abs_difference': {},
+              'different_elements': {}, 'within_absolute_tolerance': {}}
+    with np.load(reference / 'arrays.npz') as a, np.load(candidate / 'arrays.npz') as b:
+        for key in ('precision', 'recall', 'scores', 'stats'):
+            if a[key].shape != b[key].shape:
+                raise ValueError(f'Array shapes differ: {key}')
+            result['byte_identical'][key] = a[key].tobytes() == b[key].tobytes()
+            delta = np.abs(a[key] - b[key])
+            result['max_abs_difference'][key] = float(np.max(delta)) if np.isfinite(delta).all() else None
+            result['different_elements'][key] = int(np.count_nonzero(a[key] != b[key]))
+            result['within_absolute_tolerance'][key] = bool(np.allclose(a[key], b[key], rtol=0, atol=atol))
+    return result
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('mode', choices=('quick', 'objects365', 'predictions'))
     p.add_argument('--out', type=Path, required=True, help='New output directory; never overwritten')
     p.add_argument('--gt', type=Path, help='Original annotation JSON; required except in quick mode')
     p.add_argument('--pred', type=Path, help='Existing predictions, for predictions mode')
+    p.add_argument('--include-faster', action='store_true', help='Also measure faster-coco-eval and report numerical agreement')
     p.add_argument('--threads', type=int, default=2)
     p.add_argument('--repeats', type=int, default=1)
     p.add_argument('--seed', type=int, help='Defaults to 0 for quick, 1234 for Objects365')
@@ -100,6 +125,12 @@ def main():
                                              '--out', a.out / backend, '--repeats', a.repeats],
             a.out / f'{backend}.log')
     result = compare(a.out / 'pycocotools', a.out / 'ultrafast')
+    if a.include_faster:
+        run('compare_saved_predictions.py', ['--backend', 'faster-coco-eval', '--gt', gt, '--pred', pred,
+                                             '--out', a.out / 'faster-coco-eval', '--repeats', a.repeats],
+            a.out / 'faster-coco-eval.log')
+        result['faster_coco_eval'] = json.loads((a.out / 'faster-coco-eval/result.json').read_text())
+        result['faster_agreement'] = compare_numerically(a.out / 'pycocotools', a.out / 'faster-coco-eval')
     if a.verify_published and result['reference']['array_sha256'] != expected['array_sha256']:
         raise ValueError('Inputs match but evaluation arrays differ from the published reference; check versions')
     result.update(mode=a.mode, seed=seed, python=platform.python_version(),
@@ -107,9 +138,16 @@ def main():
                             ('numpy', 'pycocotools', 'ultrafast-pycocotools')},
                   threads=a.threads, cpu_affinity=sorted(os.sched_getaffinity(0))
                   if hasattr(os, 'sched_getaffinity') else None, commands=commands)
+    if a.include_faster:
+        result['versions']['faster-coco-eval'] = importlib.metadata.version('faster-coco-eval')
     (a.out / 'comparison.json').write_text(json.dumps(result, indent=2) + '\n')
-    print('PASS: precision, recall, scores and stats are byte-identical.', flush=True)
+    print('PASS: precision, recall, scores and stats are byte-identical (pycocotools vs ultrafast).', flush=True)
     print(f'Evidence: {a.out / "comparison.json"}', flush=True)
+    if a.include_faster:
+        agreement = result['faster_agreement']
+        print('faster-coco-eval versus reference:', json.dumps(agreement), flush=True)
+        if not all(agreement['within_absolute_tolerance'].values()):
+            raise ValueError('faster-coco-eval differs beyond tolerance; see comparison.json')
 
 
 if __name__ == '__main__':

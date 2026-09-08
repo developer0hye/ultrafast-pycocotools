@@ -88,6 +88,75 @@
         "recall": true,
         "scores": true,
         "stats": true
+      },
+      "faster_coco_eval": {
+        "backend": "faster-coco-eval",
+        "images": 64,
+        "detections": 1203,
+        "gt_sha256": "ee19d0fd95f68c6b8d6a6f8455e49d762cf27d0e85370db96486e2fc61130631",
+        "pred_sha256": "20de4d9e5e3c1ed4dfc9885198f7f02c19d5d844e5b7f56e656596ea47fb0a92",
+        "input_json_parse_seconds": 0.0028185080736875534,
+        "runs": [
+          {
+            "gt_seconds": 0.00016647903248667717,
+            "load_res_seconds": 0.00131247378885746,
+            "evaluate_seconds": 0.029652775265276432,
+            "accumulate_seconds": 5.448237061500549e-06,
+            "summarize_seconds": 0.0004967940039932728,
+            "total_scoring_seconds": 0.03163397032767534
+          }
+        ],
+        "stats": [
+          0.05781897630784407,
+          0.18494247147852422,
+          0.011624283898097667,
+          0.13738428766245733,
+          0.09581274062045364,
+          0.060897088583322385,
+          0.09090398107009949,
+          0.22552054816528502,
+          0.22813666468765154,
+          0.23950823482073483,
+          0.23600720551378443,
+          0.22151120547002776
+        ],
+        "array_sha256": {
+          "precision": "f0a397120e45db2e7782f2a624810033f28c4c7684640f69eacab47c25780ae0",
+          "recall": "b922598677c13d72fb24bca21ac02794b5c4a2ef46fdce1f89fee7dcf00110b7",
+          "scores": "02e8291e197d527666842b86816627c1944913b215b864a9cd4e0dea18b21239",
+          "stats": "18f471841634c196060d9ce99d71a286a77f1f44773a699cd33a68b1eb83a25f"
+        },
+        "peak_rss_MiB": 56.0,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "faster_agreement": {
+        "absolute_tolerance": 1e-12,
+        "relative_tolerance": 0,
+        "byte_identical": {
+          "precision": false,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        },
+        "max_abs_difference": {
+          "precision": 2.220446049250313e-16,
+          "recall": 0.0,
+          "scores": 0.0,
+          "stats": 0.0
+        },
+        "different_elements": {
+          "precision": 559,
+          "recall": 0,
+          "scores": 0,
+          "stats": 0
+        },
+        "within_absolute_tolerance": {
+          "precision": true,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        }
       }
     },
     "yolo11m": {
@@ -180,7 +249,76 @@
         "omp_threads": "2"
       },
       "workload": "public pretrained detector predictions",
-      "speedup": 11.455475852090407
+      "speedup": 11.455475852090407,
+      "faster_coco_eval": {
+        "backend": "faster-coco-eval",
+        "images": 5000,
+        "detections": 431145,
+        "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+        "pred_sha256": "c525b1678fc8d1b71ea2ef7f8068d7aec56d139cd61c21eb26f731de4a047f59",
+        "input_json_parse_seconds": 0.9567143321037292,
+        "runs": [
+          {
+            "gt_seconds": 0.017892977222800255,
+            "load_res_seconds": 1.8492295700125396,
+            "evaluate_seconds": 3.0140380770899355,
+            "accumulate_seconds": 2.0239967852830887e-05,
+            "summarize_seconds": 0.0023773182183504105,
+            "total_scoring_seconds": 4.883558182511479
+          }
+        ],
+        "stats": [
+          0.5069484658135361,
+          0.673320131017044,
+          0.5512620504670513,
+          0.330515872003354,
+          0.5604537680841476,
+          0.6680562864385514,
+          0.37210815548284415,
+          0.6145818878960251,
+          0.6597944487500417,
+          0.47971037211459217,
+          0.7206374084868608,
+          0.8016607280954492
+        ],
+        "array_sha256": {
+          "precision": "3c6d91372da71e158da06c5c973dc6b5520d51241cf0fec484aa718b53eaaa33",
+          "recall": "3a0032f1a46291af36d1baec0d491965ad2f554ba15216437f3aeb5fa2ae5b8c",
+          "scores": "8fa1542ca9965e42323eeb31047bfe169bf0ca534ca6c6611dafb0ff6a0cb406",
+          "stats": "a29ce67aff55707cc46e739d2e1e78a39f8da13b7a1e9294bbb720501f23b551"
+        },
+        "peak_rss_MiB": 1368.4453125,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "faster_agreement": {
+        "absolute_tolerance": 1e-12,
+        "relative_tolerance": 0,
+        "byte_identical": {
+          "precision": false,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        },
+        "max_abs_difference": {
+          "precision": 2.220446049250313e-16,
+          "recall": 0.0,
+          "scores": 0.0,
+          "stats": 0.0
+        },
+        "different_elements": {
+          "precision": 5744,
+          "recall": 0,
+          "scores": 0,
+          "stats": 0
+        },
+        "within_absolute_tolerance": {
+          "precision": true,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        }
+      }
     },
     "objects365": {
       "byte_identical": {
@@ -272,7 +410,76 @@
         "omp_threads": "2"
       },
       "workload": "synthetic predictions on public annotations; not detector accuracy",
-      "speedup": 41.856107221414916
+      "speedup": 41.856107221414916,
+      "faster_coco_eval": {
+        "backend": "faster-coco-eval",
+        "images": 80000,
+        "detections": 1090984,
+        "gt_sha256": "b5b6a043f3b36c1865240a3e23fc4cbbf627052d72b6a4428a993bf2549d4424",
+        "pred_sha256": "d1a1db2ffc1afd15ee02b82672a83747b0518e7770491cdfdbb0098283df4542",
+        "input_json_parse_seconds": 5.164370249025524,
+        "runs": [
+          {
+            "gt_seconds": 2.0717708389274776,
+            "load_res_seconds": 4.499084068927914,
+            "evaluate_seconds": 93.92817474575713,
+            "accumulate_seconds": 2.4166889488697052e-05,
+            "summarize_seconds": 0.014340801164507866,
+            "total_scoring_seconds": 100.51339462166652
+          }
+        ],
+        "stats": [
+          0.06030084048502876,
+          0.26168735827995165,
+          0.003828009378613344,
+          0.06726780903958639,
+          0.06534415548295817,
+          0.04750469803411289,
+          0.09028229398920475,
+          0.1594475864758379,
+          0.16624303931713869,
+          0.1676666324801709,
+          0.16533728516480317,
+          0.16647753225552828
+        ],
+        "array_sha256": {
+          "precision": "493bc436aca3b5219073bd1d203c06bd0466ca60bc7fa4848a30ce4d7b6300c9",
+          "recall": "dd2c143922a45cc7daead948fa3a39e6e6f01d66c1f1fda344e54d0f28269101",
+          "scores": "b9cb9ff753ba98fb3d965f48590f8ad6e07a8203d72aeded1082ae1c5685be1f",
+          "stats": "dd79c9cdae4b7fcbea703567e888781fd22be61eed8f143d54f370523bb7de8c"
+        },
+        "peak_rss_MiB": 31195.76953125,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "faster_agreement": {
+        "absolute_tolerance": 1e-12,
+        "relative_tolerance": 0,
+        "byte_identical": {
+          "precision": false,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        },
+        "max_abs_difference": {
+          "precision": 2.220446049250313e-16,
+          "recall": 0.0,
+          "scores": 0.0,
+          "stats": 0.0
+        },
+        "different_elements": {
+          "precision": 4510,
+          "recall": 0,
+          "scores": 0,
+          "stats": 0
+        },
+        "within_absolute_tolerance": {
+          "precision": true,
+          "recall": true,
+          "scores": true,
+          "stats": true
+        }
+      }
     }
   },
   "provenance": {
@@ -371,6 +578,8 @@
       ],
       "use_cats": true,
       "image_selection": "all annotation images"
-    }
+    },
+    "faster_coco_eval": "1.8.0",
+    "faster_measurement_note": "Measured afterward on identical input files and CPU affinity; prior pycocotools and ultrafast runs reused. Faster-coco-eval 1.8.0 defaults; one run per size."
   }
 }
