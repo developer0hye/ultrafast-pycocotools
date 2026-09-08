@@ -215,7 +215,7 @@ index 097d8ce..80b4a0e 100644
              # torchmetrics supports incremental .update() calls
              batch_size = self.mask_batch_size
 diff --git a/pyproject.toml b/pyproject.toml
-index 3283690..5b63d6b 100644
+index 3283690..7e693ee 100644
 --- a/pyproject.toml
 +++ b/pyproject.toml
 @@ -53,6 +53,8 @@ dependencies = [
@@ -223,7 +223,7 @@ index 3283690..5b63d6b 100644
  
  [project.optional-dependencies]
 +# Optional CPU evaluator for bbox and instance-segmentation mAP.
-+ultrafast = ["ultrafast-pycocotools>=0.1.6,<0.2"]
++ultrafast = ["ultrafast-pycocotools>=0.1.7,<0.2"]
  # `make export` / `dfine export` backends. Large, so opt-in. nncf and openvino are
  # capped at the tested major: a silent API change there yields a bad artifact, not an error.
  export = [
@@ -280,7 +280,7 @@ index aeee2cb..a3f7649 100644
          preds=copy.deepcopy(preds),
          label_to_name=COCO80,
 diff --git a/uv.lock b/uv.lock
-index c7b8156..34b9985 100644
+index c7b8156..0153af8 100644
 --- a/uv.lock
 +++ b/uv.lock
 @@ -584,6 +584,7 @@ all = [
@@ -319,7 +319,7 @@ index c7b8156..34b9985 100644
      { name = "torchvision", specifier = ">=0.28.0" },
      { name = "tqdm", specifier = ">=4.66.5" },
      { name = "transformers", marker = "extra == 'label'", specifier = ">=5.15.0" },
-+    { name = "ultrafast-pycocotools", marker = "extra == 'ultrafast'", specifier = ">=0.1.6,<0.2" },
++    { name = "ultrafast-pycocotools", marker = "extra == 'ultrafast'", specifier = ">=0.1.7,<0.2" },
      { name = "wandb", specifier = ">=0.26.1" },
  ]
 -provides-extras = ["export", "trt", "label", "demo", "extra", "all"]
@@ -372,25 +372,25 @@ index c7b8156..34b9985 100644
  
 +[[package]]
 +name = "ultrafast-pycocotools"
-+version = "0.1.6"
++version = "0.1.7"
 +source = { registry = "https://pypi.org/simple" }
 +dependencies = [
 +    { name = "numpy", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 +]
-+sdist = { url = "https://files.pythonhosted.org/packages/0f/b3/78921d5b2335129800369b342bc59792d3ea49a5ea8cc45139491f7dbac9/ultrafast_pycocotools-0.1.6.tar.gz", hash = "sha256:3badf4dea2aed7bee0d0185c961ed7ef487f1e5a3de89a346b516d88db3cd5ad", size = 85410, upload-time = "2026-09-08T11:56:30.484Z" }
++sdist = { url = "https://files.pythonhosted.org/packages/75/8b/cab616a8ba82ab45f3e7d7ff83e1c666c844419924d89b24ebfabe8a5012/ultrafast_pycocotools-0.1.7.tar.gz", hash = "sha256:f3c1f4dc32b8f3fa98d7cb5af4d61b4cea453a6309632be7ae985ac6994fc685", size = 86387, upload-time = "2026-09-08T15:15:25.04Z" }
 +wheels = [
-+    { url = "https://files.pythonhosted.org/packages/c7/d4/05cbc107ea7a61f5a8df0ce13cddc8f68d9b124f0ed507f63690dc5f7a2a/ultrafast_pycocotools-0.1.6-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:526c7d1d940a7fffef5b1ee31ab59d1f99c7b3512fdcfea1ab30899df1a8f7cb", size = 514314, upload-time = "2026-09-08T11:55:44.6Z" },
-+    { url = "https://files.pythonhosted.org/packages/7f/78/ebb12b845c6d0d41de88390880f8374089690715aae52b23e4d0be2cff90/ultrafast_pycocotools-0.1.6-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:205bfde1857e7822bc4ea3f43e128848567ed1093c7da9f0b87da15eecbee398", size = 499580, upload-time = "2026-09-08T11:55:46.016Z" },
-+    { url = "https://files.pythonhosted.org/packages/e4/fd/95eb61ddd8ac593d0447f3832f27282d6f601dc49e83902802944f5cb699/ultrafast_pycocotools-0.1.6-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e37d7a2c074e62f8269a073de5544148f4fd98a52df8ecf5716b13e8d010d844", size = 524059, upload-time = "2026-09-08T11:55:47.617Z" },
-+    { url = "https://files.pythonhosted.org/packages/55/d9/16e24413eb93da1af8cddea53807bafbea71fc3f5d560b5d3b191c86cc70/ultrafast_pycocotools-0.1.6-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ee69993d10525c616d3036f8f5bf1295b344b300b4af851dfd7e5ac636997c1b", size = 555766, upload-time = "2026-09-08T11:55:49.476Z" },
-+    { url = "https://files.pythonhosted.org/packages/75/e8/268efd455552ee022a74ed759ae6ef5438cfcbcacf61a868782962f9700e/ultrafast_pycocotools-0.1.6-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:d3be7d1e58bc2937f3226b740044373dfb735e041ebf77abdfd3c15e334a9fdd", size = 522117, upload-time = "2026-09-08T11:55:52.807Z" },
-+    { url = "https://files.pythonhosted.org/packages/3d/52/052be2ce9dd94080ee1e413ecc1df3b3d21a5ffa39c0cc32129892ccb864/ultrafast_pycocotools-0.1.6-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:ceedbf8e007f0517dae639dc6748eab6de746a2786ea089afcaaf3b7d1951341", size = 495540, upload-time = "2026-09-08T11:55:54.64Z" },
-+    { url = "https://files.pythonhosted.org/packages/52/3d/949afc876dd6815dcdd724192b6f3bc4156357903a126481301200e50a95/ultrafast_pycocotools-0.1.6-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:01ef36b10e16d1d726d039f8fa5c244accbf9d6787f0e6512f9d0d9f382ec4cb", size = 520724, upload-time = "2026-09-08T11:55:56.176Z" },
-+    { url = "https://files.pythonhosted.org/packages/9b/2d/5199d5c4ae2b6c2a12fb6d69ae9ecfd88279c41fff527301657b3a58f2e8/ultrafast_pycocotools-0.1.6-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6c2630a49b302594d46f593319ad82e1185e2dca9e7df4364264d0c16894bb47", size = 554237, upload-time = "2026-09-08T11:55:57.682Z" },
-+    { url = "https://files.pythonhosted.org/packages/be/ca/12b1778d0ec04f52061c4e970f5924c4d89f389ca07cdd52282ea8963c8f/ultrafast_pycocotools-0.1.6-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:151d17f1f73027bfbc01055dfd0462b9c13f72e4ace776fee0aed20cefeccb76", size = 521998, upload-time = "2026-09-08T11:56:01.009Z" },
-+    { url = "https://files.pythonhosted.org/packages/b5/2d/b6e764d08daa4396aa2aadc7f5eff5a229cfc54427ebc578a1e14bd62aa9/ultrafast_pycocotools-0.1.6-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:1498a2e7382013a3aa106cec6b483f58cfbec91b4c6473287a1a9c895187d071", size = 495189, upload-time = "2026-09-08T11:56:02.754Z" },
-+    { url = "https://files.pythonhosted.org/packages/1b/33/6f49d9c17060d263e7b10c1bb22da812881ea09e7aef8ce3f7b08a6cf33a/ultrafast_pycocotools-0.1.6-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7427473727bdb859484ebe5eb428c0a13d9aee6b8a94a4656b0f304dcf939ea0", size = 521061, upload-time = "2026-09-08T11:56:04.377Z" },
-+    { url = "https://files.pythonhosted.org/packages/45/cb/3d819e12405358b8c3259d34fc122a2c5f1432f156d31d92bd2a335ab465/ultrafast_pycocotools-0.1.6-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:07010478a701b7b2c739de333b5d100e1a0cb61d73bbfdcc87e091dee1582a27", size = 554137, upload-time = "2026-09-08T11:56:05.87Z" },
++    { url = "https://files.pythonhosted.org/packages/8c/15/66fdb942fa5f6456f9a3ef48c86087b4a3371ab2e68d4478b1135a9ea0e1/ultrafast_pycocotools-0.1.7-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:0a2a051e16d8dd7e6c2d0129141fea71fa6421d60ddc90fd277403e2639bd59a", size = 516216, upload-time = "2026-09-08T15:14:43.146Z" },
++    { url = "https://files.pythonhosted.org/packages/ca/32/069b5e7236262b249afde3f765946b3fabf0a87f28bcceb7e902965adb9b/ultrafast_pycocotools-0.1.7-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:4217d2311405f0acd1f78dc4362b2c4ddb4a3d446a3e28a2e487937d2471e585", size = 501582, upload-time = "2026-09-08T15:14:44.541Z" },
++    { url = "https://files.pythonhosted.org/packages/cb/5c/cb467eb214e78fdfcf1b98c3bb654e899480d558263db63055b623e0bbe2/ultrafast_pycocotools-0.1.7-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1a2adaf59f3a4ac9f8994c1fa7b6182706f46f97d6c10e761619df4079dc8102", size = 525586, upload-time = "2026-09-08T15:14:45.743Z" },
++    { url = "https://files.pythonhosted.org/packages/d0/d5/587da2ca98e8122f4a66dd454bf573ae0cab99b88dad648b5260fe954114/ultrafast_pycocotools-0.1.7-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e7e7c7cf62b946818a9d76ed1cf66ab3e619a958a501efe914814a95e5481d23", size = 557682, upload-time = "2026-09-08T15:14:46.955Z" },
++    { url = "https://files.pythonhosted.org/packages/cc/6e/d5315eebb1a712310e141cc8e441a29e1ddd56d30c3c0749fca7bac9f73d/ultrafast_pycocotools-0.1.7-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:5dd455f49c3bee4da81c9b36a99e18ad6c5dd85521dfaf8e36279e2e2f1f3529", size = 523492, upload-time = "2026-09-08T15:14:49.906Z" },
++    { url = "https://files.pythonhosted.org/packages/ec/79/ed19de6cfdb2c56d5e7744238ced5cdd4324a57f32edf1ea0ddedd170654/ultrafast_pycocotools-0.1.7-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:edab4443ce0c69df02c80861843228f3c553547bca3cc5f5317dec1c46873125", size = 497117, upload-time = "2026-09-08T15:14:51.232Z" },
++    { url = "https://files.pythonhosted.org/packages/9a/e3/8993a54330a5418346d025908b2385a5ceba03e9c6e9ca7072a0e06f9427/ultrafast_pycocotools-0.1.7-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:206ce346ab83b857a3023fa112fcd5e4d4b42ac33966998da7735e7cf94ab56f", size = 522745, upload-time = "2026-09-08T15:14:52.84Z" },
++    { url = "https://files.pythonhosted.org/packages/22/6a/5a38d3e3bdce61192f54db2325a3c2d9f0530266d2d2442c6552e1c0fb6b/ultrafast_pycocotools-0.1.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:90f207f2540b59a6e3430dcbacab792018a96e7cdb62614ba02373dc1fb48c53", size = 555853, upload-time = "2026-09-08T15:14:54.154Z" },
++    { url = "https://files.pythonhosted.org/packages/fa/04/765ea4fa4d9eed7d19236777c749350cce0b0229325f727028b93ab40d53/ultrafast_pycocotools-0.1.7-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:257982ae69a2cc3a9a077ced1a1be765dc00cb445e628b8907eb7d51b30fd638", size = 523476, upload-time = "2026-09-08T15:14:57.127Z" },
++    { url = "https://files.pythonhosted.org/packages/ac/d8/a20ad18534957f5fc7264f7f075632a5748bb5dd0adc3186b14314a73f9b/ultrafast_pycocotools-0.1.7-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:aac5bafb72df4d83be3f40ab01057c7c67ab85bd3de732d89313e9c78462b2ad", size = 496819, upload-time = "2026-09-08T15:14:58.497Z" },
++    { url = "https://files.pythonhosted.org/packages/64/f0/350af858788b06770bf947387637baae63f3aeea2529c22caa81d79eff35/ultrafast_pycocotools-0.1.7-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1688bf9aef392366537b53f5332607bed4d45348cc939faa02e523a33b453380", size = 522759, upload-time = "2026-09-08T15:14:59.993Z" },
++    { url = "https://files.pythonhosted.org/packages/8f/ae/2db3019327205c82542e79670e3848824aa580e6fac6a03b21943a7dad6b/ultrafast_pycocotools-0.1.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:05732cbca9367e7cc14d63438783ec90011ac7461256ec62d24a3216656b90b3", size = 555641, upload-time = "2026-09-08T15:15:01.451Z" },
 +]
 +
  [[package]]

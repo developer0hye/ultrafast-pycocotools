@@ -190,9 +190,20 @@ It includes full-array parity, Validator lifecycle and pretrained-model checks.
 With the **0.1.7 mask-encoder optimization**, actual COCO500 bbox +
 segmentation validation is **17.8% faster on M2** and **23.4% faster on the
 i5-10400 server** than faster-coco-eval. All outputs are unchanged.
-[Source-build results and instructions](docs/mask-encoding-optimization.md).
+[Published release and measurements](docs/mask-encoding-optimization.md).
 The [published-0.1.6 baseline](docs/benchmark-dfine-seg.md) retains the original
 measurements, including its mask-encoding regression.
+
+## Ultralytics real-task validation (0.1.7)
+
+On the RTX 3070 / i5-10400 server, complete COCO val2017 validation is
+16.3% faster for detection, 9.1% for segmentation and 10.0% for pose than
+faster-coco-eval 1.8.0. All returned metrics and fitness are identical.
+Peak process memory decreases for detection and segmentation; pose full-validation
+RSS increases 0.9%, while pose evaluator-only RSS decreases. The report also
+includes cold/cached replay, complete arrays, LVIS compatibility and background load.
+[Measurements and reproducible evidence](docs/ultralytics-pr26101-validation.md) ·
+[Reviewer checklist](docs/ultralytics-review-checklist.md).
 
 ## YOLO26n benchmark (0.1.2)
 

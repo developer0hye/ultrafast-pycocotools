@@ -1,0 +1,228 @@
+{
+  "release": "https://github.com/developer0hye/ultrafast-pycocotools/releases/tag/v0.1.7",
+  "source_commit": "b52e8527cb772393880289ee4eb0fb30f29a7d15",
+  "merge_commit": "27ba04f87b93e13f1c1f33291662ea02c7fd98b5",
+  "release_ci": "https://github.com/developer0hye/ultrafast-pycocotools/actions/runs/34242155935",
+  "pypi": "https://pypi.org/project/ultrafast-pycocotools/0.1.7/",
+  "files": [
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp310-cp310-macosx_10_12_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/3a/16/aad864e83d1ad2d80ef11312fb84f5ba211b0ae6e72a2134cad2df113aeb/ultrafast_pycocotools-0.1.7-cp310-cp310-macosx_10_12_x86_64.whl",
+      "sha256": "c61925ec71e31481c66211730ca60328fa403db15d0ca7faac222b63034b69e4"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp310-cp310-macosx_11_0_arm64.whl",
+      "url": "https://files.pythonhosted.org/packages/66/98/e025809b29df2b2f2499766c40b7e05e5b60583403467b2b0c215d578ac9/ultrafast_pycocotools-0.1.7-cp310-cp310-macosx_11_0_arm64.whl",
+      "sha256": "850826ea27dafecb757edcc06afdb0439a33c93f9fd5f41af8552033aad46f87"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "url": "https://files.pythonhosted.org/packages/bc/1c/6ee353c4a825de266a39a5d343c459e9ce9edc91e18e3bb12f1f7bbac8bb/ultrafast_pycocotools-0.1.7-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "sha256": "ab3eed19e5a4be19fedf93c27ef91b5908b09ad157296d184b489415bcf0cfbf"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/88/25/9f89aca11625168b1811fc69883faa959bb243743420eced382edbbb51bb/ultrafast_pycocotools-0.1.7-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "821eda6b6fe948a4ea6631319db4ca9ee8a64a17f9d854db65001ff28eb36ab0"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp310-cp310-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/44/46/8954946f14cb2bd883672ef5fbb49675e8df310dadefb3ce85cabc1ea4bf/ultrafast_pycocotools-0.1.7-cp310-cp310-win_amd64.whl",
+      "sha256": "7615bac819d3a8499e47d968188664eebae369750ba409cbade4cfa1b9eec5f2"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp311-cp311-macosx_10_12_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/8c/15/66fdb942fa5f6456f9a3ef48c86087b4a3371ab2e68d4478b1135a9ea0e1/ultrafast_pycocotools-0.1.7-cp311-cp311-macosx_10_12_x86_64.whl",
+      "sha256": "0a2a051e16d8dd7e6c2d0129141fea71fa6421d60ddc90fd277403e2639bd59a"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp311-cp311-macosx_11_0_arm64.whl",
+      "url": "https://files.pythonhosted.org/packages/ca/32/069b5e7236262b249afde3f765946b3fabf0a87f28bcceb7e902965adb9b/ultrafast_pycocotools-0.1.7-cp311-cp311-macosx_11_0_arm64.whl",
+      "sha256": "4217d2311405f0acd1f78dc4362b2c4ddb4a3d446a3e28a2e487937d2471e585"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "url": "https://files.pythonhosted.org/packages/cb/5c/cb467eb214e78fdfcf1b98c3bb654e899480d558263db63055b623e0bbe2/ultrafast_pycocotools-0.1.7-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "sha256": "1a2adaf59f3a4ac9f8994c1fa7b6182706f46f97d6c10e761619df4079dc8102"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/d0/d5/587da2ca98e8122f4a66dd454bf573ae0cab99b88dad648b5260fe954114/ultrafast_pycocotools-0.1.7-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "e7e7c7cf62b946818a9d76ed1cf66ab3e619a958a501efe914814a95e5481d23"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp311-cp311-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/60/62/f9cead344843422291b88d61d7c66f170b9b5377900f390374b4299f5e3b/ultrafast_pycocotools-0.1.7-cp311-cp311-win_amd64.whl",
+      "sha256": "7ed665949cfd79514f0fd7765a777fe57949fe46f925874bbe17e1ef14a97210"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp312-cp312-macosx_10_12_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/cc/6e/d5315eebb1a712310e141cc8e441a29e1ddd56d30c3c0749fca7bac9f73d/ultrafast_pycocotools-0.1.7-cp312-cp312-macosx_10_12_x86_64.whl",
+      "sha256": "5dd455f49c3bee4da81c9b36a99e18ad6c5dd85521dfaf8e36279e2e2f1f3529"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp312-cp312-macosx_11_0_arm64.whl",
+      "url": "https://files.pythonhosted.org/packages/ec/79/ed19de6cfdb2c56d5e7744238ced5cdd4324a57f32edf1ea0ddedd170654/ultrafast_pycocotools-0.1.7-cp312-cp312-macosx_11_0_arm64.whl",
+      "sha256": "edab4443ce0c69df02c80861843228f3c553547bca3cc5f5317dec1c46873125"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "url": "https://files.pythonhosted.org/packages/9a/e3/8993a54330a5418346d025908b2385a5ceba03e9c6e9ca7072a0e06f9427/ultrafast_pycocotools-0.1.7-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "sha256": "206ce346ab83b857a3023fa112fcd5e4d4b42ac33966998da7735e7cf94ab56f"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/22/6a/5a38d3e3bdce61192f54db2325a3c2d9f0530266d2d2442c6552e1c0fb6b/ultrafast_pycocotools-0.1.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "90f207f2540b59a6e3430dcbacab792018a96e7cdb62614ba02373dc1fb48c53"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp312-cp312-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/b4/f5/20f71bf9139546988172c236ed0765960f650c0f495f6a8ec0367f3230a7/ultrafast_pycocotools-0.1.7-cp312-cp312-win_amd64.whl",
+      "sha256": "a92a062e9e8d3305e2de5c135017d918b55d6ac2c44c8912df2eec459920ec5f"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp313-cp313-macosx_10_12_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/fa/04/765ea4fa4d9eed7d19236777c749350cce0b0229325f727028b93ab40d53/ultrafast_pycocotools-0.1.7-cp313-cp313-macosx_10_12_x86_64.whl",
+      "sha256": "257982ae69a2cc3a9a077ced1a1be765dc00cb445e628b8907eb7d51b30fd638"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp313-cp313-macosx_11_0_arm64.whl",
+      "url": "https://files.pythonhosted.org/packages/ac/d8/a20ad18534957f5fc7264f7f075632a5748bb5dd0adc3186b14314a73f9b/ultrafast_pycocotools-0.1.7-cp313-cp313-macosx_11_0_arm64.whl",
+      "sha256": "aac5bafb72df4d83be3f40ab01057c7c67ab85bd3de732d89313e9c78462b2ad"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "url": "https://files.pythonhosted.org/packages/64/f0/350af858788b06770bf947387637baae63f3aeea2529c22caa81d79eff35/ultrafast_pycocotools-0.1.7-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "sha256": "1688bf9aef392366537b53f5332607bed4d45348cc939faa02e523a33b453380"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/8f/ae/2db3019327205c82542e79670e3848824aa580e6fac6a03b21943a7dad6b/ultrafast_pycocotools-0.1.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "05732cbca9367e7cc14d63438783ec90011ac7461256ec62d24a3216656b90b3"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp313-cp313-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/37/e9/d5b00a7b536cc1c878b34932bc3a6e0020a533c92b6d844a8d093b3a6405/ultrafast_pycocotools-0.1.7-cp313-cp313-win_amd64.whl",
+      "sha256": "5536b08a023142fb93eceb54931ecd72769b53dea827d46cc86111679bb6b86b"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp314-cp314-macosx_10_12_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/82/d4/6bbd270462a3b77b337a2b3a4264407edbb93a04f34a6f23ecee9f7d40e1/ultrafast_pycocotools-0.1.7-cp314-cp314-macosx_10_12_x86_64.whl",
+      "sha256": "7f3e7af03b590b836fc8fffc4144e6e58cc23cab301e33d82b5c3e42b9263ebf"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp314-cp314-macosx_11_0_arm64.whl",
+      "url": "https://files.pythonhosted.org/packages/30/72/889f61556c41aba87d0cb01618847cfb7dc37e3d5e79c32a65cbaab6bf2c/ultrafast_pycocotools-0.1.7-cp314-cp314-macosx_11_0_arm64.whl",
+      "sha256": "5a2eb3f51c69a58eaee1147ddc2912266d168d4346b579060349176821587642"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp314-cp314-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "url": "https://files.pythonhosted.org/packages/27/1f/a187c573f78c93de0a7510bdf2af97821ffdbbe96bd175818a1305074c76/ultrafast_pycocotools-0.1.7-cp314-cp314-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "sha256": "39955e5b948a62a9238c722b500ce6bd9bfff1272f628c3959fa1558cad38d4d"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/3d/b9/f303d93a9d15dbe3f438bb2b2dd8755039694fbe4a84b0056f93987a0fd1/ultrafast_pycocotools-0.1.7-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "d40d378106bddceca4fc785b35220b611bcbc62da44cfbc20ec6a5895365274e"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp314-cp314-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/35/fc/ef1e43c26c9f87c01cc309f86a01576fce94041199869530a27ea2e39fc7/ultrafast_pycocotools-0.1.7-cp314-cp314-win_amd64.whl",
+      "sha256": "4e47c61e477b2a4052ad763e6f43a514639d14df90228825ba175cdd3c6bb003"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp38-cp38-macosx_10_12_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/9e/d2/dceb14e5515618f3847f81f52dd155a9719d9a36119c32f0a80edd5f122a/ultrafast_pycocotools-0.1.7-cp38-cp38-macosx_10_12_x86_64.whl",
+      "sha256": "efd4a39fb3732afe32acf314c23f168bfed7083700c89fdc54d248c46941828c"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp38-cp38-macosx_11_0_arm64.whl",
+      "url": "https://files.pythonhosted.org/packages/d3/54/68c17cfddcf9d6ecb5709d40f72c3596b58640cd9f3724e08665896e34ca/ultrafast_pycocotools-0.1.7-cp38-cp38-macosx_11_0_arm64.whl",
+      "sha256": "db764abd1d8ed12c54c1668fca637120093b2f59858b62728530d044df35e60a"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "url": "https://files.pythonhosted.org/packages/e4/68/ccbcd90d7a783cd034c6bf391bc15899e07bba8b9285f9ced1b8ecb4750f/ultrafast_pycocotools-0.1.7-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "sha256": "db00a644db086bd199bcb5282db6e0e78aa4a325900b6c551a711ea192876922"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/c5/4a/26a17dafa8c8ac2f3e24ff8ae3664b8a0055e475b4788f40f36d04ff8e04/ultrafast_pycocotools-0.1.7-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "bbab345502af365e25be0494d84f0ddb476a9dd81b107236fb874e5bc844f9ab"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp38-cp38-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/fb/16/fc7e1367ce181b4ab746cef3f07687b43f13d44467189027a205f16bfa1f/ultrafast_pycocotools-0.1.7-cp38-cp38-win_amd64.whl",
+      "sha256": "4b5f43d7bda5759bf6e0c53e44b3ff492b0ec74326bacbf9795fa7561628a415"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp39-cp39-macosx_10_12_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/ad/f2/41bd9079dea196db06bd538fc2744bdffa9f44358d6bfdd4dc21f300a487/ultrafast_pycocotools-0.1.7-cp39-cp39-macosx_10_12_x86_64.whl",
+      "sha256": "e0fd692973f97afcf77cdd9d96ea85c0ca4f77ccd152df74d314c0e47029edc3"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp39-cp39-macosx_11_0_arm64.whl",
+      "url": "https://files.pythonhosted.org/packages/20/04/c7d78ad060410277a4f072dada19e5f8425e6fcc657f0d577ac4d7e40514/ultrafast_pycocotools-0.1.7-cp39-cp39-macosx_11_0_arm64.whl",
+      "sha256": "84d90d0ed78f8bb41f84d2e92e859d5a1b82029330e7f2065e0f922ea01f4b28"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "url": "https://files.pythonhosted.org/packages/f5/34/a0b65e3929cfc7590b646f6d068b5919e83f6db7d6727bc096f6a5110964/ultrafast_pycocotools-0.1.7-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+      "sha256": "7d6560def5c3127638cee456faeeb4079112d1a137c8f6203ccddcecff2d1962"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "url": "https://files.pythonhosted.org/packages/f9/f9/4ef27e3e956ca47376f0b4683f8c3a90d5bdea0a3b3e727fd65140d75639/ultrafast_pycocotools-0.1.7-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "fc07e75d6b9442b7398fda7b4f7da192e3934c18e4c376918b5a03c8bbf4152b"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7-cp39-cp39-win_amd64.whl",
+      "url": "https://files.pythonhosted.org/packages/98/ea/c767da3ea37db91b5458929e7ef4419d67d2cd1d01f113d8b3ac7d84ffe7/ultrafast_pycocotools-0.1.7-cp39-cp39-win_amd64.whl",
+      "sha256": "05576db3dc7c8b6df73638ef42b9128a6fc7167ee41ece061874db95143486c4"
+    },
+    {
+      "filename": "ultrafast_pycocotools-0.1.7.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/75/8b/cab616a8ba82ab45f3e7d7ff83e1c666c844419924d89b24ebfabe8a5012/ultrafast_pycocotools-0.1.7.tar.gz",
+      "sha256": "f3c1f4dc32b8f3fa98d7cb5af4d61b4cea453a6309632be7ae985ac6994fc685"
+    }
+  ],
+  "all_pypi_hashes_match_tested_artifacts": true,
+  "cp38_macos_arm64": {
+    "installation": "Public PyPI, --only-binary=:all: --no-cache-dir --force-reinstall --no-deps",
+    "tests": 266,
+    "skipped": 17,
+    "failures": 0,
+    "errors": 0,
+    "passed": 249,
+    "test_xml_sha256": "9defd362e3d1a83e15c73475899de0dae29f1004f666637c95095cc031182cb4"
+  },
+  "linux_measured_native_sha256": "b3bde5d6a65e91c934a79aad1cd2edb9845a3046fa83948d3ffbdbcda2c9c840",
+  "published_native_and_python_match_measured_wheel_byte_for_byte": true,
+  "version": "0.1.7",
+  "cp312_macos_arm64": {
+    "initial_run": {
+      "passed": 252,
+      "skipped": 14,
+      "skip_reasons": {
+        "collection skipped": 1,
+        "full COCO val2017 not present; run bench/make_dets.py": 2,
+        "full COCO val2017 annotations not present": 1,
+        "Install .[lvis-test] for the official reference": 9,
+        "could not import 'matplotlib': No module named 'matplotlib'": 1
+      },
+      "test_xml_sha256": "5e60abbc42cba151f715af960bb4394b389a8ba58bbd291e9a6ffb0fe4cf13f1"
+    },
+    "passed": 265,
+    "remaining_optional_collection_skip": "RFDETR",
+    "additional_run": {
+      "passed": 13,
+      "skipped": 0,
+      "test_xml_sha256": "9b6b15bd8d55d6c52705971265a450cec49629a86687407d199af09c9c35d4dd",
+      "note": "Previously skipped COCO fixtures and optional LVIS/matplotlib dependencies supplied; only those 13 cases rerun."
+    }
+  },
+  "dfine_published_release_tests": {
+    "passed": 11,
+    "test_xml_sha256": "b6b401ca032313c77b4438776fe8b3d87f1710db3e2c37b6ae302729a5da110b"
+  }
+}

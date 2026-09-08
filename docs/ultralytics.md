@@ -1,5 +1,9 @@
 # Ultralytics evaluator replacement (0.1.6)
 
+The [0.1.7 follow-up](ultralytics-pr26101-validation.md) adds complete real
+detection, segmentation and pose validation, cached replay, full arrays and LVIS
+mask evidence on the RTX 3070 server. This page retains the original 0.1.6 run.
+
 This benchmark calls the actual `DetectionValidator.coco_evaluate` method
 on saved YOLO26n predictions for all 5,000 COCO val2017 images (596,202
 predictions). It compares upstream `4e6701f` against the replacement in
@@ -48,6 +52,7 @@ git clone https://github.com/ultralytics/ultralytics.git /tmp/ultra-reference
 git -C /tmp/ultra-reference checkout 4e6701f
 git clone --branch perf/ultrafast-coco-eval \
   https://github.com/developer0hye/ultralytics.git /tmp/ultra-replacement
+git -C /tmp/ultra-replacement checkout e600c6f2275acd4344127ea59942fccc179a7c2f
 ```
 
 Generate shared predictions using the [YOLO26 reproduction commands](yolo26.md#reproduce)
@@ -55,13 +60,14 @@ or use an existing COCO prediction JSON. Do not regenerate predictions between
 backends. Run from this repository with paths appropriate to your data:
 
 ```bash
+git show 5d5da8c8dcc85ffd1be2f48541adbdc79adeb97f:bench/ultralytics_metric.py > /tmp/ultralytics-metric-v016.py
 export CUDA_VISIBLE_DEVICES='' YOLO_AUTOINSTALL=false
 export RAYON_NUM_THREADS=2 OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1
 export YOLO_CONFIG_DIR=/tmp/ultra-benchmark-config
 for sample in 1 2 3; do
   for backend in reference replacement; do
     PYTHONPATH="/tmp/ultra-$backend" taskset -c 8-9 \
-      python bench/ultralytics_metric.py \
+      python /tmp/ultralytics-metric-v016.py \
         --gt /path/to/coco/annotations/instances_val2017.json \
         --pred /path/to/yolo26_predictions.json \
         --output "/tmp/$backend-$sample.json"

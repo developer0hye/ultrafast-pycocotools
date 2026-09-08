@@ -1,6 +1,6 @@
 # Mask encoding optimization (0.1.7)
 
-The 0.1.7 source includes the dense-mask encoding optimization identified in
+The published 0.1.7 release includes the dense-mask encoding optimization identified in
 the [D-FINE-seg baseline](benchmark-dfine-seg.md). It is **not included in
 the published 0.1.6 wheel**. The original benchmark wheels retained version
 0.1.6, so source and native-library hashes identify those optimized builds.
@@ -101,9 +101,9 @@ transitions around the 32-byte block boundaries.
 
 ## Reproduce the optimized application run
 
-Build this modified source and install its wheel into the patched D-FINE-seg
-environment. The original integration lock pins 0.1.6; that pinned package
-does not include this optimization.
+The integration now requires and locks the public 0.1.7 release, so
+`uv sync --no-dev --extra ultrafast` installs the optimized encoder directly.
+The historical benchmark builds can also be reproduced from source:
 
 ```bash
 cd ~/Documents/ultrafast-pycocotools

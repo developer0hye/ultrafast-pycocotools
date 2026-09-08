@@ -8,6 +8,10 @@
     "lvis_dt_100.json": {
       "url": "https://raw.githubusercontent.com/lvis-dataset/lvis-api/7d7f07def11da91f8b2710ce352c62a78fd5a7ad/data/lvis_results_100.json",
       "sha256": "160308634f9026ec1ac7df52fb5a65a1bf08d74b0835b1645b2cd47aff4816e4"
+    },
+    "lvis_coco_to_synset.json": {
+      "url": "https://raw.githubusercontent.com/lvis-dataset/lvis-api/7d7f07def11da91f8b2710ce352c62a78fd5a7ad/data/coco_to_synset.json",
+      "sha256": "e6d4a9ae5c5af4f7ce1258f8a0d65b7409cab832955f1aaa8b21bf80b62f9b40"
     }
   }
 }
