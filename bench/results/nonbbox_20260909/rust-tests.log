@@ -1,0 +1,82 @@
+   Compiling crossbeam-utils v0.8.22
+   Compiling crossbeam-epoch v0.9.20
+   Compiling crossbeam-deque v0.8.7
+   Compiling rayon-core v1.13.0
+   Compiling either v1.17.0
+   Compiling rayon v1.12.0
+   Compiling ufcoco-core v0.1.7 (/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-opt/rust/ufcoco-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.03s
+     Running unittests src/lib.rs (/Volumes/T7/targets/ultrafast-pycocotools-nonbbox-opt/debug/deps/ufcoco_core-92431ce3ddc4d3b7)
+
+running 62 tests
+test eval::tests::descending_score_order_puts_nan_last ... ok
+test eval::tests::detections_with_no_ground_truth_are_absent_not_zero ... ok
+test eval::tests::a_threshold_of_one_still_matches_a_near_perfect_overlap ... ok
+test eval::tests::area_range_excludes_ground_truth_from_the_denominator ... ok
+test eval::tests::a_real_match_is_not_given_up_for_a_better_ignored_one ... ok
+test eval::tests::an_iou_exactly_on_the_threshold_matches ... ok
+test eval::tests::a_crowd_region_absorbs_more_than_one_detection ... ok
+test eval::tests::crowd_ground_truth_absorbs_extra_detections ... ok
+test eval::tests::area_range_bounds_are_inclusive ... ok
+test eval::tests::each_max_dets_setting_sees_its_own_slice ... ok
+test eval::tests::ground_truth_with_no_detections_scores_zero_not_absent ... ok
+test eval::tests::iou_below_threshold_does_not_match ... ok
+test eval::tests::max_dets_truncates_by_score ... ok
+test eval::tests::negative_zero_ties_with_zero ... ok
+test eval::tests::oks_is_the_mean_of_the_per_keypoint_terms ... ok
+test eval::tests::oks_of_identical_keypoints_is_exactly_one ... ok
+test eval::tests::output_arrays_have_the_documented_shape ... ok
+test eval::tests::per_instance_reports_ignored_detections_separately ... ok
+test eval::tests::precision_envelope_is_monotone_and_not_the_raw_curve ... ok
+test eval::tests::precision_envelope_propagates_leftward_not_rightward ... ok
+test eval::tests::precision_keeps_the_np_spacing_epsilon ... ok
+test eval::tests::precision_recall_curve_is_built_point_by_point ... ok
+test eval::tests::result_is_independent_of_how_the_work_was_split ... ok
+test eval::tests::tied_ious_go_to_the_last_ground_truth_scanned ... ok
+test eval::tests::tied_scores_resolve_to_annotation_order ... ok
+test eval::tests::timings_are_recorded ... ok
+test group::tests::a_group_with_no_annotations_reads_back_empty ... ok
+test group::tests::annotations_outside_the_evaluation_are_dropped ... ok
+test group::tests::building_from_nothing_is_empty_everywhere ... ok
+test eval::tests::use_cats_off_merges_categories ... ok
+test group::tests::groups_preserve_annotation_order ... ok
+test group::tests::join_with_one_empty_side ... ok
+test group::tests::join_yields_union_of_images ... ok
+test group::tests::merged_groups_are_category_major ... ok
+test group::tests::runs_are_ascending_by_image_within_a_group ... ok
+test rle::tests::area_sums_the_odd_runs ... ok
+test rle::tests::bbox_iou_matches_hand_computation ... ok
+test rle::tests::bbox_of_degenerate_rles ... ok
+test rle::tests::bbox_widens_to_the_full_column_when_a_run_crosses ... ok
+test rle::tests::a_zero_floor_disables_the_iou_bound_entirely ... ok
+test rle::tests::boundary_dilation_never_rounds_down_to_zero ... ok
+test rle::tests::c_int_cast_follows_the_hardware_not_rust ... ok
+test rle::tests::crowd_iou_uses_detection_area ... ok
+test rle::tests::disjoint_boxes_are_exactly_zero ... ok
+test rle::tests::encode_compares_bytes_not_truthiness ... ok
+test rle::tests::boundary_is_the_rim_of_the_mask ... ok
+test rle::tests::encode_decode_roundtrip ... ok
+test rle::tests::indexed_bbox_iou_preserves_permutations_repeats_and_crowds ... ok
+test rle::tests::iou_matrix_is_row_major_over_detections ... ok
+test rle::tests::iou_of_mismatched_sizes_is_negative_one ... ok
+test rle::tests::merge_of_mismatched_sizes_collapses ... ok
+test rle::tests::merge_of_one_is_a_copy_and_of_none_is_empty ... ok
+test rle::tests::merge_union_and_intersect ... ok
+test rle::tests::poly_square_area ... ok
+test rle::tests::polygon_with_a_repeated_vertex_stays_a_valid_rle ... ok
+test rle::tests::polygon_outside_the_image_is_clipped ... ok
+test rle::tests::run_arrays_carry_no_capacity_slack ... ok
+test rle::tests::string_round_trip_survives_the_delta_rule ... ok
+test rle::tests::scratch_reuse_does_not_change_results ... ok
+test rle::tests::the_iou_bound_uses_the_crowd_denominator ... ok
+test rle::tests::the_iou_bound_never_touches_a_pair_that_could_match ... ok
+test rle::tests::encode_runs_across_block_boundaries ... ok
+
+test result: ok. 62 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests ufcoco_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

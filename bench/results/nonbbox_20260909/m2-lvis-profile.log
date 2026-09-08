@@ -1,0 +1,30 @@
+         33112 function calls (31679 primitive calls) in 0.143 seconds
+
+   Ordered by: cumulative time
+   List reduced from 386 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000    0.143    0.143 cocoeval.py:632(run)
+        1    0.007    0.007    0.102    0.102 cocoeval.py:450(evaluate)
+        1    0.056    0.056    0.056    0.056 {method 'run' of 'ultrafast_pycocotools._ufcoco.Evaluator' objects}
+        1    0.000    0.000    0.041    0.041 cocoeval.py:573(summarize)
+       13    0.033    0.003    0.034    0.003 cocoeval.py:542(_summarize)
+        1    0.000    0.000    0.030    0.030 cocoeval.py:199(_collect)
+   115/95    0.004    0.000    0.027    0.000 coco.py:116(_ensure_materialized)
+        1    0.000    0.000    0.027    0.027 cocoeval.py:582(_summarizeDets)
+        1    0.001    0.001    0.025    0.025 _lvis.py:7(collect)
+       94    0.000    0.000    0.022    0.000 coco.py:148(imgToAnns)
+        2    0.022    0.011    0.022    0.011 {method 'annotations' of 'ultrafast_pycocotools._ufcoco.CompactBbox' objects}
+      4/2    0.000    0.000    0.007    0.004 <frozen importlib._bootstrap>:1349(_find_and_load)
+      4/2    0.000    0.000    0.007    0.004 <frozen importlib._bootstrap>:1304(_find_and_load_unlocked)
+        2    0.000    0.000    0.007    0.004 _arraysetops_impl.py:145(unique)
+        1    0.007    0.007    0.007    0.007 _lvis.py:44(frequency_stats)
+      4/2    0.000    0.000    0.007    0.004 <frozen importlib._bootstrap>:911(_load_unlocked)
+        2    0.000    0.000    0.007    0.004 _arraysetops_impl.py:350(_unique1d)
+      4/2    0.000    0.000    0.007    0.004 <frozen importlib._bootstrap_external>:993(exec_module)
+        1    0.000    0.000    0.007    0.007 __init__.py:704(__getattr__)
+     10/4    0.000    0.000    0.007    0.002 <frozen importlib._bootstrap>:480(_call_with_frames_removed)
+
+
+{'gt_read': 0.000503625, 'dt_read': 0.001099041, 'read_blocked': 2.375e-06, 'rasterise': 0.004607292, 'group_index': 0.000161667, 'iou_cpu': 0.003803025, 'match_cpu': 0.002274321, 'accumulate_cpu': 0.004673426}
+array bytes {'precision': 119260800, 'recall': 1180800, 'scores': 119260800}

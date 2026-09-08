@@ -1,0 +1,68 @@
+   Compiling pyo3 v0.29.2
+    Checking pyo3-ffi v0.29.2
+   Compiling pyo3-macros v0.29.2
+    Checking serde_json v1.0.151
+    Checking serde v1.0.229
+    Checking ufcoco-core v0.1.7 (/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-opt/rust/ufcoco-core)
+warning: clamp-like pattern without using clamp function
+   --> rust/ufcoco-core/src/eval.rs:404:9
+    |
+404 | /         self.params
+405 | |             .iou_thrs
+406 | |             .iter()
+407 | |             .copied()
+408 | |             .fold(f64::INFINITY, f64::min)
+409 | |             .min(1.0 - 1e-10)
+410 | |             .max(0.0)
+    | |_____________________^
+    |
+    = note: clamp will panic if max < min, min.is_nan(), or max.is_nan()
+    = note: clamp returns NaN if the input is NaN
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#manual_clamp
+    = note: `#[warn(clippy::manual_clamp)]` on by default
+help: replace with clamp
+    |
+404 ~         self.params
+405 +             .iou_thrs
+406 +             .iter()
+407 +             .copied()
+408 +             .fold(f64::INFINITY, f64::min).clamp(0.0, 1.0 - 1e-10)
+    |
+
+warning: the use of negated comparison operators on partially ordered types produces code that is hard to read and refactor, please consider using the `partial_cmp` method instead, to make it clear that the two values could be incomparable
+   --> rust/ufcoco-core/src/eval.rs:921:44
+    |
+921 |                 while next_sample < r_n && !(recall < rec_thrs[next_sample]) {
+    |                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#neg_cmp_op_on_partial_ord
+    = note: `#[warn(clippy::neg_cmp_op_on_partial_ord)]` on by default
+
+warning: manual checked division
+   --> rust/ufcoco-core/src/rle.rs:120:29
+    |
+120 |             let (x, y) = if h == 0 { (0, 0) } else { (t / h, t % h) };
+    |                             ^^^^^^                    ----- division performed here
+    |                             |
+    |                             check performed here
+    |
+    = help: consider using `checked_div`
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#manual_checked_ops
+    = note: `#[warn(clippy::manual_checked_ops)]` on by default
+
+warning: `ufcoco-core` (lib) generated 3 warnings
+warning: `ufcoco-core` (lib test) generated 3 warnings (3 duplicates)
+   Compiling numpy v0.29.0
+    Checking ufcoco-py v0.1.7 (/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-opt/rust/ufcoco-py)
+warning: this expression creates a reference which is immediately dereferenced by the compiler
+   --> rust/ufcoco-py/src/json.rs:203:55
+    |
+203 |     let mut de = serde_json::Deserializer::from_slice(&bytes);
+    |                                                       ^^^^^^ help: change this to: `bytes`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#needless_borrow
+    = note: `#[warn(clippy::needless_borrow)]` on by default
+
+warning: `ufcoco-py` (lib test) generated 1 warning (1 duplicate)
+warning: `ufcoco-py` (lib) generated 1 warning (run `cargo clippy --fix --lib -p ufcoco-py -- ` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.19s

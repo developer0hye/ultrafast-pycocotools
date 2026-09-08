@@ -1,0 +1,4097 @@
+{
+  "baseline_revision": "b52e8527cb772393880289ee4eb0fb30f29a7d15",
+  "candidate_revision": "b3b98166c73816c6fabb1bce31afd5cc6e3173d4",
+  "candidate_status": "unreleased native build; package version remains 0.1.7",
+  "threads": 2,
+  "hosts": {
+    "m2": {
+      "cpu": "Apple M2",
+      "ram_bytes": 17179869184,
+      "python": "3.12.13",
+      "numpy": "2.4.4",
+      "rust": "1.98.0",
+      "scope": "library file loading plus one evaluator run; no Ultralytics caller",
+      "tasks": {
+        "segm": {
+          "baseline": {
+            "load_and_evaluate_median_seconds": 2.7810267499880865,
+            "evaluate_median_seconds": 2.4263473539904226,
+            "peak_rss_median_mb": 2727.755776,
+            "records": [
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "segm",
+                "timings": {
+                  "load_gt": 0.053566208021948114,
+                  "load_dt": 0.466894165991107,
+                  "evaluate": 2.879662624996854,
+                  "accumulate": 5.6374992709606886e-05,
+                  "summarize": 0.001520624995464459
+                },
+                "eval_total": 2.881239624985028,
+                "eval_cpu": 3.9280569999999995,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 3.401699998998083,
+                "stats": [
+                  0.3436595380932048,
+                  0.5385525392988464,
+                  0.3644561943722224,
+                  0.14920930726509513,
+                  0.38233001176124254,
+                  0.5217235966750563,
+                  0.29347661900258953,
+                  0.4642012251982567,
+                  0.49898527290264416,
+                  0.2738044950465343,
+                  0.5608445107429896,
+                  0.702358022024834
+                ],
+                "digests": {
+                  "precision": "91fd10baa35f91af",
+                  "recall": "c6b629ae39352057",
+                  "scores": "c2101caf3eb9e2dd"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 2218.22976
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "segm",
+                "timings": {
+                  "load_gt": 0.04281708400230855,
+                  "load_dt": 0.3121646670042537,
+                  "evaluate": 2.4317694579949602,
+                  "accumulate": 2.812498132698238e-05,
+                  "summarize": 0.0013619170058518648
+                },
+                "eval_total": 2.433159499982139,
+                "eval_cpu": 3.523374,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 2.7881412509887014,
+                "stats": [
+                  0.3436595380932048,
+                  0.5385525392988464,
+                  0.3644561943722224,
+                  0.14920930726509513,
+                  0.38233001176124254,
+                  0.5217235966750563,
+                  0.29347661900258953,
+                  0.4642012251982567,
+                  0.49898527290264416,
+                  0.2738044950465343,
+                  0.5608445107429896,
+                  0.702358022024834
+                ],
+                "digests": {
+                  "precision": "91fd10baa35f91af",
+                  "recall": "c6b629ae39352057",
+                  "scores": "c2101caf3eb9e2dd"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 2727.886848
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "segm",
+                "timings": {
+                  "load_gt": 0.04379208298632875,
+                  "load_dt": 0.31151712499558926,
+                  "evaluate": 2.3709067500021774,
+                  "accumulate": 3.754100180231035e-05,
+                  "summarize": 0.0013654170033987612
+                },
+                "eval_total": 2.3723097080073785,
+                "eval_cpu": 3.414357,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 2.7276189159892965,
+                "stats": [
+                  0.3436595380932048,
+                  0.5385525392988464,
+                  0.3644561943722224,
+                  0.14920930726509513,
+                  0.38233001176124254,
+                  0.5217235966750563,
+                  0.29347661900258953,
+                  0.4642012251982567,
+                  0.49898527290264416,
+                  0.2738044950465343,
+                  0.5608445107429896,
+                  0.702358022024834
+                ],
+                "digests": {
+                  "precision": "91fd10baa35f91af",
+                  "recall": "c6b629ae39352057",
+                  "scores": "c2101caf3eb9e2dd"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 2727.149568
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "segm",
+                "timings": {
+                  "load_gt": 0.042117125005461276,
+                  "load_dt": 0.3122599159833044,
+                  "evaluate": 2.4181347920093685,
+                  "accumulate": 2.6875000912696123e-05,
+                  "summarize": 0.0013735409884247929
+                },
+                "eval_total": 2.419535207998706,
+                "eval_cpu": 3.5021780000000002,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 2.7739122489874717,
+                "stats": [
+                  0.3436595380932048,
+                  0.5385525392988464,
+                  0.3644561943722224,
+                  0.14920930726509513,
+                  0.38233001176124254,
+                  0.5217235966750563,
+                  0.29347661900258953,
+                  0.4642012251982567,
+                  0.49898527290264416,
+                  0.2738044950465343,
+                  0.5608445107429896,
+                  0.702358022024834
+                ],
+                "digests": {
+                  "precision": "91fd10baa35f91af",
+                  "recall": "c6b629ae39352057",
+                  "scores": "c2101caf3eb9e2dd"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 2728.280064
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "segm",
+                "timings": {
+                  "load_gt": 0.043178250023629516,
+                  "load_dt": 0.31709154197596945,
+                  "evaluate": 2.3945288340037223,
+                  "accumulate": 2.837498323060572e-05,
+                  "summarize": 0.0013557919883169234
+                },
+                "eval_total": 2.39591300097527,
+                "eval_cpu": 3.434884,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 2.756182792974869,
+                "stats": [
+                  0.3436595380932048,
+                  0.5385525392988464,
+                  0.3644561943722224,
+                  0.14920930726509513,
+                  0.38233001176124254,
+                  0.5217235966750563,
+                  0.29347661900258953,
+                  0.4642012251982567,
+                  0.49898527290264416,
+                  0.2738044950465343,
+                  0.5608445107429896,
+                  0.702358022024834
+                ],
+                "digests": {
+                  "precision": "91fd10baa35f91af",
+                  "recall": "c6b629ae39352057",
+                  "scores": "c2101caf3eb9e2dd"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 2727.624704
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "segm",
+                "timings": {
+                  "load_gt": 0.04285583397722803,
+                  "load_dt": 0.31689387501683086,
+                  "evaluate": 2.44072374998359,
+                  "accumulate": 2.6583002181723714e-05,
+                  "summarize": 0.001477209007134661
+                },
+                "eval_total": 2.4422275419929065,
+                "eval_cpu": 3.506774,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 2.8019772509869654,
+                "stats": [
+                  0.3436595380932048,
+                  0.5385525392988464,
+                  0.3644561943722224,
+                  0.14920930726509513,
+                  0.38233001176124254,
+                  0.5217235966750563,
+                  0.29347661900258953,
+                  0.4642012251982567,
+                  0.49898527290264416,
+                  0.2738044950465343,
+                  0.5608445107429896,
+                  0.702358022024834
+                ],
+                "digests": {
+                  "precision": "91fd10baa35f91af",
+                  "recall": "c6b629ae39352057",
+                  "scores": "c2101caf3eb9e2dd"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 2728.312832
+              }
+            ]
+          },
+          "candidate": {
+            "load_and_evaluate_median_seconds": 1.4948307295271661,
+            "evaluate_median_seconds": 1.1396323964727344,
+            "peak_rss_median_mb": 1098.326016,
+            "records": [
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "segm",
+                "timings": {
+                  "load_gt": 0.04347658299957402,
+                  "load_dt": 0.3209863329830114,
+                  "evaluate": 1.120576917019207,
+                  "accumulate": 2.9916001949459314e-05,
+                  "summarize": 0.0022034169815015048
+                },
+                "eval_total": 1.122810250002658,
+                "eval_cpu": 2.0255739999999998,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 1.4872731659852434,
+                "stats": [
+                  0.3436595380932048,
+                  0.5385525392988464,
+                  0.3644561943722224,
+                  0.14920930726509513,
+                  0.38233001176124254,
+                  0.5217235966750563,
+                  0.29347661900258953,
+                  0.4642012251982567,
+                  0.49898527290264416,
+                  0.2738044950465343,
+                  0.5608445107429896,
+                  0.702358022024834
+                ],
+                "digests": {
+                  "precision": "91fd10baa35f91af",
+                  "recall": "c6b629ae39352057",
+                  "scores": "c2101caf3eb9e2dd"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 1098.268672
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "segm",
+                "timings": {
+                  "load_gt": 0.0431672919949051,
+                  "load_dt": 0.312710625003092,
+                  "evaluate": 1.135663207998732,
+                  "accumulate": 2.4500011932104826e-05,
+                  "summarize": 0.0013560420193243772
+                },
+                "eval_total": 1.1370437500299886,
+                "eval_cpu": 2.064236,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 1.4929216670279857,
+                "stats": [
+                  0.3436595380932048,
+                  0.5385525392988464,
+                  0.3644561943722224,
+                  0.14920930726509513,
+                  0.38233001176124254,
+                  0.5217235966750563,
+                  0.29347661900258953,
+                  0.4642012251982567,
+                  0.49898527290264416,
+                  0.2738044950465343,
+                  0.5608445107429896,
+                  0.702358022024834
+                ],
+                "digests": {
+                  "precision": "91fd10baa35f91af",
+                  "recall": "c6b629ae39352057",
+                  "scores": "c2101caf3eb9e2dd"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 1098.661888
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "segm",
+                "timings": {
+                  "load_gt": 0.04371299999183975,
+                  "load_dt": 0.3107664580165874,
+                  "evaluate": 1.140851667005336,
+                  "accumulate": 2.7250003768131137e-05,
+                  "summarize": 0.0013814170088153332
+                },
+                "eval_total": 1.1422603340179194,
+                "eval_cpu": 2.070407,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 1.4967397920263465,
+                "stats": [
+                  0.3436595380932048,
+                  0.5385525392988464,
+                  0.3644561943722224,
+                  0.14920930726509513,
+                  0.38233001176124254,
+                  0.5217235966750563,
+                  0.29347661900258953,
+                  0.4642012251982567,
+                  0.49898527290264416,
+                  0.2738044950465343,
+                  0.5608445107429896,
+                  0.702358022024834
+                ],
+                "digests": {
+                  "precision": "91fd10baa35f91af",
+                  "recall": "c6b629ae39352057",
+                  "scores": "c2101caf3eb9e2dd"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 1096.794112
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "segm",
+                "timings": {
+                  "load_gt": 0.04281741700833663,
+                  "load_dt": 0.3110027090006042,
+                  "evaluate": 1.1360932090028655,
+                  "accumulate": 3.0583993066102266e-05,
+                  "summarize": 0.0013774169783573598
+                },
+                "eval_total": 1.137501209974289,
+                "eval_cpu": 2.066021,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 1.4913213359832298,
+                "stats": [
+                  0.3436595380932048,
+                  0.5385525392988464,
+                  0.3644561943722224,
+                  0.14920930726509513,
+                  0.38233001176124254,
+                  0.5217235966750563,
+                  0.29347661900258953,
+                  0.4642012251982567,
+                  0.49898527290264416,
+                  0.2738044950465343,
+                  0.5608445107429896,
+                  0.702358022024834
+                ],
+                "digests": {
+                  "precision": "91fd10baa35f91af",
+                  "recall": "c6b629ae39352057",
+                  "scores": "c2101caf3eb9e2dd"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 1098.38336
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "segm",
+                "timings": {
+                  "load_gt": 0.04320350001216866,
+                  "load_dt": 0.31696762499632314,
+                  "evaluate": 1.1401401659823023,
+                  "accumulate": 3.399999695830047e-05,
+                  "summarize": 0.001589416991919279
+                },
+                "eval_total": 1.1417635829711799,
+                "eval_cpu": 2.072038,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 1.5019347079796717,
+                "stats": [
+                  0.3436595380932048,
+                  0.5385525392988464,
+                  0.3644561943722224,
+                  0.14920930726509513,
+                  0.38233001176124254,
+                  0.5217235966750563,
+                  0.29347661900258953,
+                  0.4642012251982567,
+                  0.49898527290264416,
+                  0.2738044950465343,
+                  0.5608445107429896,
+                  0.702358022024834
+                ],
+                "digests": {
+                  "precision": "91fd10baa35f91af",
+                  "recall": "c6b629ae39352057",
+                  "scores": "c2101caf3eb9e2dd"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 1097.465856
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "segm",
+                "timings": {
+                  "load_gt": 0.042538292007520795,
+                  "load_dt": 0.3177705839916598,
+                  "evaluate": 1.1464687499974389,
+                  "accumulate": 3.541700425557792e-05,
+                  "summarize": 0.0014971670170780271
+                },
+                "eval_total": 1.1480013340187725,
+                "eval_cpu": 2.088311,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 1.508310210017953,
+                "stats": [
+                  0.3436595380932048,
+                  0.5385525392988464,
+                  0.3644561943722224,
+                  0.14920930726509513,
+                  0.38233001176124254,
+                  0.5217235966750563,
+                  0.29347661900258953,
+                  0.4642012251982567,
+                  0.49898527290264416,
+                  0.2738044950465343,
+                  0.5608445107429896,
+                  0.702358022024834
+                ],
+                "digests": {
+                  "precision": "91fd10baa35f91af",
+                  "recall": "c6b629ae39352057",
+                  "scores": "c2101caf3eb9e2dd"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 1098.694656
+              }
+            ]
+          }
+        },
+        "keypoints": {
+          "baseline": {
+            "load_and_evaluate_median_seconds": 0.9410520214878488,
+            "evaluate_median_seconds": 0.7382996670057764,
+            "peak_rss_median_mb": 710.541312,
+            "records": [
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "keypoints",
+                "timings": {
+                  "load_gt": 0.027140541991684586,
+                  "load_dt": 0.2515969999949448,
+                  "evaluate": 0.7407927909807768,
+                  "accumulate": 3.0208000680431724e-05,
+                  "summarize": 0.0003027079801540822
+                },
+                "eval_total": 0.7411257069616113,
+                "eval_cpu": 0.754137,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 1.0198632489482407,
+                "stats": [
+                  0.5638424803359239,
+                  0.8196351834130865,
+                  0.6089962809874976,
+                  0.4897993433730227,
+                  0.682574551089035,
+                  0.6315963476070529,
+                  0.8765743073047859,
+                  0.676794710327456,
+                  0.5475279978148048,
+                  0.7487179487179488
+                ],
+                "digests": {
+                  "precision": "1de2eae8c54a8c87",
+                  "recall": "ecb41c9ed31cacee",
+                  "scores": "8bc12df8da30fb4b"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 710.541312
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "keypoints",
+                "timings": {
+                  "load_gt": 0.02183016698108986,
+                  "load_dt": 0.18056745899957605,
+                  "evaluate": 0.7373303339991253,
+                  "accumulate": 2.3917004000395536e-05,
+                  "summarize": 0.00021062500309199095
+                },
+                "eval_total": 0.7375648760062177,
+                "eval_cpu": 0.751857,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 0.9399625019868836,
+                "stats": [
+                  0.5638424803359239,
+                  0.8196351834130865,
+                  0.6089962809874976,
+                  0.4897993433730227,
+                  0.682574551089035,
+                  0.6315963476070529,
+                  0.8765743073047859,
+                  0.676794710327456,
+                  0.5475279978148048,
+                  0.7487179487179488
+                ],
+                "digests": {
+                  "precision": "1de2eae8c54a8c87",
+                  "recall": "ecb41c9ed31cacee",
+                  "scores": "8bc12df8da30fb4b"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 710.688768
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "keypoints",
+                "timings": {
+                  "load_gt": 0.02191749998019077,
+                  "load_dt": 0.18203158301184885,
+                  "evaluate": 0.7332800829899497,
+                  "accumulate": 2.445801510475576e-05,
+                  "summarize": 0.00023741598124615848
+                },
+                "eval_total": 0.7335419569863006,
+                "eval_cpu": 0.7477919999999998,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 0.9374910399783403,
+                "stats": [
+                  0.5638424803359239,
+                  0.8196351834130865,
+                  0.6089962809874976,
+                  0.4897993433730227,
+                  0.682574551089035,
+                  0.6315963476070529,
+                  0.8765743073047859,
+                  0.676794710327456,
+                  0.5475279978148048,
+                  0.7487179487179488
+                ],
+                "digests": {
+                  "precision": "1de2eae8c54a8c87",
+                  "recall": "ecb41c9ed31cacee",
+                  "scores": "8bc12df8da30fb4b"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 710.475776
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "keypoints",
+                "timings": {
+                  "load_gt": 0.022187916008988395,
+                  "load_dt": 0.18206420799833722,
+                  "evaluate": 0.7306180000014137,
+                  "accumulate": 2.3333006538450718e-05,
+                  "summarize": 0.0002118749835062772
+                },
+                "eval_total": 0.7308532079914585,
+                "eval_cpu": 0.7451010000000001,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 0.9351053319987841,
+                "stats": [
+                  0.5638424803359239,
+                  0.8196351834130865,
+                  0.6089962809874976,
+                  0.4897993433730227,
+                  0.682574551089035,
+                  0.6315963476070529,
+                  0.8765743073047859,
+                  0.676794710327456,
+                  0.5475279978148048,
+                  0.7487179487179488
+                ],
+                "digests": {
+                  "precision": "1de2eae8c54a8c87",
+                  "recall": "ecb41c9ed31cacee",
+                  "scores": "8bc12df8da30fb4b"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 710.57408
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "keypoints",
+                "timings": {
+                  "load_gt": 0.021720124990679324,
+                  "load_dt": 0.18588745800661854,
+                  "evaluate": 0.7452955830085557,
+                  "accumulate": 3.199998172931373e-05,
+                  "summarize": 0.0002127499901689589
+                },
+                "eval_total": 0.745540332980454,
+                "eval_cpu": 0.7563809999999997,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 0.9531479159777518,
+                "stats": [
+                  0.5638424803359239,
+                  0.8196351834130865,
+                  0.6089962809874976,
+                  0.4897993433730227,
+                  0.682574551089035,
+                  0.6315963476070529,
+                  0.8765743073047859,
+                  0.676794710327456,
+                  0.5475279978148048,
+                  0.7487179487179488
+                ],
+                "digests": {
+                  "precision": "1de2eae8c54a8c87",
+                  "recall": "ecb41c9ed31cacee",
+                  "scores": "8bc12df8da30fb4b"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 710.541312
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "keypoints",
+                "timings": {
+                  "load_gt": 0.021675124997273088,
+                  "load_dt": 0.18143195798620582,
+                  "evaluate": 0.7387657920189667,
+                  "accumulate": 3.374999505467713e-05,
+                  "summarize": 0.0002349159913137555
+                },
+                "eval_total": 0.7390344580053352,
+                "eval_cpu": 0.7535670000000003,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 0.9421415409888141,
+                "stats": [
+                  0.5638424803359239,
+                  0.8196351834130865,
+                  0.6089962809874976,
+                  0.4897993433730227,
+                  0.682574551089035,
+                  0.6315963476070529,
+                  0.8765743073047859,
+                  0.676794710327456,
+                  0.5475279978148048,
+                  0.7487179487179488
+                ],
+                "digests": {
+                  "precision": "1de2eae8c54a8c87",
+                  "recall": "ecb41c9ed31cacee",
+                  "scores": "8bc12df8da30fb4b"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 710.49216
+              }
+            ]
+          },
+          "candidate": {
+            "load_and_evaluate_median_seconds": 0.5927255420247093,
+            "evaluate_median_seconds": 0.3891184374806471,
+            "peak_rss_median_mb": 329.408512,
+            "records": [
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "keypoints",
+                "timings": {
+                  "load_gt": 0.022738500003470108,
+                  "load_dt": 0.18046908400719985,
+                  "evaluate": 0.3875925830216147,
+                  "accumulate": 2.37500062212348e-05,
+                  "summarize": 0.00024516700068488717
+                },
+                "eval_total": 0.3878615000285208,
+                "eval_cpu": 0.4039559999999999,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 0.5910690840391908,
+                "stats": [
+                  0.5638424803359239,
+                  0.8196351834130865,
+                  0.6089962809874976,
+                  0.4897993433730227,
+                  0.682574551089035,
+                  0.6315963476070529,
+                  0.8765743073047859,
+                  0.676794710327456,
+                  0.5475279978148048,
+                  0.7487179487179488
+                ],
+                "digests": {
+                  "precision": "1de2eae8c54a8c87",
+                  "recall": "ecb41c9ed31cacee",
+                  "scores": "8bc12df8da30fb4b"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 329.613312
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "keypoints",
+                "timings": {
+                  "load_gt": 0.022053166991099715,
+                  "load_dt": 0.18090904198470525,
+                  "evaluate": 0.3876988340052776,
+                  "accumulate": 2.508299075998366e-05,
+                  "summarize": 0.00021679099882021546
+                },
+                "eval_total": 0.3879407079948578,
+                "eval_cpu": 0.4043830000000001,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 0.5909029169706628,
+                "stats": [
+                  0.5638424803359239,
+                  0.8196351834130865,
+                  0.6089962809874976,
+                  0.4897993433730227,
+                  0.682574551089035,
+                  0.6315963476070529,
+                  0.8765743073047859,
+                  0.676794710327456,
+                  0.5475279978148048,
+                  0.7487179487179488
+                ],
+                "digests": {
+                  "precision": "1de2eae8c54a8c87",
+                  "recall": "ecb41c9ed31cacee",
+                  "scores": "8bc12df8da30fb4b"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 329.383936
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "keypoints",
+                "timings": {
+                  "load_gt": 0.02190550000523217,
+                  "load_dt": 0.18073695900966413,
+                  "evaluate": 0.38620770900161006,
+                  "accumulate": 2.4333014152944088e-05,
+                  "summarize": 0.00021208298858255148
+                },
+                "eval_total": 0.38644412500434555,
+                "eval_cpu": 0.4026720000000001,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 0.5890865840192419,
+                "stats": [
+                  0.5638424803359239,
+                  0.8196351834130865,
+                  0.6089962809874976,
+                  0.4897993433730227,
+                  0.682574551089035,
+                  0.6315963476070529,
+                  0.8765743073047859,
+                  0.676794710327456,
+                  0.5475279978148048,
+                  0.7487179487179488
+                ],
+                "digests": {
+                  "precision": "1de2eae8c54a8c87",
+                  "recall": "ecb41c9ed31cacee",
+                  "scores": "8bc12df8da30fb4b"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 329.433088
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "keypoints",
+                "timings": {
+                  "load_gt": 0.0219905830163043,
+                  "load_dt": 0.1843414579925593,
+                  "evaluate": 0.3900401669961866,
+                  "accumulate": 3.191697760485113e-05,
+                  "summarize": 0.00022408299264498055
+                },
+                "eval_total": 0.39029616696643643,
+                "eval_cpu": 0.4055280000000001,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 0.5966282079753,
+                "stats": [
+                  0.5638424803359239,
+                  0.8196351834130865,
+                  0.6089962809874976,
+                  0.4897993433730227,
+                  0.682574551089035,
+                  0.6315963476070529,
+                  0.8765743073047859,
+                  0.676794710327456,
+                  0.5475279978148048,
+                  0.7487179487179488
+                ],
+                "digests": {
+                  "precision": "1de2eae8c54a8c87",
+                  "recall": "ecb41c9ed31cacee",
+                  "scores": "8bc12df8da30fb4b"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 329.383936
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "keypoints",
+                "timings": {
+                  "load_gt": 0.02218833300867118,
+                  "load_dt": 0.1817426249908749,
+                  "evaluate": 0.39021000001230277,
+                  "accumulate": 2.90420139208436e-05,
+                  "summarize": 0.00021199998445808887
+                },
+                "eval_total": 0.3904510420106817,
+                "eval_cpu": 0.40633099999999994,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 0.5943820000102278,
+                "stats": [
+                  0.5638424803359239,
+                  0.8196351834130865,
+                  0.6089962809874976,
+                  0.4897993433730227,
+                  0.682574551089035,
+                  0.6315963476070529,
+                  0.8765743073047859,
+                  0.676794710327456,
+                  0.5475279978148048,
+                  0.7487179487179488
+                ],
+                "digests": {
+                  "precision": "1de2eae8c54a8c87",
+                  "recall": "ecb41c9ed31cacee",
+                  "scores": "8bc12df8da30fb4b"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 329.498624
+              },
+              {
+                "impl": "ufcoco",
+                "file_inputs": true,
+                "iou_type": "keypoints",
+                "timings": {
+                  "load_gt": 0.021989458007737994,
+                  "load_dt": 0.18941533300676383,
+                  "evaluate": 0.3942840000090655,
+                  "accumulate": 3.895797999575734e-05,
+                  "summarize": 0.0002170839870814234
+                },
+                "eval_total": 0.3945400419761427,
+                "eval_cpu": 0.4110019999999999,
+                "threads": "2",
+                "cpu_load_before": NaN,
+                "cpu_load_after": NaN,
+                "wall_total": 0.6059448329906445,
+                "stats": [
+                  0.5638424803359239,
+                  0.8196351834130865,
+                  0.6089962809874976,
+                  0.4897993433730227,
+                  0.682574551089035,
+                  0.6315963476070529,
+                  0.8765743073047859,
+                  0.676794710327456,
+                  0.5475279978148048,
+                  0.7487179487179488
+                ],
+                "digests": {
+                  "precision": "1de2eae8c54a8c87",
+                  "recall": "ecb41c9ed31cacee",
+                  "scores": "8bc12df8da30fb4b"
+                },
+                "platform": "darwin/arm64",
+                "peak_rss_mb": 329.351168
+              }
+            ]
+          }
+        }
+      }
+    },
+    "server": {
+      "cpu": "Intel Core i5-10400",
+      "physical_cores": 6,
+      "logical_cpus": 12,
+      "ram_bytes": 33547984896,
+      "gpu": "RTX 3070 8 GB (unused during evaluator replay)",
+      "python": "3.12.3",
+      "numpy": "2.4.4",
+      "rust": "1.97.1",
+      "scope": "actual frozen Ultralytics 0d406853 eval_json replay, retained jdict, cold plus two cached calls; no inference",
+      "tasks": {
+        "segment": {
+          "baseline": {
+            "cold_median_seconds": 5.898784618941136,
+            "cached_median_seconds": 5.117456272244453,
+            "peak_rss_median_mib": 3788.18359375,
+            "records": [
+              {
+                "mode": "replay",
+                "task": "segment",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  0.36669921875,
+                  0.228515625,
+                  0.21826171875
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+                "calls": [
+                  {
+                    "seconds": 6.394687262130901,
+                    "cpu_seconds": 8.591661084000002,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 4.858036688994616,
+                    "cpu_seconds": 6.911514073000001,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 5.3431780859827995,
+                    "cpu_seconds": 7.399778543,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "e83982c81f7cab7f26295542fcde54119989fc9aa2795eed80dead79b02660cd"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 724953,
+                "pred_sha256": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+                "peak_rss_mib": 3789.79296875,
+                "load_after": [
+                  0.69482421875,
+                  0.31201171875,
+                  0.24658203125
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "segment",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  0.97216796875,
+                  0.421875,
+                  0.287109375
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+                "calls": [
+                  {
+                    "seconds": 5.8776485428679734,
+                    "cpu_seconds": 8.062750794,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 5.347601823974401,
+                    "cpu_seconds": 7.414154486999998,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 4.881668240064755,
+                    "cpu_seconds": 6.944452667,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "e83982c81f7cab7f26295542fcde54119989fc9aa2795eed80dead79b02660cd"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 724953,
+                "pred_sha256": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+                "peak_rss_mib": 3786.71875,
+                "load_after": [
+                  1.05224609375,
+                  0.46728515625,
+                  0.30419921875
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "segment",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.0478515625,
+                  0.4765625,
+                  0.30810546875
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+                "calls": [
+                  {
+                    "seconds": 5.904359075939283,
+                    "cpu_seconds": 8.091923885,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 5.396447136066854,
+                    "cpu_seconds": 7.465209769000001,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 4.881106551969424,
+                    "cpu_seconds": 6.943544927999998,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "e83982c81f7cab7f26295542fcde54119989fc9aa2795eed80dead79b02660cd"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 724953,
+                "pred_sha256": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+                "peak_rss_mib": 3788.12109375,
+                "load_after": [
+                  1.25634765625,
+                  0.56005859375,
+                  0.33984375
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "segment",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.3896484375,
+                  0.67333984375,
+                  0.38720703125
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+                "calls": [
+                  {
+                    "seconds": 5.959050948964432,
+                    "cpu_seconds": 8.162515633,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 5.355033141095191,
+                    "cpu_seconds": 7.441710259999999,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 4.885521883843467,
+                    "cpu_seconds": 6.9707089400000015,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "e83982c81f7cab7f26295542fcde54119989fc9aa2795eed80dead79b02660cd"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 724953,
+                "pred_sha256": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+                "peak_rss_mib": 3788.44921875,
+                "load_after": [
+                  1.376953125,
+                  0.70654296875,
+                  0.40283203125
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "segment",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.3466796875,
+                  0.71142578125,
+                  0.40625
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+                "calls": [
+                  {
+                    "seconds": 5.893210161942989,
+                    "cpu_seconds": 8.11893496,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 5.364191649015993,
+                    "cpu_seconds": 7.434617208000001,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 4.892830790951848,
+                    "cpu_seconds": 6.969390913000002,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "e83982c81f7cab7f26295542fcde54119989fc9aa2795eed80dead79b02660cd"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 724953,
+                "pred_sha256": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+                "peak_rss_mib": 3788.24609375,
+                "load_after": [
+                  1.46337890625,
+                  0.779296875,
+                  0.43603515625
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "segment",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.45703125,
+                  0.853515625,
+                  0.474609375
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+                "calls": [
+                  {
+                    "seconds": 5.887082620058209,
+                    "cpu_seconds": 8.105103255,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 5.333710344042629,
+                    "cpu_seconds": 7.410833221000001,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 4.867700845003128,
+                    "cpu_seconds": 6.938441831000002,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "e83982c81f7cab7f26295542fcde54119989fc9aa2795eed80dead79b02660cd"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 724953,
+                "pred_sha256": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+                "peak_rss_mib": 3787.6796875,
+                "load_after": [
+                  1.4296875,
+                  0.87744140625,
+                  0.48876953125
+                ]
+              }
+            ]
+          },
+          "candidate": {
+            "cold_median_seconds": 3.4815525555750355,
+            "cached_median_seconds": 2.7816417025169358,
+            "peak_rss_median_mib": 2512.900390625,
+            "records": [
+              {
+                "mode": "replay",
+                "task": "segment",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  0.7197265625,
+                  0.32373046875,
+                  0.2509765625
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+                "calls": [
+                  {
+                    "seconds": 3.460915745003149,
+                    "cpu_seconds": 5.496248818000001,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 2.7476956949103624,
+                    "cpu_seconds": 4.6292668,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 2.7762768941465765,
+                    "cpu_seconds": 4.660214547999999,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "f7839f71476782a19bf701dd06072f430f052ba3583a6173a2de47ad895ca0a5"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 724953,
+                "pred_sha256": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+                "peak_rss_mib": 2533.99609375,
+                "load_after": [
+                  0.76318359375,
+                  0.34619140625,
+                  0.259765625
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "segment",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  0.7822265625,
+                  0.357421875,
+                  0.26416015625
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+                "calls": [
+                  {
+                    "seconds": 3.5705899118911475,
+                    "cpu_seconds": 5.592710702,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 2.7746283130254596,
+                    "cpu_seconds": 4.674004350000001,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 2.7877034950070083,
+                    "cpu_seconds": 4.6754801740000005,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "f7839f71476782a19bf701dd06072f430f052ba3583a6173a2de47ad895ca0a5"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 724953,
+                "pred_sha256": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+                "peak_rss_mib": 2513.12890625,
+                "load_after": [
+                  0.9697265625,
+                  0.41162109375,
+                  0.283203125
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "segment",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.2353515625,
+                  0.5673828125,
+                  0.34375
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+                "calls": [
+                  {
+                    "seconds": 3.420811412855983,
+                    "cpu_seconds": 5.439107975,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 2.7665542881004512,
+                    "cpu_seconds": 4.654118358,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 2.797680713934824,
+                    "cpu_seconds": 4.699839571000002,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "f7839f71476782a19bf701dd06072f430f052ba3583a6173a2de47ad895ca0a5"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 724953,
+                "pred_sha256": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+                "peak_rss_mib": 2512.671875,
+                "load_after": [
+                  1.3466796875,
+                  0.61474609375,
+                  0.3623046875
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "segment",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.31884765625,
+                  0.62158203125,
+                  0.3662109375
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+                "calls": [
+                  {
+                    "seconds": 3.5762428601738065,
+                    "cpu_seconds": 5.606558607,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 2.7906543728895485,
+                    "cpu_seconds": 4.676243659000001,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 2.7947417069226503,
+                    "cpu_seconds": 4.692619707999999,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "f7839f71476782a19bf701dd06072f430f052ba3583a6173a2de47ad895ca0a5"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 724953,
+                "pred_sha256": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+                "peak_rss_mib": 2514.0234375,
+                "load_after": [
+                  1.423828125,
+                  0.66748046875,
+                  0.3837890625
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "segment",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.42626953125,
+                  0.783203125,
+                  0.439453125
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+                "calls": [
+                  {
+                    "seconds": 3.4906654281076044,
+                    "cpu_seconds": 5.578406577,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 2.7739199728239328,
+                    "cpu_seconds": 4.6509258299999985,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 2.772008025087416,
+                    "cpu_seconds": 4.647650518999999,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "f7839f71476782a19bf701dd06072f430f052ba3583a6173a2de47ad895ca0a5"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 724953,
+                "pred_sha256": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+                "peak_rss_mib": 2512.12109375,
+                "load_after": [
+                  1.44091796875,
+                  0.8076171875,
+                  0.45166015625
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "segment",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.4052734375,
+                  0.81103515625,
+                  0.455078125
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+                "calls": [
+                  {
+                    "seconds": 3.4724396830424666,
+                    "cpu_seconds": 5.567263897000001,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 2.7902368509676307,
+                    "cpu_seconds": 4.699031608,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 2.7982556289061904,
+                    "cpu_seconds": 4.690712176,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.5679821660893593,
+                      "metrics/mAP50-95(B)": 0.4058588077940764,
+                      "fitness": 0.36314883821376903,
+                      "metrics/mAP_small(B)": 0.14920930726509513,
+                      "metrics/mAP_medium(B)": 0.38233001176124254,
+                      "metrics/mAP_large(B)": 0.5217235966750563,
+                      "metrics/mAP50(M)": 0.5385525392988464,
+                      "metrics/mAP50-95(M)": 0.3436595380932048
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "f7839f71476782a19bf701dd06072f430f052ba3583a6173a2de47ad895ca0a5"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 724953,
+                "pred_sha256": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+                "peak_rss_mib": 2509.2890625,
+                "load_after": [
+                  1.4970703125,
+                  0.8505859375,
+                  0.4716796875
+                ]
+              }
+            ]
+          }
+        },
+        "pose": {
+          "baseline": {
+            "cold_median_seconds": 1.8733261788729578,
+            "cached_median_seconds": 1.574219417059794,
+            "peak_rss_median_mib": 1719.759765625,
+            "records": [
+              {
+                "mode": "replay",
+                "task": "pose",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.46044921875,
+                  0.9609375,
+                  0.53662109375
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+                "calls": [
+                  {
+                    "seconds": 1.8800143338739872,
+                    "cpu_seconds": 1.9332566509999998,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 1.5543552008457482,
+                    "cpu_seconds": 1.6050294109999994,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 1.5905152771156281,
+                    "cpu_seconds": 1.6411764030000011,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "e83982c81f7cab7f26295542fcde54119989fc9aa2795eed80dead79b02660cd"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 134663,
+                "pred_sha256": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+                "peak_rss_mib": 1717.6171875,
+                "load_after": [
+                  1.38916015625,
+                  0.962890625,
+                  0.54248046875
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "pose",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.3525390625,
+                  0.98291015625,
+                  0.55859375
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+                "calls": [
+                  {
+                    "seconds": 1.9008926230017096,
+                    "cpu_seconds": 1.9553919649999996,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 1.5925856442190707,
+                    "cpu_seconds": 1.6441119320000004,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 1.5926976811606437,
+                    "cpu_seconds": 1.6443913109999997,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "e83982c81f7cab7f26295542fcde54119989fc9aa2795eed80dead79b02660cd"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 134663,
+                "pred_sha256": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+                "peak_rss_mib": 1719.84765625,
+                "load_after": [
+                  1.32421875,
+                  0.9833984375,
+                  0.56103515625
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "pose",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.2978515625,
+                  0.98388671875,
+                  0.5634765625
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+                "calls": [
+                  {
+                    "seconds": 1.8666380238719285,
+                    "cpu_seconds": 1.9200567139999993,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 1.5913891759701073,
+                    "cpu_seconds": 1.6421155280000006,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 1.5903932570945472,
+                    "cpu_seconds": 1.6408468309999993,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "e83982c81f7cab7f26295542fcde54119989fc9aa2795eed80dead79b02660cd"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 134663,
+                "pred_sha256": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+                "peak_rss_mib": 1719.83203125,
+                "load_after": [
+                  1.27392578125,
+                  0.984375,
+                  0.56591796875
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "pose",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.19580078125,
+                  0.986328125,
+                  0.57568359375
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+                "calls": [
+                  {
+                    "seconds": 1.8536919408943504,
+                    "cpu_seconds": 1.9076786070000002,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 1.5502972030080855,
+                    "cpu_seconds": 1.6020467169999995,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 1.55616146302782,
+                    "cpu_seconds": 1.6075095489999995,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "e83982c81f7cab7f26295542fcde54119989fc9aa2795eed80dead79b02660cd"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 134663,
+                "pred_sha256": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+                "peak_rss_mib": 1719.6875,
+                "load_after": [
+                  1.1796875,
+                  0.98681640625,
+                  0.578125
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "pose",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.1650390625,
+                  0.9873046875,
+                  0.58056640625
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+                "calls": [
+                  {
+                    "seconds": 1.8972315059509128,
+                    "cpu_seconds": 1.9510764820000004,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 1.5971568981185555,
+                    "cpu_seconds": 1.6487490319999996,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 1.5548502921592444,
+                    "cpu_seconds": 1.606095389,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "e83982c81f7cab7f26295542fcde54119989fc9aa2795eed80dead79b02660cd"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 134663,
+                "pred_sha256": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+                "peak_rss_mib": 1719.90625,
+                "load_after": [
+                  1.13916015625,
+                  0.98828125,
+                  0.58544921875
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "pose",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.10791015625,
+                  0.98974609375,
+                  0.5927734375
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+                "calls": [
+                  {
+                    "seconds": 1.8073767549358308,
+                    "cpu_seconds": 1.8619352400000002,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 1.543979049893096,
+                    "cpu_seconds": 1.595352397000001,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 1.5898043119814247,
+                    "cpu_seconds": 1.6413917379999994,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "e83982c81f7cab7f26295542fcde54119989fc9aa2795eed80dead79b02660cd"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 134663,
+                "pred_sha256": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+                "peak_rss_mib": 1719.1171875,
+                "load_after": [
+                  1.0908203125,
+                  0.99072265625,
+                  0.59765625
+                ]
+              }
+            ]
+          },
+          "candidate": {
+            "cold_median_seconds": 0.9478214085102081,
+            "cached_median_seconds": 0.9105327139841393,
+            "peak_rss_median_mib": 1362.990234375,
+            "records": [
+              {
+                "mode": "replay",
+                "task": "pose",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.38916015625,
+                  0.962890625,
+                  0.54248046875
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+                "calls": [
+                  {
+                    "seconds": 0.9495421580504626,
+                    "cpu_seconds": 1.0053399069999998,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 0.931695592822507,
+                    "cpu_seconds": 0.9849974260000005,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 0.9076438769698143,
+                    "cpu_seconds": 0.9606123360000005,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "f7839f71476782a19bf701dd06072f430f052ba3583a6173a2de47ad895ca0a5"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 134663,
+                "pred_sha256": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+                "peak_rss_mib": 1362.6640625,
+                "load_after": [
+                  1.35791015625,
+                  0.9638671875,
+                  0.54541015625
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "pose",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.3291015625,
+                  0.96484375,
+                  0.54833984375
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+                "calls": [
+                  {
+                    "seconds": 0.9481919179670513,
+                    "cpu_seconds": 1.0035080300000008,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 0.9085232040379196,
+                    "cpu_seconds": 0.9612648159999999,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 0.9075329161714762,
+                    "cpu_seconds": 0.9605515809999998,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "f7839f71476782a19bf701dd06072f430f052ba3583a6173a2de47ad895ca0a5"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 134663,
+                "pred_sha256": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+                "peak_rss_mib": 1362.70703125,
+                "load_after": [
+                  1.38330078125,
+                  0.982421875,
+                  0.55615234375
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "pose",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.251953125,
+                  0.98486328125,
+                  0.568359375
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+                "calls": [
+                  {
+                    "seconds": 0.9449044181965292,
+                    "cpu_seconds": 0.9993476720000007,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 0.9124779370613396,
+                    "cpu_seconds": 0.9645292830000001,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 0.9093988069798797,
+                    "cpu_seconds": 0.961395392,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "f7839f71476782a19bf701dd06072f430f052ba3583a6173a2de47ad895ca0a5"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 134663,
+                "pred_sha256": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+                "peak_rss_mib": 1362.98828125,
+                "load_after": [
+                  1.2314453125,
+                  0.9853515625,
+                  0.57080078125
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "pose",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.2314453125,
+                  0.9853515625,
+                  0.57080078125
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+                "calls": [
+                  {
+                    "seconds": 0.947450899053365,
+                    "cpu_seconds": 1.0030351020000001,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 0.9130273719783872,
+                    "cpu_seconds": 0.9661534819999993,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 0.9082743939943612,
+                    "cpu_seconds": 0.9612239960000002,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "f7839f71476782a19bf701dd06072f430f052ba3583a6173a2de47ad895ca0a5"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 134663,
+                "pred_sha256": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+                "peak_rss_mib": 1362.9921875,
+                "load_after": [
+                  1.212890625,
+                  0.98583984375,
+                  0.5732421875
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "pose",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.13916015625,
+                  0.98828125,
+                  0.58544921875
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+                "calls": [
+                  {
+                    "seconds": 0.9462160600814968,
+                    "cpu_seconds": 1.0004593889999995,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 0.9113457449711859,
+                    "cpu_seconds": 0.9635561020000001,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 0.9094833449926227,
+                    "cpu_seconds": 0.9613734259999998,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "f7839f71476782a19bf701dd06072f430f052ba3583a6173a2de47ad895ca0a5"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 134663,
+                "pred_sha256": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+                "peak_rss_mib": 1371.25390625,
+                "load_after": [
+                  1.1279296875,
+                  0.98876953125,
+                  0.587890625
+                ]
+              },
+              {
+                "mode": "replay",
+                "task": "pose",
+                "diagnostic_only": false,
+                "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+                "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+                "cpu": "x86_64",
+                "logical_cpus": 12,
+                "physical_cpus": 6,
+                "ram_bytes": 33547984896,
+                "threads": 2,
+                "load_before": [
+                  1.11767578125,
+                  0.9892578125,
+                  0.59033203125
+                ],
+                "versions": {
+                  "ultralytics": "8.4.143",
+                  "faster-coco-eval": "1.8.0",
+                  "ultrafast-pycocotools": "0.1.7",
+                  "numpy": "2.4.4",
+                  "torch": "2.13.0+cu126",
+                  "torchvision": "0.28.0+cu126"
+                },
+                "source": "/tmp/ultralytics-pr26101/replacement/ultralytics/__init__.py",
+                "source_hashes": {
+                  "models/yolo/detect/val.py": "660e449cfea6d1a71378ec9de76f9815cec89958227b8ee4ebf98b4d11a940b2",
+                  "models/yolo/segment/val.py": "237479e04bd0f10bd4fd8b4013d65601643db4f6f876717e9559fcecf3fe03dd",
+                  "models/yolo/depth/val.py": "c0a65357d908ab287a3390b63645144b5cfb4b054de0ac65de52bba615da8e88",
+                  "models/yolo/pose/val.py": "107d7c8298b02ea31fefcf8f28de57a1e85df12c8fbffa37f36380f69733e527",
+                  "models/yolo/semantic/val.py": "ef10ecd5eada2ff058ccc9fdab02a97529d1cbc98ac10d315c0932f46fabb5bb",
+                  "models/yolo/world/val.py": "fdd5d3b1dd426dc5099fb845ec12f161a18116d7dd7d30be64844b49e49e0726",
+                  "models/yolo/obb/val.py": "e4273ad5e8c00325adcccdeffdca6446b3f47b7eb4214b6dcbefa23d87fec54f",
+                  "models/yolo/classify/val.py": "abc79c8284a61587e3c4c83f9d69332d28af7158aec17b1d0738f52a2f48a54e",
+                  "models/yolo/yoloe/val.py": "8ddc0a1e4934273b41823b5b0ab984cd710df166f66c1a17e3d7462408cedaa7"
+                },
+                "gt_sha256": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+                "calls": [
+                  {
+                    "seconds": 0.9503849020693451,
+                    "cpu_seconds": 1.0064011410000004,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cold"
+                  },
+                  {
+                    "seconds": 0.9082472429145128,
+                    "cpu_seconds": 0.9612229120000002,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  },
+                  {
+                    "seconds": 0.9079819389153272,
+                    "cpu_seconds": 0.9609530529999999,
+                    "metrics": {
+                      "metrics/mAP50(B)": 0.6377897669841036,
+                      "metrics/mAP50-95(B)": 0.4510778600080224,
+                      "fitness": 0.5894217506436402,
+                      "metrics/mAP_small(B)": 0.1786874178451701,
+                      "metrics/mAP_medium(B)": 0.6129447378176806,
+                      "metrics/mAP_large(B)": 0.7532816959115529,
+                      "metrics/mAP50(P)": 0.8196351834130865,
+                      "metrics/mAP50-95(P)": 0.5638424803359239
+                    },
+                    "ground_truth": "cached"
+                  }
+                ],
+                "native_hashes": {
+                  "faster-coco-eval": {
+                    "faster_coco_eval/faster_eval_api_cpp.cpython-312-x86_64-linux-gnu.so": "d2f69616f6062125007599420eec46e601f4acaf5697ba555e511b190aabb133",
+                    "faster_coco_eval/mask_api_new_cpp.cpython-312-x86_64-linux-gnu.so": "a47b987e67f01abcf055ee087ec7a3a80a1c1a55345b8dd81612a88bb22212d3"
+                  },
+                  "ultrafast-pycocotools": {
+                    "ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "f7839f71476782a19bf701dd06072f430f052ba3583a6173a2de47ad895ca0a5"
+                  }
+                },
+                "cpu_models": [
+                  "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz"
+                ],
+                "evaluator_statistics": {},
+                "images": 5000,
+                "predictions": 134663,
+                "pred_sha256": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885",
+                "prediction_file": "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+                "peak_rss_mib": 1366.015625,
+                "load_after": [
+                  1.10791015625,
+                  0.98974609375,
+                  0.5927734375
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "full_array_comparisons": [
+    {
+      "host": "m2",
+      "task": "segm",
+      "arrays": {
+        "precision": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "recall": {
+          "shape": [
+            10,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "scores": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        }
+      }
+    },
+    {
+      "host": "m2",
+      "task": "keypoints",
+      "arrays": {
+        "precision": {
+          "shape": [
+            10,
+            101,
+            1,
+            3,
+            1
+          ],
+          "max_abs_diff": 0.0
+        },
+        "recall": {
+          "shape": [
+            10,
+            1,
+            3,
+            1
+          ],
+          "max_abs_diff": 0.0
+        },
+        "scores": {
+          "shape": [
+            10,
+            101,
+            1,
+            3,
+            1
+          ],
+          "max_abs_diff": 0.0
+        }
+      }
+    },
+    {
+      "host": "server",
+      "task": "segment",
+      "arrays": {
+        "call0_bbox_precision": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call0_bbox_recall": {
+          "shape": [
+            10,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call0_bbox_scores": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call0_segm_precision": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call0_segm_recall": {
+          "shape": [
+            10,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call0_segm_scores": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call1_bbox_precision": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call1_bbox_recall": {
+          "shape": [
+            10,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call1_bbox_scores": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call1_segm_precision": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call1_segm_recall": {
+          "shape": [
+            10,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call1_segm_scores": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call2_bbox_precision": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call2_bbox_recall": {
+          "shape": [
+            10,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call2_bbox_scores": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call2_segm_precision": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call2_segm_recall": {
+          "shape": [
+            10,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call2_segm_scores": {
+          "shape": [
+            10,
+            101,
+            80,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        }
+      }
+    },
+    {
+      "host": "server",
+      "task": "pose",
+      "arrays": {
+        "call0_bbox_precision": {
+          "shape": [
+            10,
+            101,
+            1,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call0_bbox_recall": {
+          "shape": [
+            10,
+            1,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call0_bbox_scores": {
+          "shape": [
+            10,
+            101,
+            1,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call0_keypoints_precision": {
+          "shape": [
+            10,
+            101,
+            1,
+            3,
+            1
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call0_keypoints_recall": {
+          "shape": [
+            10,
+            1,
+            3,
+            1
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call0_keypoints_scores": {
+          "shape": [
+            10,
+            101,
+            1,
+            3,
+            1
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call1_bbox_precision": {
+          "shape": [
+            10,
+            101,
+            1,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call1_bbox_recall": {
+          "shape": [
+            10,
+            1,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call1_bbox_scores": {
+          "shape": [
+            10,
+            101,
+            1,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call1_keypoints_precision": {
+          "shape": [
+            10,
+            101,
+            1,
+            3,
+            1
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call1_keypoints_recall": {
+          "shape": [
+            10,
+            1,
+            3,
+            1
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call1_keypoints_scores": {
+          "shape": [
+            10,
+            101,
+            1,
+            3,
+            1
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call2_bbox_precision": {
+          "shape": [
+            10,
+            101,
+            1,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call2_bbox_recall": {
+          "shape": [
+            10,
+            1,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call2_bbox_scores": {
+          "shape": [
+            10,
+            101,
+            1,
+            4,
+            3
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call2_keypoints_precision": {
+          "shape": [
+            10,
+            101,
+            1,
+            3,
+            1
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call2_keypoints_recall": {
+          "shape": [
+            10,
+            1,
+            3,
+            1
+          ],
+          "max_abs_diff": 0.0
+        },
+        "call2_keypoints_scores": {
+          "shape": [
+            10,
+            101,
+            1,
+            3,
+            1
+          ],
+          "max_abs_diff": 0.0
+        }
+      }
+    }
+  ],
+  "artifacts": {
+    "m2/segm-0-baseline.json": "c99e32d1bb89a91ee95bb8053b2076d4664071347d92d56d8777f30e48c5f0d4",
+    "m2/segm-1-baseline.json": "4c14e19d5cfe7ef7ed5177d19d5bbd0d109727a302b29e3e82d7050a2b82354a",
+    "m2/segm-2-baseline.json": "42fdfd78ffd98e48d89d018aef8fd346dc41a4232c70fa4a8a1b13a3fd9ba5db",
+    "m2/segm-3-baseline.json": "4d9175576dd35b9e60846b5c2a6a6778869273b8ff355b7d91eece630d3cf43b",
+    "m2/segm-4-baseline.json": "c4ef86170c4c6a2c51c4ee0c267c79b3f9c62aaef108fc7ead0fad762feac4db",
+    "m2/segm-5-baseline.json": "b5b46c1c6a27b3d7afb2c9bfffbb6967301cccf0812224dfbb1a25c74e88154a",
+    "m2/segm-0-candidate.json": "f82c4774ac53f343e6432c29d6ad0ff71438914c91e19a1dd0bf3dd74e9ce810",
+    "m2/segm-1-candidate.json": "f1da3761123f5b19cd2b0eecbab12e3d270bcd7a69a1b1b3fe4daa629a069c35",
+    "m2/segm-2-candidate.json": "eb16249254c261a15fc3b244c99b7383a070044469cbfaa4c972668f9176bd46",
+    "m2/segm-3-candidate.json": "a111f73b74655040c805d56b82de969a20b814e16dfa7612b342db47433493b0",
+    "m2/segm-4-candidate.json": "4748421e7cd2cee403a4f4bbf0df592f8cbe3ec1e0e12e2a2e8d01ae0b09dba0",
+    "m2/segm-5-candidate.json": "b7a633e83d64990d7571927c37792275cd21f8b098e357cccd85e02063d2a4d4",
+    "m2/segm-diagnostic-baseline.npz": "755ca21f818f798aee603ad03b28825233a01db85bceee7296f976fb236354bd",
+    "m2/segm-diagnostic-baseline.json": "66c7dea8b0cce6600847f9f2c1719838a9cfaec5541a57dd7ba43ba1f59f6386",
+    "m2/segm-diagnostic-candidate.npz": "755ca21f818f798aee603ad03b28825233a01db85bceee7296f976fb236354bd",
+    "m2/segm-diagnostic-candidate.json": "cbd46bc5e6b39ee6888ef86e792b92b53b63a95d276d296dadebc569c5f0c2e6",
+    "m2/keypoints-0-baseline.json": "3693c507180bdf59d47f7f9b90dadedd2bf8b37eed38c52e3ecb54e2816b3cba",
+    "m2/keypoints-1-baseline.json": "c213559013d70d699846fecd1511eebaa7dc4debf9e9f45109b7a59d15b90e12",
+    "m2/keypoints-2-baseline.json": "8bff8d0add19aa8b4b6c173500e06e41f68f9257507345617ad83c19bd662136",
+    "m2/keypoints-3-baseline.json": "c970cf40b02907c1fdf09ff5a995cbfddabd75a4f4ffba045d5e0ce3719d3672",
+    "m2/keypoints-4-baseline.json": "29e59497009f640cf562db0cd222cdd75dd3c7c2b2ac153ddb813d4adfcd3d2c",
+    "m2/keypoints-5-baseline.json": "66151efc9d1bd9e2f86c04f15e53977e6ffb57853dc431e22b6593c3bf9df177",
+    "m2/keypoints-0-candidate.json": "b8bfc5ac5f89627ee9ce752664547656931050f29711bb5e432da35ec991f586",
+    "m2/keypoints-1-candidate.json": "b263fd48240b216f2fc0ab3bace191a5465e29448c72c1a57c79e6d2f982ab48",
+    "m2/keypoints-2-candidate.json": "86dcc2c5be7b8160b47d8884bc4a51e8c643aa7b788af36a5a277a8512851ab1",
+    "m2/keypoints-3-candidate.json": "35004db5ca666dee641a28280a8996d64bd1ca7928a3bcce56dbc1118974b3ee",
+    "m2/keypoints-4-candidate.json": "c0e385466ea956c3ffc314322cd9e5807e7d12df3302293fcf94558a4ae5e117",
+    "m2/keypoints-5-candidate.json": "636a25fe3767cd11d46e6de93b35ab527aee492b86fce8b49298d7ea61d3cb71",
+    "m2/keypoints-diagnostic-baseline.npz": "1fffa7664aaf457ba5f870c4c39f77b68d9034127717871d4a093daac4ec5282",
+    "m2/keypoints-diagnostic-baseline.json": "2f6952fcfc97a55ff9ad18e399e2395f82e8c2a8a4ef7d637051810bab765a04",
+    "m2/keypoints-diagnostic-candidate.npz": "1fffa7664aaf457ba5f870c4c39f77b68d9034127717871d4a093daac4ec5282",
+    "m2/keypoints-diagnostic-candidate.json": "498d09f6050d3b8ec77d7b3f95a6032d4399aeb0b14a2afd6f49ebe495574185",
+    "server/segment-0-baseline.json": "d5938d7978d70177e672719ee64bd9bb4a980833c658db59cfb6ffb20db98e5d",
+    "server/segment-1-baseline.json": "4697b4ccf4c604a79d0875fbf33ac72c49e480652e6b93e0c0974fe84fd7b373",
+    "server/segment-2-baseline.json": "f80e6de3741c1a5e0ce93ae88489cbdbf9df09a6482b739b169042b584177431",
+    "server/segment-3-baseline.json": "57f74d24e6dd1b1e1c4cabaa3cea876788ecf12634822c95b7b32daa8bb855e2",
+    "server/segment-4-baseline.json": "01f7c5c667d37dc10aa664f803a2445b7e9566bdd46090c58f325eb40bf2d4c8",
+    "server/segment-5-baseline.json": "4b4fc93b026b3cbeab0c7c30ef8f3722a0f7adf7ca954d2acdb245e98c3d6a2c",
+    "server/segment-0-candidate.json": "9b492e79d1fe4e1983e5dcd11c76fb9ad98e323d7788276a9a040878a960e559",
+    "server/segment-1-candidate.json": "c2ee580582405814b2d1764ed92aba56313a5f1f3ece3d93f20b3b8b92bb7e35",
+    "server/segment-2-candidate.json": "32e29520ffec16a02325b405580f82b8c3896f2e62254e486433f98960f4d30c",
+    "server/segment-3-candidate.json": "f78851930729e7289c2ab4d0c75c534357cd5b7e92f3949ce2a43bad6efbf8c1",
+    "server/segment-4-candidate.json": "70dd6d2ffbe0e2c7c6d2d571aa91efe589554cf50cb5c713eb379adfd9452ca9",
+    "server/segment-5-candidate.json": "4dae90e06f00f8f8162bf5057d90ef0d23f037c0eb2b60ab1ebad1b1bf58a509",
+    "server/segment-6-baseline.npz": "f37ee9eff81447c64bb9128ddf4beee533a09c035f9f8861e32cadcde6ee5f6d",
+    "server/segment-6-baseline.json": "cc7b793f2b517dc2eb11ca38f0ba07a452a0a7e8b0b8a0ba37bf0aa506f6ce67",
+    "server/segment-6-candidate.npz": "f37ee9eff81447c64bb9128ddf4beee533a09c035f9f8861e32cadcde6ee5f6d",
+    "server/segment-6-candidate.json": "cf12b4844a9f1b77cf8c18aa3719f598a0e5ccd55afcd0feb8063b53eca675bf",
+    "server/pose-0-baseline.json": "1bb45a63d77ec3946ac88927c622e821eddfa90f08e7e44167c4aadea131aafc",
+    "server/pose-1-baseline.json": "0e3c84ff98318a32c882933b9deb9a52f9dc5b01139bd93aa1045c877ed2de74",
+    "server/pose-2-baseline.json": "7382941a51e7cc2a4ce257d7dd786817cefb6e701b239e5624cfdebb73451039",
+    "server/pose-3-baseline.json": "f335fca4c9b61a4d41013314ffe50cfb156da6af15386dbf741d170fe32cdb73",
+    "server/pose-4-baseline.json": "f39b554d80c552be3d6ce183623badf08b27c4c7551ab9c0fece86d29d7b068a",
+    "server/pose-5-baseline.json": "213f2f41ff692e12e8e92e268bf139d61f73ac9bb35d62930cdb347513bd26fa",
+    "server/pose-0-candidate.json": "c36d53f1a8dd6f889f49de3a3f7e9c69f4733a25fbeb51160a5ecaba33120ccd",
+    "server/pose-1-candidate.json": "a1de342938f215c5b41adca00e25a578094bbb2797f16ae52c9c6e20a22b1b98",
+    "server/pose-2-candidate.json": "bbf601e22cafcb7b52297caad7ebab1f91d59e9a406420d164d16db071bedd59",
+    "server/pose-3-candidate.json": "16b33bb73e4637ac4b1bf5875f4bb36f2eaf38625bb008a537fec74e9c02f6b6",
+    "server/pose-4-candidate.json": "e68619947cf9956b7c80eb241f160c58983945a6ae5e24c202048a4c7b954d45",
+    "server/pose-5-candidate.json": "553f1ffc360424ce1d0c202d349dcbd4564880cb257458ef327091110bce2fb3",
+    "server/pose-6-baseline.npz": "17945c3ba0b973dfaa52483732ddbc7799003815b332017f7d06f1b2aeda54e8",
+    "server/pose-6-baseline.json": "9f366c080bb1d9b2bbfc7eb61d1de72af7b2773d1a4adec7a8e70e49e587cb5e",
+    "server/pose-6-candidate.npz": "17945c3ba0b973dfaa52483732ddbc7799003815b332017f7d06f1b2aeda54e8",
+    "server/pose-6-candidate.json": "75dcd360ffa454ed7a8f5bfd9e37366ad9a3a1d1d278c4c5bcd60e4115fb18a9"
+  }
+}
