@@ -240,3 +240,78 @@ def test_large_integer_coordinates_keep_ordinary_json_semantics(tmp_path, coordi
     assert gt._compact is None
     assert gt.anns[3]['bbox'][0] == coordinate
     assert isinstance(gt.anns[3]['bbox'][0], int)
+
+
+@pytest.mark.parametrize('iou_type', ['segm', 'keypoints'])
+@pytest.mark.parametrize('input_types', [('file', 'file'), ('file', 'dict'), ('dict', 'file')])
+def test_nonbbox_keeps_file_snapshots_and_exact_curves(synthetic, synthetic_kp, iou_type, input_types):
+    gp, dp = synthetic_kp if iou_type == 'keypoints' else synthetic
+    def tweak(p):
+        p.imgIds = p.imgIds[::3]
+        p.catIds = p.catIds[::2]
+    reference = run_reference(gp, dp, iou_type, tweak)
+    gt = ufc.COCO(gp if input_types[0] == 'file' else json.loads(gp.read_text()), verbose=False)
+    dt = gt.loadRes(dp if input_types[1] == 'file' else json.loads(dp.read_text()))
+    ev = ufc.COCOeval(gt, dt, iou_type, print_function=lambda *_: None)
+    tweak(ev.params)
+    for _ in range(2):
+        ev.run()
+        assert_bit_identical(reference, ev, f'{iou_type}/{input_types}')
+        assert (gt._compact is not None) == (input_types[0] == 'file')
+        assert (dt._compact is not None) == (input_types[1] == 'file')
+
+
+def test_keypoint_json_boolean_coordinates_and_mutable_views(tmp_path):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    for ann in data['annotations']:
+        ann.update(keypoints=[True, False, 2] * 17, num_keypoints=17)
+    for ann in dets:
+        ann['keypoints'] = [True, False, 2] * 17
+    gp.write_text(json.dumps(data))
+    dp.write_text(json.dumps(dets))
+    reference = run_reference(gp, dp, 'keypoints')
+    gt = ufc.COCO(gp, verbose=False)
+    ev = ufc.COCOeval(gt, gt.loadRes(dp), 'keypoints', print_function=lambda *_: None)
+    ev.run()
+    assert_bit_identical(reference, ev, 'boolean coordinates')
+    gt.anns[3]['keypoints'] = [90, 90, 2] * 17
+    gp.write_text(json.dumps(gt.dataset))
+    ev.run()
+    assert_bit_identical(run_reference(gp, dp, 'keypoints'), ev, 'mutated public keypoints')
+
+
+def test_duplicate_annotation_arrays_keep_last_json_value(tmp_path):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    text = json.dumps(data)
+    gp.write_text(text[:-1] + ', "annotations": []}')
+    gt = ufc.COCO(gp, verbose=False)
+    assert gt._compact is None
+    assert gt.dataset['annotations'] == []
+    assert gt.anns == {}
+
+
+@pytest.mark.parametrize('use_cats', [0, 1])
+@pytest.mark.parametrize('iou_type', ['segm', 'boundary', 'keypoints'])
+def test_nonbbox_compact_matches_materialized_diagnostics(synthetic, synthetic_kp, iou_type, use_cats):
+    import numpy as np
+    gp, dp = synthetic_kp if iou_type == 'keypoints' else synthetic
+    evaluations = []
+    for materialized in (False, True):
+        gt = ufc.COCO(gp, verbose=False)
+        dt = gt.loadRes(dp)
+        if materialized:
+            gt.anns
+            dt.anns
+        ev = ufc.COCOeval(gt, dt, iou_type, print_function=lambda *_: None)
+        ev.params.useCats = use_cats
+        ev.params.catIds = ev.params.catIds[::2]
+        ev.params.maxDets = [1, 3, 20] if iou_type != 'keypoints' else [20]
+        ev.run()
+        assert (gt._compact is None) == materialized
+        evaluations.append(ev)
+    first, second = evaluations
+    assert_bit_identical(first, second, f'{iou_type}/useCats={use_cats}')
+    for actual, expected in zip(first.per_instance(iou_thr=.5), second.per_instance(iou_thr=.5)):
+        assert actual.keys() == expected.keys()
+        for name in actual:
+            np.testing.assert_array_equal(actual[name], expected[name])

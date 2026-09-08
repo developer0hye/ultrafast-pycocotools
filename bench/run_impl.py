@@ -112,7 +112,7 @@ def cpu_load_percent() -> float:
         return float("nan")
 
 
-def run(impl: str, gt_path: str, dt_path: str, iou_type: str) -> dict:
+def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool = False) -> dict:
     timings: dict[str, float] = {}
 
     if impl == "pycocotools":
@@ -133,9 +133,12 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str) -> dict:
     timings["load_gt"] = time.perf_counter() - t
 
     t = time.perf_counter()
-    with open(dt_path) as f:
-        dt_json = json.load(f)
-    dt = gt.loadRes(dt_json)
+    if file_inputs:
+        dt = gt.loadRes(dt_path)
+    else:
+        with open(dt_path) as f:
+            dt_json = json.load(f)
+        dt = gt.loadRes(dt_json)
     timings["load_dt"] = time.perf_counter() - t
 
     t = time.perf_counter()
@@ -169,6 +172,7 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str) -> dict:
     }
     return {
         "impl": impl,
+        "file_inputs": file_inputs,
         "iou_type": iou_type,
         "timings": timings,
         "eval_total": timings["evaluate"] + timings["accumulate"] + timings["summarize"],
@@ -196,6 +200,8 @@ def main() -> None:
     ap.add_argument("--dt", required=True)
     ap.add_argument("--iou-type", default="bbox")
     ap.add_argument("--json-out", type=Path)
+    ap.add_argument("--file-inputs", action="store_true",
+                    help="Pass the prediction filename directly to loadRes")
     args = ap.parse_args()
 
     # Must happen before the extension is imported: rayon reads this when it
@@ -206,7 +212,7 @@ def main() -> None:
 
     global LOAD_BEFORE
     LOAD_BEFORE = cpu_load_percent()
-    res = run(args.impl, args.gt, args.dt, args.iou_type)
+    res = run(args.impl, args.gt, args.dt, args.iou_type, args.file_inputs)
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)
         args.json_out.write_text(json.dumps(res, indent=2))

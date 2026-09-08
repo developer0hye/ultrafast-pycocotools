@@ -24,7 +24,7 @@ use pyo3::intern;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyDict, PyFloat, PyList, PyString};
 use rayon::prelude::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
@@ -81,6 +81,9 @@ fn iou_type_from_str(s: &str) -> PyResult<IouType> {
 
 /// Raw, not-yet-rasterised segmentation as it appears in the JSON.
 enum RawSegm {
+    /// No opposing annotation in this evaluation group. Scalar fields still
+    /// contribute FP/FN records; compute_iou never reads this placeholder.
+    Unused,
     /// One or more polygon rings, unioned into a single mask. Stored flat
     /// (`ends[i]` is the exclusive end of ring `i`) so a multi-ring polygon
     /// costs one allocation instead of one per ring.
@@ -244,6 +247,7 @@ impl<'py> Keys<'py> {
 /// as-is, compressed RLE is decoded.
 fn raw_to_rle(raw: &RawSegm, h: u32, w: u32, scratch: &mut rle::PolyScratch) -> Rle {
     match raw {
+        RawSegm::Unused => Rle::default(),
         RawSegm::Poly { coords, ends } => rle::rle_fr_polys_flat_into(coords, ends, h, w, scratch),
         RawSegm::Uncompressed(c) => rle::rle_fr_uncompressed(c, h, w),
         RawSegm::Compressed(s) => Rle::from_str(s, h, w),
@@ -257,7 +261,11 @@ type BuiltMask = (Rle, Option<Rle>);
 
 /// An empty `Instances` sized for `n` annotations of `iou_type`.
 fn new_instances(n: usize, iou_type: IouType) -> Instances {
-    let geom = match iou_type {
+    new_instances_with_geom(n, new_geometry(n, iou_type))
+}
+
+fn new_geometry(n: usize, iou_type: IouType) -> GeomStore {
+    match iou_type {
         IouType::Bbox => GeomStore::Bboxes(Vec::with_capacity(n)),
         IouType::Segm => GeomStore::Masks(Vec::with_capacity(n)),
         IouType::Boundary => GeomStore::Boundaries {
@@ -268,8 +276,7 @@ fn new_instances(n: usize, iou_type: IouType) -> Instances {
             data: Vec::new(),
             k: 0,
         },
-    };
-    new_instances_with_geom(n, geom)
+    }
 }
 
 fn new_instances_with_geom(n: usize, geom: GeomStore) -> Instances {
@@ -287,6 +294,16 @@ fn new_instances_with_geom(n: usize, geom: GeomStore) -> Instances {
     }
 }
 
+fn instance_groups(instances: &Instances, use_cats: bool) -> HashSet<(u32, u32)> {
+    instances
+        .img_slot
+        .iter()
+        .zip(&instances.cat_slot)
+        .filter(|(image, category)| **image != u32::MAX && **category != u32::MAX)
+        .map(|(&image, &category)| (image, if use_cats { category } else { 0 }))
+        .collect()
+}
+
 fn attach_masks(geom: &mut GeomStore, masks: Vec<BuiltMask>) {
     match geom {
         GeomStore::Masks(v) => v.extend(masks.into_iter().map(|(m, _)| m)),
@@ -301,6 +318,34 @@ fn attach_masks(geom: &mut GeomStore, masks: Vec<BuiltMask>) {
         }
         _ => debug_assert!(masks.is_empty()),
     }
+}
+
+fn rasterise_chunks(
+    chunks: std::sync::mpsc::Receiver<Vec<(RawSegm, u32, u32)>>,
+    want_boundary: bool,
+    boundary_dilation: f64,
+    timings: &ExtractTimings,
+) -> Vec<BuiltMask> {
+    let mut out = Vec::new();
+    while let Ok(chunk) = chunks.recv() {
+        let t = Instant::now();
+        let built: Vec<BuiltMask> = chunk
+            .par_iter()
+            .map_init(rle::PolyScratch::default, |scratch, (r, h, w)| {
+                if matches!(r, RawSegm::Unused) {
+                    return (Rle::default(), want_boundary.then(Rle::default));
+                }
+                let m = raw_to_rle(r, *h, *w, scratch);
+                let b = want_boundary.then(|| rle::rle_to_boundary(&m, boundary_dilation));
+                (m, b)
+            })
+            .collect();
+        timings
+            .rasterise_ns
+            .fetch_add(t.elapsed().as_nanos() as u64, Ordering::Relaxed);
+        out.extend(built);
+    }
+    out
 }
 
 /// Read both annotation sets, rasterising behind a single worker.
@@ -343,27 +388,7 @@ fn extract_both(
             let (tx_raw, rx_raw) = std::sync::mpsc::sync_channel::<Vec<(RawSegm, u32, u32)>>(2);
             let worker_timings = Arc::clone(&timings);
             let worker = scope.spawn(move || {
-                let mut out: Vec<BuiltMask> = Vec::new();
-                while let Ok(chunk) = rx_raw.recv() {
-                    let t = Instant::now();
-                    let built: Vec<BuiltMask> = chunk
-                        .par_iter()
-                        // One scratch per worker: polygon rasterisation
-                        // otherwise spends its time allocating and freeing the
-                        // same buffers.
-                        .map_init(rle::PolyScratch::default, |scratch, (r, h, w)| {
-                            let m = raw_to_rle(r, *h, *w, scratch);
-                            let b =
-                                want_boundary.then(|| rle::rle_to_boundary(&m, boundary_dilation));
-                            (m, b)
-                        })
-                        .collect();
-                    worker_timings
-                        .rasterise_ns
-                        .fetch_add(t.elapsed().as_nanos() as u64, Ordering::Relaxed);
-                    out.extend(built);
-                }
-                out
+                rasterise_chunks(rx_raw, want_boundary, boundary_dilation, &worker_timings)
             });
 
             let mut raw_chunk: Vec<(RawSegm, u32, u32)> = Vec::with_capacity(CHUNK);
@@ -585,11 +610,6 @@ impl Evaluator {
         let empty = PyList::empty(py);
         let compact_gt = gt_anns.extract::<PyRef<compact::CompactBbox>>().ok();
         let compact_dt = dt_anns.extract::<PyRef<compact::CompactBbox>>().ok();
-        if (compact_gt.is_some() || compact_dt.is_some()) && it != IouType::Bbox {
-            return Err(PyValueError::new_err(
-                "compact storage requires bbox evaluation",
-            ));
-        }
         let gt_list = if compact_gt.is_some() {
             &empty
         } else {
@@ -610,11 +630,54 @@ impl Evaluator {
             &cat_map,
             boundary_dilation,
         )?;
+        let mask_geometry = matches!(it, IouType::Segm | IouType::Boundary);
+        let dt_groups = (mask_geometry && compact_gt.is_some()).then(|| {
+            compact_dt.as_ref().map_or_else(
+                || instance_groups(&dt, use_cats),
+                |source| source.groups(&img_map, &cat_map, use_cats),
+            )
+        });
         if let Some(source) = compact_gt {
-            gt = source.instances(true, &img_map, &cat_map);
+            gt = if it == IouType::Bbox {
+                source.instances(true, &img_map, &cat_map)
+            } else {
+                let source = &*source;
+                py.detach(|| {
+                    source.geometry_instances(
+                        true,
+                        it,
+                        &img_sizes,
+                        &img_map,
+                        &cat_map,
+                        boundary_dilation,
+                        &extract,
+                        dt_groups.as_ref(),
+                        use_cats,
+                    )
+                })?
+            };
         }
+        let gt_groups =
+            (mask_geometry && compact_dt.is_some()).then(|| instance_groups(&gt, use_cats));
         if let Some(source) = compact_dt {
-            dt = source.instances(false, &img_map, &cat_map);
+            dt = if it == IouType::Bbox {
+                source.instances(false, &img_map, &cat_map)
+            } else {
+                let source = &*source;
+                py.detach(|| {
+                    source.geometry_instances(
+                        false,
+                        it,
+                        &img_sizes,
+                        &img_map,
+                        &cat_map,
+                        boundary_dilation,
+                        &extract,
+                        gt_groups.as_ref(),
+                        use_cats,
+                    )
+                })?
+            };
         }
 
         let params = EvalParams {
