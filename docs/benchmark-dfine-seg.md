@@ -6,7 +6,7 @@ COCO val2017 images and predictions from the public
 It compares `faster_coco_eval` with `ultrafast` inside the application's
 `Validator`, including input conversion and the other validation metrics.
 
-**Follow-up:** the [unreleased mask-encoder optimization](mask-encoding-optimization.md)
+**Follow-up:** the [0.1.7 mask-encoder optimization](mask-encoding-optimization.md)
 reverses the segmentation regression: full validation is 17.8% / 23.4% faster
 than faster-coco-eval on M2 / the server. This page retains the original
 published-0.1.6 measurements.
@@ -108,7 +108,7 @@ behavior was changed during this benchmark; the discrepancy is retained in
 the evidence instead of relaxing the backend comparison tolerance.
 
 [Raw results, telemetry, hashes, curve parity, F1 audit and profiling evidence](../bench/results/dfine_seg_20260908.json)
-are saved in the repository's results directory as a local working-tree artifact.
+are committed in the repository's results directory.
 Per-process logs, curve archives, input cache and profiles remain under
 `bench/out/dfine-validator-{m2,rtx3070}-20260908/` and
 `bench/out/dfine-coco500-inputs/`. The server copy is
