@@ -252,6 +252,36 @@ fn cmp_desc_score(a: f64, b: f64) -> Ordering {
     }
 }
 
+/// Geometry is only read for the largest per-image evaluation limit. Keep
+/// scalar rows intact, but allow the loader to omit decoded mask payload for
+/// detections outside that limit. Reuse matching's category-major grouping and
+/// stable score ordering, including class-agnostic ties and NaNs.
+pub fn detection_geometry_keep(
+    dt: &Instances,
+    category_count: usize,
+    use_cats: bool,
+    max_det: usize,
+) -> Vec<bool> {
+    let n_groups = if use_cats { category_count } else { 1 };
+    let groups = Grouping::build(&dt.img_slot, &dt.cat_slot, n_groups, use_cats);
+    let mut keep = vec![true; dt.len()];
+    let mut order = Vec::new();
+    for group in 0..n_groups {
+        for run in groups.group(group) {
+            if run.len as usize <= max_det {
+                continue;
+            }
+            order.clear();
+            order.extend_from_slice(groups.indices(run));
+            order.sort_by(|&a, &b| cmp_desc_score(dt.scores[a as usize], dt.scores[b as usize]));
+            for &index in &order[max_det..] {
+                keep[index as usize] = false;
+            }
+        }
+    }
+    keep
+}
+
 /// Everything one image contributes to one category.
 struct CatImage<'a> {
     img_slot: u32,
@@ -554,9 +584,9 @@ impl Evaluator {
         out: &mut ImgMatch,
         scratch: &mut MatchScratch,
     ) -> bool {
-        if ci.gt_idx.is_empty() && ci.dt_idx.is_empty() {
-            return false;
-        }
+        // RunJoin already excludes groups with neither GT nor detections.
+        // A zero maxDets may empty a real detection-only group afterwards;
+        // pycocotools still exposes its empty evalImgs record, not None.
         let a_rng = self.params.area_rng[area_idx];
         let t_n = self.params.iou_thrs.len();
         let g_n = ci.gt_idx.len();
@@ -1086,6 +1116,27 @@ mod tests {
 
     fn no_boxes() -> Instances {
         boxes(&[], &[], &[], &[], &[])
+    }
+
+    #[test]
+    fn geometry_cap_preserves_category_major_ties_nan_and_image_limits() {
+        let mut dt = boxes(
+            &[1, 2, 3, 4, 5, 6],
+            &[0.5, 0.5, 0.9, f64::NAN, -0.0, 0.0],
+            &[[0.0, 0.0, 1.0, 1.0]; 6],
+            &[1, 0, 1, 0, 0, 0],
+            &[false; 6],
+        );
+        dt.img_slot = vec![0, 0, 0, 0, 1, 1];
+        assert_eq!(
+            detection_geometry_keep(&dt, 2, false, 2),
+            vec![false, true, true, false, true, true]
+        );
+        assert_eq!(
+            detection_geometry_keep(&dt, 2, true, 1),
+            vec![false, true, true, false, true, false]
+        );
+        assert_eq!(detection_geometry_keep(&dt, 2, false, 0), vec![false; 6]);
     }
 
     /// One image, one category, one IoU threshold, three recall thresholds.
