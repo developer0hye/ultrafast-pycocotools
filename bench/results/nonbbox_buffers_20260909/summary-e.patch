@@ -1,0 +1,72 @@
+diff --git a/python/ultrafast_pycocotools/cocoeval.py b/python/ultrafast_pycocotools/cocoeval.py
+index e1c9d28..8add73e 100644
+--- a/python/ultrafast_pycocotools/cocoeval.py
++++ b/python/ultrafast_pycocotools/cocoeval.py
+@@ -556,15 +556,20 @@ class COCOeval:
+             s = self.eval["precision"]
+             if iouThr is not None:
+                 t = np.where(iouThr == p.iouThrs)[0]
+-                s = s[t]
+-            s = s[:, :, :, aind, mind]
++                s = s[t[0]:t[0] + 1] if len(t) == 1 else s[t]
++            s = (s[:, :, :, aind[0], mind[0]] if len(aind) == len(mind) == 1
++                 else s[:, :, :, aind, mind])
+         else:
+             s = self.eval["recall"]
+             if iouThr is not None:
+                 t = np.where(iouThr == p.iouThrs)[0]
+-                s = s[t]
+-            s = s[:, :, aind, mind]
+-        mean_s = -1 if len(s[s > -1]) == 0 else np.mean(s[s > -1])
++                s = s[t[0]:t[0] + 1] if len(t) == 1 else s[t]
++            s = (s[:, :, aind[0], mind[0]] if len(aind) == len(mind) == 1
++                 else s[:, :, aind, mind])
++        # Boolean selection preserves NumPy's existing reduction order. Basic
++        # singleton indexing above avoids copying the larger source tensor.
++        valid = s[s > -1]
++        mean_s = np.mean(valid) if valid.size else -1
+         self.print_function(
+             iStr.format(titleStr, typeStr, iouStr, areaRng, maxDets, mean_s)
+         )
+diff --git a/tests/test_eval_parity.py b/tests/test_eval_parity.py
+index 816f59d..a5b950d 100644
+--- a/tests/test_eval_parity.py
++++ b/tests/test_eval_parity.py
+@@ -24,6 +24,37 @@ import ultrafast_pycocotools as ufc
+ REAL_SUBSET_IMAGES = 400
+ 
+ 
++@pytest.mark.parametrize('iou_type', ['segm', 'keypoints'])
++@pytest.mark.parametrize('selection', ['ordinary', 'duplicate-area', 'duplicate-limit', 'duplicate-threshold', 'missing-threshold'])
++@pytest.mark.parametrize('layout', ['C', 'F'])
++def test_summary_reduction_keeps_reference_order(iou_type, selection, layout):
++    """Changing advanced indexing into views must preserve exact reduction order."""
++    from pycocotools.cocoeval import COCOeval as RefEval
++    import copy
++    reference = RefEval(iouType=iou_type)
++    actual = ufc.COCOeval(iouType=iou_type, print_function=lambda *_: None)
++    p = reference.params
++    if selection == 'duplicate-area':
++        p.areaRngLbl[1] = 'all'
++    elif selection == 'duplicate-limit':
++        p.maxDets = [1, 100, 100] if iou_type == 'segm' else [20, 20]
++    elif selection == 'duplicate-threshold':
++        p.iouThrs[1] = .5
++    elif selection == 'missing-threshold':
++        p.iouThrs += .001
++    actual.params = copy.deepcopy(p)
++    shape = (len(p.iouThrs), len(p.recThrs), 37, len(p.areaRngLbl), len(p.maxDets))
++    rng = np.random.default_rng(91)
++    precision = np.array(rng.random(shape), order=layout)
++    recall = np.array(rng.random((shape[0], *shape[2:])), order=layout)
++    precision[precision < .2] = -1
++    recall[recall < .2] = -1
++    reference.eval = actual.eval = {'precision': precision, 'recall': recall}
++    reference.summarize()
++    actual.summarize()
++    assert reference.stats.tobytes() == actual.stats.tobytes()
++
++
+ def run_reference(gt_path, dt_path, iou_type, tweak=None):
+     from pycocotools.coco import COCO as RefCOCO
+     from pycocotools.cocoeval import COCOeval as RefEval

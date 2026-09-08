@@ -315,3 +315,23 @@ def test_nonbbox_compact_matches_materialized_diagnostics(synthetic, synthetic_k
         assert actual.keys() == expected.keys()
         for name in actual:
             np.testing.assert_array_equal(actual[name], expected[name])
+
+
+@pytest.mark.parametrize('field', ['segmentation', 'keypoints', 'num_keypoints'])
+def test_duplicate_geometry_fields_keep_last_json_value(tmp_path, field):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    iou_type = 'segm' if field == 'segmentation' else 'keypoints'
+    for ann in data['annotations'] + dets:
+        if iou_type == 'segm':
+            ann['segmentation'] = [[2, 3, 14, 3, 14, 17, 2, 17]]
+        else:
+            ann.update(keypoints=[5, 5, 2] * 17, num_keypoints=17)
+    for path, value in [(gp, data), (dp, dets)]:
+        path.write_text(json.dumps(value).replace(f'"{field}":', f'"{field}": null, "{field}":'))
+    reference = run_reference(gp, dp, iou_type)
+    gt = ufc.COCO(gp, verbose=False)
+    dt = gt.loadRes(dp)
+    actual = ufc.COCOeval(gt, dt, iou_type, print_function=lambda *_: None)
+    actual.run()
+    assert_bit_identical(reference, actual, f'duplicate {field}')
+    assert gt.anns[3][field] == data['annotations'][0][field]

@@ -66,6 +66,14 @@ struct Record {
     score: Option<f64>,
     #[serde(default)]
     iscrowd: Option<Crowd>,
+    // Presence tracking makes duplicate geometry fields take the ordinary JSON
+    // loader's last-value path, just like duplicate scalar fields already do.
+    #[serde(default, rename = "segmentation")]
+    _segmentation: Option<serde::de::IgnoredAny>,
+    #[serde(default, rename = "keypoints")]
+    _keypoints: Option<serde::de::IgnoredAny>,
+    #[serde(default, rename = "num_keypoints")]
+    _num_keypoints: Option<serde::de::IgnoredAny>,
 }
 
 fn field_present<'de, D: serde::Deserializer<'de>>(d: D) -> Result<bool, D::Error> {
@@ -293,10 +301,21 @@ impl CompactBbox {
     ) -> PyResult<Instances> {
         let mut out = self.instances(is_gt, images, categories);
         out.geom = super::new_geometry(out.len(), kind);
+        let mask_count = if kind == IouType::Keypoints {
+            0
+        } else {
+            out.len()
+        };
         std::thread::scope(|scope| -> PyResult<()> {
             let (tx, rx) = std::sync::mpsc::sync_channel(2);
             let worker = scope.spawn(|| {
-                super::rasterise_chunks(rx, kind == IouType::Boundary, boundary_dilation, timings)
+                super::rasterise_chunks(
+                    rx,
+                    kind == IouType::Boundary,
+                    boundary_dilation,
+                    timings,
+                    mask_count,
+                )
             });
             let start = Instant::now();
             let mut geometry = GeometryRows {

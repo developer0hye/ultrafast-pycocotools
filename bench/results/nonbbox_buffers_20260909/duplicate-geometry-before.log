@@ -1,0 +1,339 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+______ test_duplicate_geometry_fields_keep_last_json_value[segmentation] _______
+
+tmp_path = PosixPath('/private/var/folders/9j/8nb2rm5n7tx4338v3_q0m0b00000gn/T/pytest-of-yhkwon/pytest-40/test_duplicate_geometry_fields0')
+field = 'segmentation'
+
+    @pytest.mark.parametrize('field', ['segmentation', 'keypoints', 'num_keypoints'])
+    def test_duplicate_geometry_fields_keep_last_json_value(tmp_path, field):
+        gp, dp, data, dets = write_inputs(tmp_path)
+        iou_type = 'segm' if field == 'segmentation' else 'keypoints'
+        for ann in data['annotations'] + dets:
+            if iou_type == 'segm':
+                ann['segmentation'] = [[2, 3, 14, 3, 14, 17, 2, 17]]
+            else:
+                ann.update(keypoints=[5, 5, 2] * 17, num_keypoints=17)
+        for path, value in [(gp, data), (dp, dets)]:
+            path.write_text(json.dumps(value).replace(f'"{field}":', f'"{field}": null, "{field}":'))
+        reference = run_reference(gp, dp, iou_type)
+        gt = ufc.COCO(gp, verbose=False)
+        dt = gt.loadRes(dp)
+        actual = ufc.COCOeval(gt, dt, iou_type, print_function=lambda *_: None)
+>       actual.run()
+
+tests/test_compact_files.py:335: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+python/ultrafast_pycocotools/cocoeval.py:634: in run
+    self.evaluate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <ultrafast_pycocotools.cocoeval.COCOeval object at 0x1074ba600>
+
+    def evaluate(self) -> None:
+        """Run per-image evaluation.
+    
+        Unlike pycocotools this also performs matching and accumulation; see
+        the module docstring for why. ``accumulate()`` then publishes the
+        result, so the usual three-call sequence keeps working unchanged.
+        """
+        tic = time.time()
+        p = self.params
+        if p.useSegm is not None:
+            p.iouType = "segm" if p.useSegm == 1 else "bbox"
+            self.print_function(
+                f"useSegm (deprecated) is not None. Running {p.iouType} evaluation"
+            )
+        self.print_function(f"Evaluate annotation type *{p.iouType}*")
+    
+        p.imgIds = [int(i) for i in np.unique(p.imgIds)]
+        if p.useCats:
+            p.catIds = [int(c) for c in np.unique(p.catIds)]
+        p.maxDets = sorted(p.maxDets)
+        self.params = p
+    
+        if (type(self) is COCOeval and not self.lvis_style
+                and type(self.cocoGt) is COCO and type(self.cocoDt) is COCO
+                and (self.cocoGt._compact is not None or self.cocoDt._compact is not None)):
+            categories = p.catIds if p.useCats else []
+            gts = (self.cocoGt._compact if self.cocoGt._compact is not None else
+                   self.cocoGt._eval_annotations(p.imgIds, categories))
+            dts = (self.cocoDt._compact if self.cocoDt._compact is not None else
+                   self.cocoDt._eval_annotations(p.imgIds, categories))
+            img_sizes = self._image_sizes()
+        else:
+            gts, dts, img_sizes = self._collect()
+        # A fresh run must not serve stale per-image views.
+        self._gts, self._dts, self._ious = {}, {}, None
+    
+        sigmas = getattr(p, "kpt_oks_sigmas", np.zeros(0))
+>       self._engine = _ufcoco.Evaluator(
+            gts,
+            dts,
+            img_sizes,
+            p.imgIds,
+            [int(c) for c in p.catIds],
+            [float(t) for t in p.iouThrs],
+            [float(t) for t in p.recThrs],
+            [int(m) for m in p.maxDets],
+            [[float(a[0]), float(a[1])] for a in p.areaRng],
+            bool(p.useCats),
+            p.iouType,
+            [float(s) for s in np.asarray(sigmas).ravel()],
+            bool(self.use_area),
+            float(self.boundary_dilation_ratio),
+        )
+E       ValueError: duplicate field `segmentation` at line 1 column 239
+
+python/ultrafast_pycocotools/cocoeval.py:487: ValueError
+----------------------------- Captured stdout call -----------------------------
+loading annotations into memory...
+Done (t=0.00s)
+creating index...
+index created!
+Loading and preparing results...
+DONE (t=0.00s)
+creating index...
+index created!
+Running per image evaluation...
+Evaluate annotation type *segm*
+DONE (t=0.01s).
+Accumulating evaluation results...
+DONE (t=0.00s).
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = -1.000
+________ test_duplicate_geometry_fields_keep_last_json_value[keypoints] ________
+
+tmp_path = PosixPath('/private/var/folders/9j/8nb2rm5n7tx4338v3_q0m0b00000gn/T/pytest-of-yhkwon/pytest-40/test_duplicate_geometry_fields1')
+field = 'keypoints'
+
+    @pytest.mark.parametrize('field', ['segmentation', 'keypoints', 'num_keypoints'])
+    def test_duplicate_geometry_fields_keep_last_json_value(tmp_path, field):
+        gp, dp, data, dets = write_inputs(tmp_path)
+        iou_type = 'segm' if field == 'segmentation' else 'keypoints'
+        for ann in data['annotations'] + dets:
+            if iou_type == 'segm':
+                ann['segmentation'] = [[2, 3, 14, 3, 14, 17, 2, 17]]
+            else:
+                ann.update(keypoints=[5, 5, 2] * 17, num_keypoints=17)
+        for path, value in [(gp, data), (dp, dets)]:
+            path.write_text(json.dumps(value).replace(f'"{field}":', f'"{field}": null, "{field}":'))
+        reference = run_reference(gp, dp, iou_type)
+        gt = ufc.COCO(gp, verbose=False)
+        dt = gt.loadRes(dp)
+        actual = ufc.COCOeval(gt, dt, iou_type, print_function=lambda *_: None)
+>       actual.run()
+
+tests/test_compact_files.py:335: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+python/ultrafast_pycocotools/cocoeval.py:634: in run
+    self.evaluate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <ultrafast_pycocotools.cocoeval.COCOeval object at 0x107b1e4e0>
+
+    def evaluate(self) -> None:
+        """Run per-image evaluation.
+    
+        Unlike pycocotools this also performs matching and accumulation; see
+        the module docstring for why. ``accumulate()`` then publishes the
+        result, so the usual three-call sequence keeps working unchanged.
+        """
+        tic = time.time()
+        p = self.params
+        if p.useSegm is not None:
+            p.iouType = "segm" if p.useSegm == 1 else "bbox"
+            self.print_function(
+                f"useSegm (deprecated) is not None. Running {p.iouType} evaluation"
+            )
+        self.print_function(f"Evaluate annotation type *{p.iouType}*")
+    
+        p.imgIds = [int(i) for i in np.unique(p.imgIds)]
+        if p.useCats:
+            p.catIds = [int(c) for c in np.unique(p.catIds)]
+        p.maxDets = sorted(p.maxDets)
+        self.params = p
+    
+        if (type(self) is COCOeval and not self.lvis_style
+                and type(self.cocoGt) is COCO and type(self.cocoDt) is COCO
+                and (self.cocoGt._compact is not None or self.cocoDt._compact is not None)):
+            categories = p.catIds if p.useCats else []
+            gts = (self.cocoGt._compact if self.cocoGt._compact is not None else
+                   self.cocoGt._eval_annotations(p.imgIds, categories))
+            dts = (self.cocoDt._compact if self.cocoDt._compact is not None else
+                   self.cocoDt._eval_annotations(p.imgIds, categories))
+            img_sizes = self._image_sizes()
+        else:
+            gts, dts, img_sizes = self._collect()
+        # A fresh run must not serve stale per-image views.
+        self._gts, self._dts, self._ious = {}, {}, None
+    
+        sigmas = getattr(p, "kpt_oks_sigmas", np.zeros(0))
+>       self._engine = _ufcoco.Evaluator(
+            gts,
+            dts,
+            img_sizes,
+            p.imgIds,
+            [int(c) for c in p.catIds],
+            [float(t) for t in p.iouThrs],
+            [float(t) for t in p.recThrs],
+            [int(m) for m in p.maxDets],
+            [[float(a[0]), float(a[1])] for a in p.areaRng],
+            bool(p.useCats),
+            p.iouType,
+            [float(s) for s in np.asarray(sigmas).ravel()],
+            bool(self.use_area),
+            float(self.boundary_dilation_ratio),
+        )
+E       ValueError: duplicate field `keypoints` at line 1 column 233
+
+python/ultrafast_pycocotools/cocoeval.py:487: ValueError
+----------------------------- Captured stdout call -----------------------------
+loading annotations into memory...
+Done (t=0.00s)
+creating index...
+index created!
+Loading and preparing results...
+DONE (t=0.00s)
+creating index...
+index created!
+Running per image evaluation...
+Evaluate annotation type *keypoints*
+DONE (t=0.00s).
+Accumulating evaluation results...
+DONE (t=0.00s).
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets= 20 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets= 20 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets= 20 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets= 20 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets= 20 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 20 ] = 1.000
+ Average Recall     (AR) @[ IoU=0.50      | area=   all | maxDets= 20 ] = 1.000
+ Average Recall     (AR) @[ IoU=0.75      | area=   all | maxDets= 20 ] = 1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets= 20 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets= 20 ] = -1.000
+______ test_duplicate_geometry_fields_keep_last_json_value[num_keypoints] ______
+
+tmp_path = PosixPath('/private/var/folders/9j/8nb2rm5n7tx4338v3_q0m0b00000gn/T/pytest-of-yhkwon/pytest-40/test_duplicate_geometry_fields2')
+field = 'num_keypoints'
+
+    @pytest.mark.parametrize('field', ['segmentation', 'keypoints', 'num_keypoints'])
+    def test_duplicate_geometry_fields_keep_last_json_value(tmp_path, field):
+        gp, dp, data, dets = write_inputs(tmp_path)
+        iou_type = 'segm' if field == 'segmentation' else 'keypoints'
+        for ann in data['annotations'] + dets:
+            if iou_type == 'segm':
+                ann['segmentation'] = [[2, 3, 14, 3, 14, 17, 2, 17]]
+            else:
+                ann.update(keypoints=[5, 5, 2] * 17, num_keypoints=17)
+        for path, value in [(gp, data), (dp, dets)]:
+            path.write_text(json.dumps(value).replace(f'"{field}":', f'"{field}": null, "{field}":'))
+        reference = run_reference(gp, dp, iou_type)
+        gt = ufc.COCO(gp, verbose=False)
+        dt = gt.loadRes(dp)
+        actual = ufc.COCOeval(gt, dt, iou_type, print_function=lambda *_: None)
+>       actual.run()
+
+tests/test_compact_files.py:335: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+python/ultrafast_pycocotools/cocoeval.py:634: in run
+    self.evaluate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <ultrafast_pycocotools.cocoeval.COCOeval object at 0x107bace30>
+
+    def evaluate(self) -> None:
+        """Run per-image evaluation.
+    
+        Unlike pycocotools this also performs matching and accumulation; see
+        the module docstring for why. ``accumulate()`` then publishes the
+        result, so the usual three-call sequence keeps working unchanged.
+        """
+        tic = time.time()
+        p = self.params
+        if p.useSegm is not None:
+            p.iouType = "segm" if p.useSegm == 1 else "bbox"
+            self.print_function(
+                f"useSegm (deprecated) is not None. Running {p.iouType} evaluation"
+            )
+        self.print_function(f"Evaluate annotation type *{p.iouType}*")
+    
+        p.imgIds = [int(i) for i in np.unique(p.imgIds)]
+        if p.useCats:
+            p.catIds = [int(c) for c in np.unique(p.catIds)]
+        p.maxDets = sorted(p.maxDets)
+        self.params = p
+    
+        if (type(self) is COCOeval and not self.lvis_style
+                and type(self.cocoGt) is COCO and type(self.cocoDt) is COCO
+                and (self.cocoGt._compact is not None or self.cocoDt._compact is not None)):
+            categories = p.catIds if p.useCats else []
+            gts = (self.cocoGt._compact if self.cocoGt._compact is not None else
+                   self.cocoGt._eval_annotations(p.imgIds, categories))
+            dts = (self.cocoDt._compact if self.cocoDt._compact is not None else
+                   self.cocoDt._eval_annotations(p.imgIds, categories))
+            img_sizes = self._image_sizes()
+        else:
+            gts, dts, img_sizes = self._collect()
+        # A fresh run must not serve stale per-image views.
+        self._gts, self._dts, self._ious = {}, {}, None
+    
+        sigmas = getattr(p, "kpt_oks_sigmas", np.zeros(0))
+>       self._engine = _ufcoco.Evaluator(
+            gts,
+            dts,
+            img_sizes,
+            p.imgIds,
+            [int(c) for c in p.catIds],
+            [float(t) for t in p.iouThrs],
+            [float(t) for t in p.recThrs],
+            [int(m) for m in p.maxDets],
+            [[float(a[0]), float(a[1])] for a in p.areaRng],
+            bool(p.useCats),
+            p.iouType,
+            [float(s) for s in np.asarray(sigmas).ravel()],
+            bool(self.use_area),
+            float(self.boundary_dilation_ratio),
+        )
+E       ValueError: duplicate field `num_keypoints` at line 1 column 409
+
+python/ultrafast_pycocotools/cocoeval.py:487: ValueError
+----------------------------- Captured stdout call -----------------------------
+loading annotations into memory...
+Done (t=0.00s)
+creating index...
+index created!
+Loading and preparing results...
+DONE (t=0.00s)
+creating index...
+index created!
+Running per image evaluation...
+Evaluate annotation type *keypoints*
+DONE (t=0.00s).
+Accumulating evaluation results...
+DONE (t=0.00s).
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets= 20 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets= 20 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets= 20 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets= 20 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets= 20 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 20 ] = 1.000
+ Average Recall     (AR) @[ IoU=0.50      | area=   all | maxDets= 20 ] = 1.000
+ Average Recall     (AR) @[ IoU=0.75      | area=   all | maxDets= 20 ] = 1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets= 20 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets= 20 ] = -1.000
+=========================== short test summary info ============================
+FAILED tests/test_compact_files.py::test_duplicate_geometry_fields_keep_last_json_value[segmentation]
+FAILED tests/test_compact_files.py::test_duplicate_geometry_fields_keep_last_json_value[keypoints]
+FAILED tests/test_compact_files.py::test_duplicate_geometry_fields_keep_last_json_value[num_keypoints]
+3 failed, 44 deselected in 0.34s

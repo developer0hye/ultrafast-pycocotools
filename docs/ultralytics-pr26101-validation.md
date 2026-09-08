@@ -30,7 +30,8 @@ platform installation evidence.
   pose manifest. Evaluation uses the original instances/keypoints JSON.
 - GPU FP32, image size 640, batch 16, two data-loader workers, rectangular
   batching, confidence 0.001, IoU 0.7, max_det 300. Torch, OpenMP, BLAS and Rayon
-  use two threads. COCO scoring retains the validator's maxDets=100 protocol.
+  use two threads. COCO scoring retains the evaluator defaults: maxDets=100
+  for bbox/mask and maxDets=20 for keypoints.
 
 Glenn also reports [independent three-task validation](https://github.com/ultralytics/ultralytics/pull/26101#issuecomment-5587037002)
 on RTX PRO 6000, batch 8 and a different Torch/NumPy environment. His values are

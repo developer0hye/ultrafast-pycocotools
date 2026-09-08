@@ -28,12 +28,21 @@ import json
 import os
 import platform
 import sys
+import sysconfig
 import time
 from pathlib import Path
 
 import numpy as np
 
 LOAD_BEFORE = float("nan")
+
+
+def file_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open('rb') as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b''):
+            digest.update(block)
+    return digest.hexdigest()
 
 
 def peak_rss_mb() -> float:
@@ -170,6 +179,23 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool 
         ).hexdigest()[:16]
         for k in ("precision", "recall", "scores")
     }
+    # Capture the peak before provenance I/O, which is outside the benchmark.
+    peak = peak_rss_mb()
+    runtime_paths = [Path(sys.executable).resolve()]
+    library = sysconfig.get_config_var('LDLIBRARY')
+    if library:
+        candidates = [Path(sys.base_prefix) / 'lib' / library,
+                      Path(sys.base_prefix) / library]
+        libdir = sysconfig.get_config_var('LIBDIR')
+        if libdir:
+            candidates.append(Path(libdir) / library)
+        runtime_paths.extend(path.resolve() for path in candidates if path.is_file())
+    source_paths = [Path(__file__).resolve()]
+    if impl == 'ufcoco':
+        from ultrafast_pycocotools import _ufcoco
+        source_paths.extend([Path(_ufcoco.__file__),
+                             Path(sys.modules[COCO.__module__].__file__),
+                             Path(sys.modules[COCOeval.__module__].__file__)])
     return {
         "impl": impl,
         "file_inputs": file_inputs,
@@ -184,7 +210,11 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool 
         "stats": stats,
         "digests": digests,
         "platform": f"{sys.platform}/{platform.machine()}",
-        "peak_rss_mb": peak_rss_mb(),
+        "peak_rss_mb": peak,
+        "python": sys.version,
+        "numpy": np.__version__,
+        "runtime_file_sha256": {str(path): file_digest(path) for path in runtime_paths},
+        "source_file_sha256": {str(path): file_digest(path) for path in source_paths},
     }
 
 
