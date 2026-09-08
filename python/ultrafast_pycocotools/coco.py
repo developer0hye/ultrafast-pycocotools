@@ -101,11 +101,19 @@ class COCO:
 
         index_categories = "categories" in self.dataset
         if "annotations" in self.dataset:
-            for ann in self.dataset["annotations"]:
-                imgToAnns[ann["image_id"]].append(ann)
-                anns[ann["id"]] = ann
-                if index_categories:
-                    catToImgs[ann["category_id"]].append(ann["image_id"])
+            annotations = self.dataset["annotations"]
+            if type(annotations) is list:
+                anns, image_index, category_index = _ufcoco.index_annotations(annotations, index_categories)
+                imgToAnns.update(image_index)
+                catToImgs.update(category_index)
+                del image_index, category_index
+            else:
+                # Preserve custom iterable behavior outside the ordinary JSON-list path.
+                for ann in annotations:
+                    imgToAnns[ann["image_id"]].append(ann)
+                    anns[ann["id"]] = ann
+                    if index_categories:
+                        catToImgs[ann["category_id"]].append(ann["image_id"])
 
         if "images" in self.dataset:
             for img in self.dataset["images"]:
@@ -331,10 +339,11 @@ class COCO:
             anns = resFile
         assert isinstance(anns, list), "results in not an array of objects"
         if len(anns) > 0:
-            annsImgIds = [ann["image_id"] for ann in anns]
-            assert set(annsImgIds) == (set(annsImgIds) & set(self.getImgIds())), (
+            valid_images = set(self.getImgIds())
+            assert all(ann["image_id"] in valid_images for ann in anns), (
                 "Results do not correspond to current coco set"
             )
+            del valid_images
 
         if len(anns) == 0:
             res.dataset["categories"] = copy.deepcopy(self.dataset.get("categories", []))
@@ -350,14 +359,17 @@ class COCO:
         elif "bbox" in anns[0] and anns[0]["bbox"] != []:
             res._derive_segmentation = derive_segmentation
             res.dataset["categories"] = copy.deepcopy(self.dataset["categories"])
-            for idx, ann in enumerate(anns):
-                bb = ann["bbox"]
-                if derive_segmentation and "segmentation" not in ann:
-                    x1, x2, y1, y2 = bb[0], bb[0] + bb[2], bb[1], bb[1] + bb[3]
-                    ann["segmentation"] = [[x1, y1, x1, y2, x2, y2, x2, y1]]
-                ann["area"] = bb[2] * bb[3]
-                ann["id"] = idx + 1
-                ann["iscrowd"] = 0
+            if not derive_segmentation and type(anns) is list:
+                _ufcoco.prepare_bbox_results(anns)
+            else:
+                for idx, ann in enumerate(anns):
+                    bb = ann["bbox"]
+                    if derive_segmentation and "segmentation" not in ann:
+                        x1, x2, y1, y2 = bb[0], bb[0] + bb[2], bb[1], bb[1] + bb[3]
+                        ann["segmentation"] = [[x1, y1, x1, y2, x2, y2, x2, y1]]
+                    ann["area"] = bb[2] * bb[3]
+                    ann["id"] = idx + 1
+                    ann["iscrowd"] = 0
         elif "segmentation" in anns[0]:
             res.dataset["categories"] = copy.deepcopy(self.dataset["categories"])
             for idx, ann in enumerate(anns):

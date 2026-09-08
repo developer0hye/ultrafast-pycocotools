@@ -483,6 +483,9 @@ class COCOeval:
         if self.lvis_style:
             self._engine.configure_lvis([bool(gt.get("ignore", 0)) for gt in gts],
                                         self._lvis_not_exhaustive)
+        # Native extraction owns the scalar/geometry data; release temporary
+        # annotation-reference lists before allocating complete output tensors.
+        del gts, dts
         self._raw = self._engine.run(self.store_eval_imgs)
         if self.store_eval_imgs:
             self.evalImgs = self._raw["evalImgs"]

@@ -772,9 +772,70 @@ fn eval_imgs_to_py<'py>(
     Ok(out)
 }
 
+/// Fill bbox-result metadata with Python arithmetic and object semantics intact.
+#[pyfunction]
+fn prepare_bbox_results(py: Python<'_>, annotations: &Bound<'_, PyList>) -> PyResult<()> {
+    let bbox_key = intern!(py, "bbox");
+    let area_key = intern!(py, "area");
+    let id_key = intern!(py, "id");
+    let crowd_key = intern!(py, "iscrowd");
+    for (i, ann) in annotations.iter().enumerate() {
+        let bbox = ann.get_item(bbox_key)?;
+        // PyNumber multiplication preserves ints, floats, NumPy scalars and overrides.
+        let area = bbox.get_item(2)?.mul(bbox.get_item(3)?)?;
+        ann.set_item(area_key, area)?;
+        ann.set_item(id_key, i + 1)?;
+        ann.set_item(crowd_key, 0)?;
+    }
+    Ok(())
+}
+
+/// Build public annotation indexes without Python bytecode loops or copied annotations.
+#[pyfunction]
+fn index_annotations<'py>(
+    py: Python<'py>,
+    annotations: &Bound<'py, PyList>,
+    with_categories: bool,
+) -> PyResult<(Bound<'py, PyDict>, Bound<'py, PyDict>, Bound<'py, PyDict>)> {
+    let anns = PyDict::new(py);
+    let images = PyDict::new(py);
+    let categories = PyDict::new(py);
+    let id_key = intern!(py, "id");
+    let image_key = intern!(py, "image_id");
+    let category_key = intern!(py, "category_id");
+    for ann in annotations.iter() {
+        // Generic item access preserves dictionary-subclass overrides.
+        let image = ann.get_item(image_key)?;
+        append_index(py, &images, &image, &ann)?;
+        anns.set_item(ann.get_item(id_key)?, &ann)?;
+        if with_categories {
+            append_index(py, &categories, &ann.get_item(category_key)?, &image)?;
+        }
+    }
+    Ok((anns, images, categories))
+}
+
+fn append_index(
+    py: Python<'_>,
+    index: &Bound<'_, PyDict>,
+    key: &Bound<'_, PyAny>,
+    value: &Bound<'_, PyAny>,
+) -> PyResult<()> {
+    if let Some(items) = index.get_item(key)? {
+        items.cast::<PyList>()?.append(value)?;
+    } else {
+        let items = PyList::empty(py);
+        items.append(value)?;
+        index.set_item(key, items)?;
+    }
+    Ok(())
+}
+
 #[pymodule]
 fn _ufcoco(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Evaluator>()?;
+    m.add_function(wrap_pyfunction!(index_annotations, m)?)?;
+    m.add_function(wrap_pyfunction!(prepare_bbox_results, m)?)?;
     m.add_function(wrap_pyfunction!(mask::encode, m)?)?;
     m.add_function(wrap_pyfunction!(mask::decode, m)?)?;
     m.add_function(wrap_pyfunction!(mask::merge, m)?)?;

@@ -80,3 +80,52 @@ def test_keypoint_results_do_not_gain_implicit_segmentation():
     assert 'bbox' in dt.anns[1]  # Derived keypoint bounds are not a box prediction.
     with pytest.raises(KeyError, match='segmentation'):
         dt.annToMask(dt.anns[1])
+
+
+def test_native_indexes_preserve_snapshots_identity_and_defaultdict_behavior():
+    from collections import defaultdict
+    data = {'images':[{'id':1}], 'categories':[{'id':2},{'id':3}],
+            'annotations':[{'id':9,'image_id':1,'category_id':2}]}
+    gt = ufc.COCO(data, verbose=False)
+    annotation = data['annotations'][0]
+    assert gt.anns[9] is annotation
+    assert gt.imgToAnns[1][0] is annotation
+    assert isinstance(gt.imgToAnns, defaultdict)
+    assert isinstance(gt.catToImgs, defaultdict)
+    annotation['category_id'] = 3
+    assert gt.catToImgs[2] == [1]  # Index snapshot, not a deferred traversal.
+    assert gt.catToImgs[3] == []
+    gt.createIndex()
+    assert gt.catToImgs[3] == [1]
+    assert gt.catToImgs[2] == []
+
+
+def test_native_indexes_honor_annotation_mapping_overrides():
+    class Annotation(dict):
+        def __getitem__(self, key):
+            return 7 if key == 'image_id' else super().__getitem__(key)
+    ann = Annotation(id=1, image_id=999, category_id=2)
+    gt = ufc.COCO({'images':[{'id':7}], 'categories':[{'id':2}],
+                   'annotations':[ann]}, verbose=False)
+    assert gt.imgToAnns[7] == [ann]
+    assert 999 not in gt.imgToAnns
+    assert gt.catToImgs[2] == [7]
+
+
+def test_custom_annotation_iterables_keep_python_indexing_path():
+    ann = {'id':1,'image_id':7,'category_id':2}
+    gt = ufc.COCO({'images':[{'id':7}], 'categories':[{'id':2}],
+                   'annotations':(ann,)}, verbose=False)
+    assert gt.imgToAnns[7][0] is ann
+    assert gt.catToImgs[2] == [7]
+
+
+@pytest.mark.parametrize('width,height', [(3,4), (3.25,4.5), (np.float32(3.25),np.float32(4.5))])
+def test_native_bbox_preparation_preserves_python_area_type_and_value(width, height):
+    gt = ufc.COCO({'images':[{'id':1,'height':32,'width':32}],
+                   'categories':[{'id':1}], 'annotations':[]}, verbose=False)
+    ann = {'image_id':1,'category_id':1,'bbox':[0,0,width,height],'score':.9}
+    dt = gt.loadRes([ann])
+    assert dt.anns[1] is ann
+    assert type(ann['area']) is type(width * height)
+    assert ann['area'] == width * height

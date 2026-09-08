@@ -23,7 +23,6 @@ def main():
         raise ValueError('Need at least two measured points with complete array parity')
     x = [(p['annotations'] + p['detections']) / 1e6 for p in points]
     backends = ('reference', 'faster_coco_eval', 'ultrafast') if all('faster_coco_eval' in p for p in points) else ('reference', 'ultrafast')
-    comparator = 'faster_coco_eval' if 'faster_coco_eval' in backends else 'reference'
     names = {'reference': 'pycocotools', 'faster_coco_eval': 'faster-coco-eval', 'ultrafast': 'ultrafast-pycocotools'}
     times = {b: [p[b]['runs'][0]['total_scoring_seconds'] for p in points] for b in backends}
     memory = {b: [p[b]['peak_rss_MiB'] / 1024 for p in points] for b in backends}
@@ -61,12 +60,20 @@ def main():
         for edge in ('left', 'bottom'):
             ax.spines[edge].set_color('#CED7DF')
         ax.tick_params(length=0, pad=7)
-        ratio = values[comparator][-1] / values['ultrafast'][-1]
-        benefit = 'faster' if index == 0 else 'lower peak memory'
-        ax.text(.035, .93, f'{ratio:.1f}×', transform=ax.transAxes,
-                fontsize=25, color=colors['ultrafast'], weight='bold', va='top')
-        ax.text(.035, .78, f'{benefit} vs {names[comparator]} (largest input)', transform=ax.transAxes,
+        ratio = values['reference'][-1] / values['ultrafast'][-1]
+        reduction = 100 * (1 - values['ultrafast'][-1] / values['reference'][-1])
+        headline = f'{ratio:.1f}× faster' if index == 0 else f'{reduction:.1f}% less memory'
+        ax.text(.035, .93, headline, transform=ax.transAxes,
+                fontsize=23, color=colors['ultrafast'], weight='bold', va='top')
+        ax.text(.035, .79, 'vs pycocotools · largest measured input', transform=ax.transAxes,
                 fontsize=9, color=muted)
+        if 'faster_coco_eval' in backends:
+            other_ratio = values['faster_coco_eval'][-1] / values['ultrafast'][-1]
+            other_reduction = 100 * (1 - values['ultrafast'][-1] / values['faster_coco_eval'][-1])
+            comparison = (f'{other_ratio:.1f}× faster' if index == 0
+                          else f'{other_reduction:.1f}% less memory')
+            ax.text(.035, .68, f'{comparison} vs faster-coco-eval', transform=ax.transAxes,
+                    fontsize=9, color=muted)
         for backend in backends:
             value = values[backend][-1]
             suffix = 's' if index == 0 else ' GiB'

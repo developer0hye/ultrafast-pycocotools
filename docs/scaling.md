@@ -22,8 +22,10 @@ Exact counts for each point are recorded below and in the raw JSON.
 ## Additional baseline
 
 Faster-coco-eval 1.8.0 is measured afterward on the exact same inputs and CPU
-affinity. The figure now includes all three implementations; callout ratios
-compare ultrafast with faster-coco-eval. Ultrafast retains byte equality against
+affinity. The figure now includes all three implementations; primary callouts
+show **41.9× faster evaluation and 89.5% lower peak RSS versus pycocotools**
+at the largest measured input. Secondary callouts show 8.1× faster evaluation
+and 92.2% lower peak RSS versus faster-coco-eval. Ultrafast retains byte equality against
 pycocotools. Faster-coco-eval agrees within absolute tolerance 1e-12 but is not
 byte-identical. See the [full comparison](faster-coco-eval.md).
 

@@ -21,6 +21,8 @@ Writes the standard COCO results format, so the output drops straight into
 from __future__ import annotations
 
 import argparse
+import hashlib
+import importlib.metadata
 import json
 import time
 from pathlib import Path
@@ -54,15 +56,26 @@ def main() -> None:
         help="COCO protocol keeps everything; the evaluator does the cutting",
     )
     ap.add_argument("--max-det", type=int, default=300)
+    ap.add_argument("--limit", type=int, default=0, help="First N sorted images; 0 evaluates all images")
+    ap.add_argument("--threads", type=int, default=4, help="PyTorch CPU threads")
+    ap.add_argument("--square", action="store_true", help="Use square letterboxing instead of rectangular batches")
     ap.add_argument("--segm", action="store_true", help="also emit RLE masks")
     args = ap.parse_args()
 
+    import torch
+    torch.set_num_threads(args.threads)
     from ultralytics import YOLO
 
     ann = json.loads(args.ann.read_text())
     id_of = {Path(im["file_name"]).name: im["id"] for im in ann["images"]}
     files = sorted(p for p in args.images.iterdir() if p.suffix.lower() == ".jpg")
     files = [p for p in files if p.name in id_of]
+    if args.limit < 0 or args.batch < 1 or args.threads < 1:
+        ap.error("limit must be nonnegative; batch and threads must be positive")
+    if args.limit:
+        files = files[:args.limit]
+    elif len(files) != len(id_of):
+        raise ValueError("Image directory does not contain every annotated image")
     print(f"{len(files)} images, model {args.model}", flush=True)
 
     if args.segm:
@@ -85,6 +98,9 @@ def main() -> None:
             max_det=args.max_det,
             verbose=False,
             retina_masks=args.segm,
+            rect=not args.square,
+            half=False,
+            augment=False,
         )
         for path, res in zip(chunk, results):
             image_id = id_of[path.name]
@@ -127,6 +143,21 @@ def main() -> None:
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(dets))
+    def sha(path):
+        return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    weights = Path(getattr(model, "ckpt_path", args.model))
+    metadata = {
+        "model": weights.name, "weights_sha256": sha(weights),
+        "ultralytics": importlib.metadata.version("ultralytics"), "torch": torch.__version__,
+        "device": args.device, "threads": args.threads, "batch": args.batch,
+        "imgsz": args.imgsz, "confidence": args.conf, "max_det": args.max_det,
+        "rect": not args.square, "half": False, "augment": False,
+        "images": len(files), "image_ids": [id_of[p.name] for p in files],
+        "detections": len(dets), "gt_sha256": sha(args.ann),
+        "pred_sha256": sha(args.out), "prediction_seconds": time.time() - t0,
+        "batch_seconds": times, "bbox_decimal_places": 3,
+    }
+    args.out.with_suffix(".metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
     print(
         f"wrote {args.out}: {len(dets)} detections "
         f"({len(dets) / max(len(files), 1):.1f} per image), "

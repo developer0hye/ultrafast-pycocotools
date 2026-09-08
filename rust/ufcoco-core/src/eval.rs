@@ -648,7 +648,15 @@ impl Evaluator {
         let i_n = p.img_ids.len();
 
         let max_det_all = p.max_dets.last().copied().unwrap_or(0);
-        let per_cat: Vec<CatOut> = (0..k_n)
+        // Workers publish one category at a time into the final C-order arrays.
+        // Keeping every CatOut until a final transpose duplicates all output tensors.
+        let output = std::sync::Mutex::new(EvalResult {
+            counts: [t_n, r_n, k_n, a_n, m_n],
+            precision: vec![-1.0; t_n * r_n * k_n * a_n * m_n],
+            recall: vec![-1.0; t_n * k_n * a_n * m_n],
+            scores: vec![-1.0; t_n * r_n * k_n * a_n * m_n],
+        });
+        let per_cat: Vec<Vec<Option<ImgEval>>> = (0..k_n)
             .into_par_iter()
             .map(|k| {
                 let t = Instant::now();
@@ -710,42 +718,32 @@ impl Evaluator {
                             .extend(self.materialise_eval_imgs(&work, &matches, k, a, i_n));
                     }
                 }
-                out
+                {
+                    // Copying disjoint category slots changes no arithmetic or ordering.
+                    // The short lock avoids unsafe shared writes; matching stays parallel.
+                    let mut result = output.lock().expect("evaluation output lock poisoned");
+                    let am = a_n * m_n;
+                    for t in 0..t_n {
+                        let dst = (t * k_n + k) * am;
+                        result.recall[dst..dst + am]
+                            .copy_from_slice(&out.recall[t * am..t * am + am]);
+                        for r in 0..r_n {
+                            let src = (t * r_n + r) * am;
+                            let dst = ((t * r_n + r) * k_n + k) * am;
+                            result.precision[dst..dst + am]
+                                .copy_from_slice(&out.precision[src..src + am]);
+                            result.scores[dst..dst + am]
+                                .copy_from_slice(&out.scores[src..src + am]);
+                        }
+                    }
+                }
+                out.eval_imgs
             })
             .collect();
 
-        let mut precision = vec![-1.0; t_n * r_n * k_n * a_n * m_n];
-        let mut recall = vec![-1.0; t_n * k_n * a_n * m_n];
-        let mut scores = vec![-1.0; t_n * r_n * k_n * a_n * m_n];
-        let am = a_n * m_n;
-        for (k, c) in per_cat.iter().enumerate() {
-            for t in 0..t_n {
-                // recall is [T, K, A, M]
-                let dst = (t * k_n + k) * am;
-                recall[dst..dst + am].copy_from_slice(&c.recall[t * am..t * am + am]);
-                // precision / scores are [T, R, K, A, M]
-                for r in 0..r_n {
-                    let src = (t * r_n + r) * am;
-                    let dst = ((t * r_n + r) * k_n + k) * am;
-                    precision[dst..dst + am].copy_from_slice(&c.precision[src..src + am]);
-                    scores[dst..dst + am].copy_from_slice(&c.scores[src..src + am]);
-                }
-            }
-        }
-
-        // pycocotools orders evalImgs [K][A][I]; per_cat is already nested
-        // that way.
-        let eval_imgs = per_cat.into_iter().flat_map(|c| c.eval_imgs).collect();
-
-        (
-            EvalResult {
-                counts: [t_n, r_n, k_n, a_n, m_n],
-                precision,
-                recall,
-                scores,
-            },
-            eval_imgs,
-        )
+        // Indexed parallel collection preserves the public [K][A][I] diagnostic order.
+        let eval_imgs = per_cat.into_iter().flatten().collect();
+        (output.into_inner().expect("evaluation output lock poisoned"), eval_imgs)
     }
 
     /// Expand the compact per-image matches into pycocotools' `evalImgs`

@@ -1,0 +1,607 @@
+{
+  "date": "2026-09-08",
+  "environment": {
+    "cpu": "AMD EPYC 9554",
+    "cpu_affinity": [
+      0,
+      1
+    ],
+    "python": "3.12.3",
+    "numpy": "2.4.4",
+    "rayon_threads": 2,
+    "omp_threads": 2,
+    "openblas_threads": 1,
+    "host": "shared"
+  },
+  "method": {
+    "result_loading": "Package defaults for both versions",
+    "time": "GT indexing + prediction dict copies + result loading + evaluate + accumulate + summarize; excludes JSON parsing, inference and serialization",
+    "memory": "Whole-process peak RSS including parsed inputs and output serialization",
+    "repeats": "Three fresh processes per version and workload; alternating version order; median reported; individual measurements retained",
+    "objects365_note": "The first pair and two subsequent pairs were measured in separate batches. Timing spreads overlap; the small median time reduction is not evidence of a reliable Objects365 speedup."
+  },
+  "cases": {
+    "coco": {
+      "reference_package": "pycocotools 2.0.11",
+      "versions": {
+        "0.1.1": {
+          "measurements": [
+            {
+              "backend": "ultrafast",
+              "images": 5000,
+              "detections": 431145,
+              "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+              "pred_sha256": "c525b1678fc8d1b71ea2ef7f8068d7aec56d139cd61c21eb26f731de4a047f59",
+              "input_json_parse_seconds": 0.9854978621006012,
+              "runs": [
+                {
+                  "gt_seconds": 0.16619450692087412,
+                  "load_res_seconds": 1.00580958975479,
+                  "evaluate_seconds": 0.42994063114747405,
+                  "accumulate_seconds": 5.2138231694698334e-05,
+                  "summarize_seconds": 0.0015505878254771233,
+                  "total_scoring_seconds": 1.60354745388031
+                }
+              ],
+              "stats": [
+                0.5069484658135361,
+                0.673320131017044,
+                0.5512620504670513,
+                0.330515872003354,
+                0.5604537680841476,
+                0.6680562864385514,
+                0.37210815548284415,
+                0.6145818878960251,
+                0.6597944487500417,
+                0.47971037211459217,
+                0.7206374084868608,
+                0.8016607280954492
+              ],
+              "array_sha256": {
+                "precision": "283f2229ec4e75e57f97cce4ecef8419bef9a1a26175a499e24e7dbbe9101c83",
+                "recall": "3a0032f1a46291af36d1baec0d491965ad2f554ba15216437f3aeb5fa2ae5b8c",
+                "scores": "8fa1542ca9965e42323eeb31047bfe169bf0ca534ca6c6611dafb0ff6a0cb406",
+                "stats": "a29ce67aff55707cc46e739d2e1e78a39f8da13b7a1e9294bbb720501f23b551"
+              },
+              "peak_rss_MiB": 597.73046875,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.1",
+              "result_loading": "package default"
+            },
+            {
+              "backend": "ultrafast",
+              "images": 5000,
+              "detections": 431145,
+              "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+              "pred_sha256": "c525b1678fc8d1b71ea2ef7f8068d7aec56d139cd61c21eb26f731de4a047f59",
+              "input_json_parse_seconds": 1.0187460989691317,
+              "runs": [
+                {
+                  "gt_seconds": 0.170482587069273,
+                  "load_res_seconds": 0.947424734942615,
+                  "evaluate_seconds": 0.5165410628542304,
+                  "accumulate_seconds": 6.402470171451569e-05,
+                  "summarize_seconds": 0.001967189833521843,
+                  "total_scoring_seconds": 1.6364795994013548
+                }
+              ],
+              "stats": [
+                0.5069484658135361,
+                0.673320131017044,
+                0.5512620504670513,
+                0.330515872003354,
+                0.5604537680841476,
+                0.6680562864385514,
+                0.37210815548284415,
+                0.6145818878960251,
+                0.6597944487500417,
+                0.47971037211459217,
+                0.7206374084868608,
+                0.8016607280954492
+              ],
+              "array_sha256": {
+                "precision": "283f2229ec4e75e57f97cce4ecef8419bef9a1a26175a499e24e7dbbe9101c83",
+                "recall": "3a0032f1a46291af36d1baec0d491965ad2f554ba15216437f3aeb5fa2ae5b8c",
+                "scores": "8fa1542ca9965e42323eeb31047bfe169bf0ca534ca6c6611dafb0ff6a0cb406",
+                "stats": "a29ce67aff55707cc46e739d2e1e78a39f8da13b7a1e9294bbb720501f23b551"
+              },
+              "peak_rss_MiB": 601.73046875,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.1",
+              "result_loading": "package default"
+            },
+            {
+              "backend": "ultrafast",
+              "images": 5000,
+              "detections": 431145,
+              "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+              "pred_sha256": "c525b1678fc8d1b71ea2ef7f8068d7aec56d139cd61c21eb26f731de4a047f59",
+              "input_json_parse_seconds": 1.0063874800689518,
+              "runs": [
+                {
+                  "gt_seconds": 0.1795414760708809,
+                  "load_res_seconds": 0.9265362080186605,
+                  "evaluate_seconds": 0.4702989920042455,
+                  "accumulate_seconds": 6.190268322825432e-05,
+                  "summarize_seconds": 0.0017184391617774963,
+                  "total_scoring_seconds": 1.5781570179387927
+                }
+              ],
+              "stats": [
+                0.5069484658135361,
+                0.673320131017044,
+                0.5512620504670513,
+                0.330515872003354,
+                0.5604537680841476,
+                0.6680562864385514,
+                0.37210815548284415,
+                0.6145818878960251,
+                0.6597944487500417,
+                0.47971037211459217,
+                0.7206374084868608,
+                0.8016607280954492
+              ],
+              "array_sha256": {
+                "precision": "283f2229ec4e75e57f97cce4ecef8419bef9a1a26175a499e24e7dbbe9101c83",
+                "recall": "3a0032f1a46291af36d1baec0d491965ad2f554ba15216437f3aeb5fa2ae5b8c",
+                "scores": "8fa1542ca9965e42323eeb31047bfe169bf0ca534ca6c6611dafb0ff6a0cb406",
+                "stats": "a29ce67aff55707cc46e739d2e1e78a39f8da13b7a1e9294bbb720501f23b551"
+              },
+              "peak_rss_MiB": 601.7421875,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.1",
+              "result_loading": "package default"
+            }
+          ],
+          "median_seconds": 1.60354745388031,
+          "seconds_range": [
+            1.5781570179387927,
+            1.6364795994013548
+          ],
+          "median_peak_rss_MiB": 601.73046875
+        },
+        "0.1.2": {
+          "measurements": [
+            {
+              "backend": "ultrafast",
+              "images": 5000,
+              "detections": 431145,
+              "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+              "pred_sha256": "c525b1678fc8d1b71ea2ef7f8068d7aec56d139cd61c21eb26f731de4a047f59",
+              "input_json_parse_seconds": 1.0156882060691714,
+              "runs": [
+                {
+                  "gt_seconds": 0.017491042148321867,
+                  "load_res_seconds": 0.9999411120079458,
+                  "evaluate_seconds": 0.42482962319627404,
+                  "accumulate_seconds": 4.119100049138069e-05,
+                  "summarize_seconds": 0.00164365628734231,
+                  "total_scoring_seconds": 1.4439466246403754
+                }
+              ],
+              "stats": [
+                0.5069484658135361,
+                0.673320131017044,
+                0.5512620504670513,
+                0.330515872003354,
+                0.5604537680841476,
+                0.6680562864385514,
+                0.37210815548284415,
+                0.6145818878960251,
+                0.6597944487500417,
+                0.47971037211459217,
+                0.7206374084868608,
+                0.8016607280954492
+              ],
+              "array_sha256": {
+                "precision": "283f2229ec4e75e57f97cce4ecef8419bef9a1a26175a499e24e7dbbe9101c83",
+                "recall": "3a0032f1a46291af36d1baec0d491965ad2f554ba15216437f3aeb5fa2ae5b8c",
+                "scores": "8fa1542ca9965e42323eeb31047bfe169bf0ca534ca6c6611dafb0ff6a0cb406",
+                "stats": "a29ce67aff55707cc46e739d2e1e78a39f8da13b7a1e9294bbb720501f23b551"
+              },
+              "peak_rss_MiB": 590.41015625,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.2",
+              "result_loading": "package default"
+            },
+            {
+              "backend": "ultrafast",
+              "images": 5000,
+              "detections": 431145,
+              "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+              "pred_sha256": "c525b1678fc8d1b71ea2ef7f8068d7aec56d139cd61c21eb26f731de4a047f59",
+              "input_json_parse_seconds": 0.9971970319747925,
+              "runs": [
+                {
+                  "gt_seconds": 0.016778807155787945,
+                  "load_res_seconds": 1.0144429272040725,
+                  "evaluate_seconds": 0.42838888289406896,
+                  "accumulate_seconds": 4.18531708419323e-05,
+                  "summarize_seconds": 0.001497758086770773,
+                  "total_scoring_seconds": 1.461150228511542
+                }
+              ],
+              "stats": [
+                0.5069484658135361,
+                0.673320131017044,
+                0.5512620504670513,
+                0.330515872003354,
+                0.5604537680841476,
+                0.6680562864385514,
+                0.37210815548284415,
+                0.6145818878960251,
+                0.6597944487500417,
+                0.47971037211459217,
+                0.7206374084868608,
+                0.8016607280954492
+              ],
+              "array_sha256": {
+                "precision": "283f2229ec4e75e57f97cce4ecef8419bef9a1a26175a499e24e7dbbe9101c83",
+                "recall": "3a0032f1a46291af36d1baec0d491965ad2f554ba15216437f3aeb5fa2ae5b8c",
+                "scores": "8fa1542ca9965e42323eeb31047bfe169bf0ca534ca6c6611dafb0ff6a0cb406",
+                "stats": "a29ce67aff55707cc46e739d2e1e78a39f8da13b7a1e9294bbb720501f23b551"
+              },
+              "peak_rss_MiB": 591.7421875,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.2",
+              "result_loading": "package default"
+            },
+            {
+              "backend": "ultrafast",
+              "images": 5000,
+              "detections": 431145,
+              "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+              "pred_sha256": "c525b1678fc8d1b71ea2ef7f8068d7aec56d139cd61c21eb26f731de4a047f59",
+              "input_json_parse_seconds": 1.022447175346315,
+              "runs": [
+                {
+                  "gt_seconds": 0.019983256235718727,
+                  "load_res_seconds": 1.008599708788097,
+                  "evaluate_seconds": 0.4651282448321581,
+                  "accumulate_seconds": 4.2424071580171585e-05,
+                  "summarize_seconds": 0.0016037668101489544,
+                  "total_scoring_seconds": 1.4953574007377028
+                }
+              ],
+              "stats": [
+                0.5069484658135361,
+                0.673320131017044,
+                0.5512620504670513,
+                0.330515872003354,
+                0.5604537680841476,
+                0.6680562864385514,
+                0.37210815548284415,
+                0.6145818878960251,
+                0.6597944487500417,
+                0.47971037211459217,
+                0.7206374084868608,
+                0.8016607280954492
+              ],
+              "array_sha256": {
+                "precision": "283f2229ec4e75e57f97cce4ecef8419bef9a1a26175a499e24e7dbbe9101c83",
+                "recall": "3a0032f1a46291af36d1baec0d491965ad2f554ba15216437f3aeb5fa2ae5b8c",
+                "scores": "8fa1542ca9965e42323eeb31047bfe169bf0ca534ca6c6611dafb0ff6a0cb406",
+                "stats": "a29ce67aff55707cc46e739d2e1e78a39f8da13b7a1e9294bbb720501f23b551"
+              },
+              "peak_rss_MiB": 589.03125,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.2",
+              "result_loading": "package default"
+            }
+          ],
+          "median_seconds": 1.461150228511542,
+          "seconds_range": [
+            1.4439466246403754,
+            1.4953574007377028
+          ],
+          "median_peak_rss_MiB": 590.41015625
+        }
+      },
+      "byte_identical": {
+        "precision": true,
+        "recall": true,
+        "scores": true,
+        "stats": true
+      },
+      "time_reduction_percent": 8.880137910742281,
+      "memory_reduction_percent": 1.8812928857526834
+    },
+    "objects365": {
+      "reference_package": "pycocotools 2.0.11",
+      "versions": {
+        "0.1.1": {
+          "measurements": [
+            {
+              "backend": "ultrafast",
+              "images": 80000,
+              "detections": 1090984,
+              "gt_sha256": "b5b6a043f3b36c1865240a3e23fc4cbbf627052d72b6a4428a993bf2549d4424",
+              "pred_sha256": "d1a1db2ffc1afd15ee02b82672a83747b0518e7770491cdfdbb0098283df4542",
+              "input_json_parse_seconds": 5.145314563065767,
+              "runs": [
+                {
+                  "gt_seconds": 2.320550865959376,
+                  "load_res_seconds": 1.8071651067584753,
+                  "evaluate_seconds": 4.51880664518103,
+                  "accumulate_seconds": 0.0001006503589451313,
+                  "summarize_seconds": 0.00834781676530838,
+                  "total_scoring_seconds": 8.654971085023135
+                }
+              ],
+              "stats": [
+                0.06030084048502876,
+                0.26168735827995165,
+                0.003828009378613344,
+                0.06726780903958639,
+                0.06534415548295817,
+                0.04750469803411289,
+                0.09028229398920475,
+                0.1594475864758379,
+                0.16624303931713869,
+                0.1676666324801709,
+                0.16533728516480317,
+                0.16647753225552828
+              ],
+              "array_sha256": {
+                "precision": "48e9a3aba29810ca43570b55b7cbf810993eecad9c15996738fb06622fa4131b",
+                "recall": "dd2c143922a45cc7daead948fa3a39e6e6f01d66c1f1fda344e54d0f28269101",
+                "scores": "b9cb9ff753ba98fb3d965f48590f8ad6e07a8203d72aeded1082ae1c5685be1f",
+                "stats": "dd79c9cdae4b7fcbea703567e888781fd22be61eed8f143d54f370523bb7de8c"
+              },
+              "peak_rss_MiB": 2164.3671875,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.1",
+              "result_loading": "package default"
+            },
+            {
+              "backend": "ultrafast",
+              "images": 80000,
+              "detections": 1090984,
+              "gt_sha256": "b5b6a043f3b36c1865240a3e23fc4cbbf627052d72b6a4428a993bf2549d4424",
+              "pred_sha256": "d1a1db2ffc1afd15ee02b82672a83747b0518e7770491cdfdbb0098283df4542",
+              "input_json_parse_seconds": 4.971475153230131,
+              "runs": [
+                {
+                  "gt_seconds": 2.165864528156817,
+                  "load_res_seconds": 1.5876823686994612,
+                  "evaluate_seconds": 4.277599590830505,
+                  "accumulate_seconds": 8.949404582381248e-05,
+                  "summarize_seconds": 0.007512197829782963,
+                  "total_scoring_seconds": 8.03874817956239
+                }
+              ],
+              "stats": [
+                0.06030084048502876,
+                0.26168735827995165,
+                0.003828009378613344,
+                0.06726780903958639,
+                0.06534415548295817,
+                0.04750469803411289,
+                0.09028229398920475,
+                0.1594475864758379,
+                0.16624303931713869,
+                0.1676666324801709,
+                0.16533728516480317,
+                0.16647753225552828
+              ],
+              "array_sha256": {
+                "precision": "48e9a3aba29810ca43570b55b7cbf810993eecad9c15996738fb06622fa4131b",
+                "recall": "dd2c143922a45cc7daead948fa3a39e6e6f01d66c1f1fda344e54d0f28269101",
+                "scores": "b9cb9ff753ba98fb3d965f48590f8ad6e07a8203d72aeded1082ae1c5685be1f",
+                "stats": "dd79c9cdae4b7fcbea703567e888781fd22be61eed8f143d54f370523bb7de8c"
+              },
+              "peak_rss_MiB": 2162.3671875,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.1",
+              "result_loading": "package default"
+            },
+            {
+              "backend": "ultrafast",
+              "images": 80000,
+              "detections": 1090984,
+              "gt_sha256": "b5b6a043f3b36c1865240a3e23fc4cbbf627052d72b6a4428a993bf2549d4424",
+              "pred_sha256": "d1a1db2ffc1afd15ee02b82672a83747b0518e7770491cdfdbb0098283df4542",
+              "input_json_parse_seconds": 5.12885464169085,
+              "runs": [
+                {
+                  "gt_seconds": 2.1780111039988697,
+                  "load_res_seconds": 1.6307210349477828,
+                  "evaluate_seconds": 4.373332486953586,
+                  "accumulate_seconds": 8.289283141493797e-05,
+                  "summarize_seconds": 0.009083617012947798,
+                  "total_scoring_seconds": 8.191231135744601
+                }
+              ],
+              "stats": [
+                0.06030084048502876,
+                0.26168735827995165,
+                0.003828009378613344,
+                0.06726780903958639,
+                0.06534415548295817,
+                0.04750469803411289,
+                0.09028229398920475,
+                0.1594475864758379,
+                0.16624303931713869,
+                0.1676666324801709,
+                0.16533728516480317,
+                0.16647753225552828
+              ],
+              "array_sha256": {
+                "precision": "48e9a3aba29810ca43570b55b7cbf810993eecad9c15996738fb06622fa4131b",
+                "recall": "dd2c143922a45cc7daead948fa3a39e6e6f01d66c1f1fda344e54d0f28269101",
+                "scores": "b9cb9ff753ba98fb3d965f48590f8ad6e07a8203d72aeded1082ae1c5685be1f",
+                "stats": "dd79c9cdae4b7fcbea703567e888781fd22be61eed8f143d54f370523bb7de8c"
+              },
+              "peak_rss_MiB": 2165.05859375,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.1",
+              "result_loading": "package default"
+            }
+          ],
+          "median_seconds": 8.191231135744601,
+          "seconds_range": [
+            8.03874817956239,
+            8.654971085023135
+          ],
+          "median_peak_rss_MiB": 2164.3671875
+        },
+        "0.1.2": {
+          "measurements": [
+            {
+              "backend": "ultrafast",
+              "images": 80000,
+              "detections": 1090984,
+              "gt_sha256": "b5b6a043f3b36c1865240a3e23fc4cbbf627052d72b6a4428a993bf2549d4424",
+              "pred_sha256": "d1a1db2ffc1afd15ee02b82672a83747b0518e7770491cdfdbb0098283df4542",
+              "input_json_parse_seconds": 5.464220167137682,
+              "runs": [
+                {
+                  "gt_seconds": 0.5559130855835974,
+                  "load_res_seconds": 3.6073892102576792,
+                  "evaluate_seconds": 4.665710926055908,
+                  "accumulate_seconds": 6.419606506824493e-05,
+                  "summarize_seconds": 0.01700645685195923,
+                  "total_scoring_seconds": 8.846083874814212
+                }
+              ],
+              "stats": [
+                0.06030084048502876,
+                0.26168735827995165,
+                0.003828009378613344,
+                0.06726780903958639,
+                0.06534415548295817,
+                0.04750469803411289,
+                0.09028229398920475,
+                0.1594475864758379,
+                0.16624303931713869,
+                0.1676666324801709,
+                0.16533728516480317,
+                0.16647753225552828
+              ],
+              "array_sha256": {
+                "precision": "48e9a3aba29810ca43570b55b7cbf810993eecad9c15996738fb06622fa4131b",
+                "recall": "dd2c143922a45cc7daead948fa3a39e6e6f01d66c1f1fda344e54d0f28269101",
+                "scores": "b9cb9ff753ba98fb3d965f48590f8ad6e07a8203d72aeded1082ae1c5685be1f",
+                "stats": "dd79c9cdae4b7fcbea703567e888781fd22be61eed8f143d54f370523bb7de8c"
+              },
+              "peak_rss_MiB": 2095.2265625,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.2",
+              "result_loading": "package default"
+            },
+            {
+              "backend": "ultrafast",
+              "images": 80000,
+              "detections": 1090984,
+              "gt_sha256": "b5b6a043f3b36c1865240a3e23fc4cbbf627052d72b6a4428a993bf2549d4424",
+              "pred_sha256": "d1a1db2ffc1afd15ee02b82672a83747b0518e7770491cdfdbb0098283df4542",
+              "input_json_parse_seconds": 5.114837609231472,
+              "runs": [
+                {
+                  "gt_seconds": 0.4942234577611089,
+                  "load_res_seconds": 3.320623884908855,
+                  "evaluate_seconds": 4.244792995043099,
+                  "accumulate_seconds": 7.132720202207565e-05,
+                  "summarize_seconds": 0.01440364820882678,
+                  "total_scoring_seconds": 8.074115313123912
+                }
+              ],
+              "stats": [
+                0.06030084048502876,
+                0.26168735827995165,
+                0.003828009378613344,
+                0.06726780903958639,
+                0.06534415548295817,
+                0.04750469803411289,
+                0.09028229398920475,
+                0.1594475864758379,
+                0.16624303931713869,
+                0.1676666324801709,
+                0.16533728516480317,
+                0.16647753225552828
+              ],
+              "array_sha256": {
+                "precision": "48e9a3aba29810ca43570b55b7cbf810993eecad9c15996738fb06622fa4131b",
+                "recall": "dd2c143922a45cc7daead948fa3a39e6e6f01d66c1f1fda344e54d0f28269101",
+                "scores": "b9cb9ff753ba98fb3d965f48590f8ad6e07a8203d72aeded1082ae1c5685be1f",
+                "stats": "dd79c9cdae4b7fcbea703567e888781fd22be61eed8f143d54f370523bb7de8c"
+              },
+              "peak_rss_MiB": 2092.87890625,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.2",
+              "result_loading": "package default"
+            },
+            {
+              "backend": "ultrafast",
+              "images": 80000,
+              "detections": 1090984,
+              "gt_sha256": "b5b6a043f3b36c1865240a3e23fc4cbbf627052d72b6a4428a993bf2549d4424",
+              "pred_sha256": "d1a1db2ffc1afd15ee02b82672a83747b0518e7770491cdfdbb0098283df4542",
+              "input_json_parse_seconds": 5.172264893073589,
+              "runs": [
+                {
+                  "gt_seconds": 0.48351122019812465,
+                  "load_res_seconds": 3.3063675267621875,
+                  "evaluate_seconds": 4.088480261154473,
+                  "accumulate_seconds": 5.156686529517174e-05,
+                  "summarize_seconds": 0.010264682117849588,
+                  "total_scoring_seconds": 7.88867525709793
+                }
+              ],
+              "stats": [
+                0.06030084048502876,
+                0.26168735827995165,
+                0.003828009378613344,
+                0.06726780903958639,
+                0.06534415548295817,
+                0.04750469803411289,
+                0.09028229398920475,
+                0.1594475864758379,
+                0.16624303931713869,
+                0.1676666324801709,
+                0.16533728516480317,
+                0.16647753225552828
+              ],
+              "array_sha256": {
+                "precision": "48e9a3aba29810ca43570b55b7cbf810993eecad9c15996738fb06622fa4131b",
+                "recall": "dd2c143922a45cc7daead948fa3a39e6e6f01d66c1f1fda344e54d0f28269101",
+                "scores": "b9cb9ff753ba98fb3d965f48590f8ad6e07a8203d72aeded1082ae1c5685be1f",
+                "stats": "dd79c9cdae4b7fcbea703567e888781fd22be61eed8f143d54f370523bb7de8c"
+              },
+              "peak_rss_MiB": 2093.27734375,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.2",
+              "result_loading": "package default"
+            }
+          ],
+          "median_seconds": 8.074115313123912,
+          "seconds_range": [
+            7.88867525709793,
+            8.846083874814212
+          ],
+          "median_peak_rss_MiB": 2093.27734375
+        }
+      },
+      "byte_identical": {
+        "precision": true,
+        "recall": true,
+        "scores": true,
+        "stats": true
+      },
+      "time_reduction_percent": 1.4297706984438996,
+      "memory_reduction_percent": 3.284555604084627
+    }
+  }
+}

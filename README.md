@@ -13,7 +13,7 @@ Benchmarks cover public pretrained detector outputs on COCO and a separate
 synthetic scalability workload on the public Objects365 dataset. Both compare
 complete evaluation arrays against pycocotools.
 
-**Status:** 0.1.1, alpha. The installation instructions below build from source.
+**Status:** 0.1.2, alpha. The installation instructions below build from source.
 Validate your application's
 parameters and subclass behavior before replacing its reference evaluator.
 
@@ -83,6 +83,10 @@ helpers remain covered by reference comparisons. Direct annotation dictionaries
 omit the derived `segmentation` field unless `derive_segmentation=True` is requested.
 [Measurements against 0.1.0](docs/efficiency.md).
 
+Version 0.1.2 further improves the COCO case by **8.9% in time and 1.9% in peak
+RSS** relative to 0.1.1, using native index/metadata loops and releasing completed
+category buffers earlier. [Repeated measurements and limits](docs/efficiency-v012.md).
+
 ### LVIS and metric names
 
 ```python
@@ -119,6 +123,10 @@ processes when comparing the reference package and the replacement.
 
 ## Scaling with input size (0.1.0 measurements)
 
+**41.9× faster evaluation · 89.5% lower peak memory than pycocotools** at the
+largest measured input (80,000 images). Also 8.1× faster with 92.2% lower peak
+memory than faster-coco-eval. These callouts use the recorded 0.1.0 runs below.
+
 ![Evaluation time and peak memory versus GT plus prediction count](docs/assets/scaling.png)
 
 Measured on nested Objects365 subsets with identical inputs for both scorers.
@@ -127,6 +135,23 @@ passes a separate numerical tolerance check; its arrays are not byte-identical.
 [Method, counts and reproduction](docs/scaling.md) ·
 [SVG](docs/assets/scaling.svg) · [PDF](docs/assets/scaling.pdf) ·
 [Raw measurements](bench/results/scaling.json).
+
+## YOLO26n benchmark (0.1.2)
+
+**19.1× faster · 53.4% lower peak RSS than pycocotools**, using identical
+YOLO26n predictions on all 5,000 COCO val2017 images.
+
+| Scorer | Evaluation time | Peak RSS |
+|---|---:|---:|
+| pycocotools 2.0.11 | 37.073 s | 1,599.2 MiB |
+| faster-coco-eval 1.8.0 | 7.257 s | 1,651.6 MiB |
+| ultrafast-pycocotools 0.1.2 | **1.942 s** | **745.9 MiB** |
+
+All four ultrafast evaluation arrays match pycocotools byte for byte. The
+additional backend is within absolute 1e-12 tolerance but not byte-identical.
+The 596,202 predictions were generated on CPU in about four minutes; inference
+is excluded from evaluation times. One fresh process per scorer on a shared
+host, two CPU cores each. [Settings, hashes and reproduction](docs/yolo26.md).
 
 ## Public benchmarks (0.1.0 measurements)
 
@@ -183,7 +208,7 @@ Some implementation details intentionally differ:
 The evaluator follows pycocotools' treatment of `iscrowd`, including its handling
 of the annotation `ignore` field. Applications that rely on mutation side
 effects or unusual evaluation parameters should run their own parity checks.
-See [the detailed compatibility notes](docs/implementation-notes.md#drop-in-호환).
+See [the detailed compatibility notes](docs/implementation-notes.md#drop-in-compatibility).
 
 ## Additional diagnostics
 
@@ -199,10 +224,12 @@ matrix = evaluator.confusion_matrix()
 ```
 
 Boundary IoU is available as an additional evaluation mode. It is an extension,
-not a standard pycocotools metric. See the [implementation notes](docs/implementation-notes.md#확장-기능)
+not a standard pycocotools metric. See the [implementation notes](docs/implementation-notes.md#extensions)
 for custom thresholds, area ranges, and diagnostic output formats.
 
 ## Development and verification
+
+Write documentation, code comments, docstrings and examples in English.
 
 [Automated CI](docs/ci.md) builds and tests Linux, macOS and Windows, checks
 NumPy 1/2 and multiple Python versions, and runs Rust tests in debug and release.
