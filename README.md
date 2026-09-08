@@ -13,15 +13,25 @@ Benchmarks cover public pretrained detector outputs on COCO and a separate
 synthetic scalability workload on the public Objects365 dataset. Both compare
 complete evaluation arrays against pycocotools.
 
-**Status:** 0.1.4, alpha. The installation instructions below build from source.
-Validate your application's
+**Status:** 0.1.4, alpha. Validate your application's
 parameters and subclass behavior before replacing its reference evaluator.
 
 ## Installation
 
-PyPI publishing is being prepared. The [release workflow and maintainer guide](docs/publishing.md)
-build and test wheels for Python 3.9–3.14 on Linux, Windows and macOS before upload.
-Until the first PyPI release, use the source installation below.
+Install from [PyPI](https://pypi.org/project/ultrafast-pycocotools/):
+
+```bash
+python -m pip install ultrafast-pycocotools
+```
+
+Prebuilt wheels cover CPython 3.9–3.14 on Linux x86-64 (glibc 2.17+), Windows
+x86-64, and macOS Intel/Apple Silicon. Compatible wheels require no Rust compiler.
+NumPy is installed automatically. Other platforms build from source.
+
+The [release workflow and maintainer guide](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/publishing.md)
+describe wheel testing and Trusted Publishing.
+
+### Build from source
 
 Requirements: Python 3.9+, a recent stable [Rust toolchain](https://rustup.rs/),
 and a working native compiler toolchain. NumPy is installed as a dependency.
