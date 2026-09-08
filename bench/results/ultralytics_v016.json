@@ -1,0 +1,213 @@
+{
+  "date": "2026-09-08",
+  "cpu": "AMD EPYC 9554",
+  "affinity": [
+    8,
+    9
+  ],
+  "threads": {
+    "RAYON_NUM_THREADS": 2,
+    "OMP_NUM_THREADS": 2,
+    "OPENBLAS_NUM_THREADS": 1
+  },
+  "python": "3.12.3",
+  "ultralytics_reference": "4e6701f",
+  "ultralytics_replacement": "e600c6f2275acd4344127ea59942fccc179a7c2f",
+  "evaluator_source": "08ffae220e08e6b71313002397c2748098f36610",
+  "inputs_sha256": {
+    "gt": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+    "pred": "3fd06049de546ecc064b9cce6be08dd5202d01f58cf5ba3281256731c2f49f1b"
+  },
+  "samples": {
+    "lvis-reference": {
+      "seconds": 0.7884760070592165,
+      "peak_rss_mib": 1280.4375,
+      "images": 100,
+      "predictions": 29980,
+      "metrics": {
+        "metrics/mAP50(B)": 0.6261971837787129,
+        "metrics/mAP50-95(B)": 0.3676645003471998,
+        "fitness": 0.3676645003471998,
+        "metrics/mAP_small(B)": 0.3014400684839344,
+        "metrics/mAP_medium(B)": 0.4383116520502349,
+        "metrics/mAP_large(B)": 0.44698568700634994,
+        "metrics/APr(B)": 0.0,
+        "metrics/APc(B)": 0.2743466491059044,
+        "metrics/APf(B)": 0.387583997438936
+      },
+      "scope": "DetectionValidator.coco_evaluate; predictions retained in jdict; cold COCO object; warm filesystem; no inference",
+      "versions": {
+        "faster-coco-eval": "1.8.0",
+        "ultrafast-pycocotools": "0.1.6",
+        "numpy": "2.4.4",
+        "torch": "2.13.0+cu126",
+        "ultralytics_distribution_metadata": "8.4.120"
+      },
+      "ultralytics_source_version": "8.4.143"
+    },
+    "lvis-replace": {
+      "seconds": 0.3468733550980687,
+      "peak_rss_mib": 942.6484375,
+      "images": 100,
+      "predictions": 29980,
+      "metrics": {
+        "metrics/mAP50(B)": 0.6261971837787129,
+        "metrics/mAP50-95(B)": 0.3676645003471998,
+        "fitness": 0.3676645003471998,
+        "metrics/mAP_small(B)": 0.30144006848393434,
+        "metrics/mAP_medium(B)": 0.4383116520502349,
+        "metrics/mAP_large(B)": 0.4469856870063499,
+        "metrics/APr(B)": 0.0,
+        "metrics/APc(B)": 0.27434664910590434,
+        "metrics/APf(B)": 0.38758399743893596
+      },
+      "scope": "DetectionValidator.coco_evaluate; predictions retained in jdict; cold COCO object; warm filesystem; no inference",
+      "versions": {
+        "faster-coco-eval": "1.8.0",
+        "ultrafast-pycocotools": "0.1.6",
+        "numpy": "2.4.4",
+        "torch": "2.13.0+cu126",
+        "ultralytics_distribution_metadata": "8.4.120"
+      },
+      "ultralytics_source_version": "8.4.143"
+    },
+    "reference-1": {
+      "seconds": 7.031534863635898,
+      "peak_rss_mib": 2415.734375,
+      "images": 5000,
+      "predictions": 596202,
+      "metrics": {
+        "metrics/mAP50(B)": 0.5603009731830645,
+        "metrics/mAP50-95(B)": 0.4033248436546061,
+        "fitness": 0.4190224566074519,
+        "metrics/mAP_small(B)": 0.19786867111506715,
+        "metrics/mAP_medium(B)": 0.4442809147191828,
+        "metrics/mAP_large(B)": 0.5857763711996818
+      },
+      "scope": "DetectionValidator.coco_evaluate; predictions retained in jdict; cold COCO object; warm filesystem; no inference",
+      "versions": {
+        "faster-coco-eval": "1.8.0",
+        "ultrafast-pycocotools": "0.1.6",
+        "numpy": "2.4.4",
+        "torch": "2.13.0+cu126",
+        "ultralytics_distribution_metadata": "8.4.120"
+      },
+      "ultralytics_source_version": "8.4.143"
+    },
+    "reference-2": {
+      "seconds": 7.241526898927987,
+      "peak_rss_mib": 2423.08203125,
+      "images": 5000,
+      "predictions": 596202,
+      "metrics": {
+        "metrics/mAP50(B)": 0.5603009731830645,
+        "metrics/mAP50-95(B)": 0.4033248436546061,
+        "fitness": 0.4190224566074519,
+        "metrics/mAP_small(B)": 0.19786867111506715,
+        "metrics/mAP_medium(B)": 0.4442809147191828,
+        "metrics/mAP_large(B)": 0.5857763711996818
+      },
+      "scope": "DetectionValidator.coco_evaluate; predictions retained in jdict; cold COCO object; warm filesystem; no inference",
+      "versions": {
+        "faster-coco-eval": "1.8.0",
+        "ultrafast-pycocotools": "0.1.6",
+        "numpy": "2.4.4",
+        "torch": "2.13.0+cu126",
+        "ultralytics_distribution_metadata": "8.4.120"
+      },
+      "ultralytics_source_version": "8.4.143"
+    },
+    "reference-3": {
+      "seconds": 7.084344740025699,
+      "peak_rss_mib": 2425.7421875,
+      "images": 5000,
+      "predictions": 596202,
+      "metrics": {
+        "metrics/mAP50(B)": 0.5603009731830645,
+        "metrics/mAP50-95(B)": 0.4033248436546061,
+        "fitness": 0.4190224566074519,
+        "metrics/mAP_small(B)": 0.19786867111506715,
+        "metrics/mAP_medium(B)": 0.4442809147191828,
+        "metrics/mAP_large(B)": 0.5857763711996818
+      },
+      "scope": "DetectionValidator.coco_evaluate; predictions retained in jdict; cold COCO object; warm filesystem; no inference",
+      "versions": {
+        "faster-coco-eval": "1.8.0",
+        "ultrafast-pycocotools": "0.1.6",
+        "numpy": "2.4.4",
+        "torch": "2.13.0+cu126",
+        "ultralytics_distribution_metadata": "8.4.120"
+      },
+      "ultralytics_source_version": "8.4.143"
+    },
+    "replace-1": {
+      "seconds": 0.6983828921802342,
+      "peak_rss_mib": 1126.5234375,
+      "images": 5000,
+      "predictions": 596202,
+      "metrics": {
+        "metrics/mAP50(B)": 0.5603009731830645,
+        "metrics/mAP50-95(B)": 0.4033248436546061,
+        "fitness": 0.4190224566074519,
+        "metrics/mAP_small(B)": 0.19786867111506715,
+        "metrics/mAP_medium(B)": 0.4442809147191828,
+        "metrics/mAP_large(B)": 0.5857763711996818
+      },
+      "scope": "DetectionValidator.coco_evaluate; predictions retained in jdict; cold COCO object; warm filesystem; no inference",
+      "versions": {
+        "faster-coco-eval": "1.8.0",
+        "ultrafast-pycocotools": "0.1.6",
+        "numpy": "2.4.4",
+        "torch": "2.13.0+cu126",
+        "ultralytics_distribution_metadata": "8.4.120"
+      },
+      "ultralytics_source_version": "8.4.143"
+    },
+    "replace-2": {
+      "seconds": 0.658880069386214,
+      "peak_rss_mib": 1127.5,
+      "images": 5000,
+      "predictions": 596202,
+      "metrics": {
+        "metrics/mAP50(B)": 0.5603009731830645,
+        "metrics/mAP50-95(B)": 0.4033248436546061,
+        "fitness": 0.4190224566074519,
+        "metrics/mAP_small(B)": 0.19786867111506715,
+        "metrics/mAP_medium(B)": 0.4442809147191828,
+        "metrics/mAP_large(B)": 0.5857763711996818
+      },
+      "scope": "DetectionValidator.coco_evaluate; predictions retained in jdict; cold COCO object; warm filesystem; no inference",
+      "versions": {
+        "faster-coco-eval": "1.8.0",
+        "ultrafast-pycocotools": "0.1.6",
+        "numpy": "2.4.4",
+        "torch": "2.13.0+cu126",
+        "ultralytics_distribution_metadata": "8.4.120"
+      },
+      "ultralytics_source_version": "8.4.143"
+    },
+    "replace-3": {
+      "seconds": 0.6684646159410477,
+      "peak_rss_mib": 1127.3671875,
+      "images": 5000,
+      "predictions": 596202,
+      "metrics": {
+        "metrics/mAP50(B)": 0.5603009731830645,
+        "metrics/mAP50-95(B)": 0.4033248436546061,
+        "fitness": 0.4190224566074519,
+        "metrics/mAP_small(B)": 0.19786867111506715,
+        "metrics/mAP_medium(B)": 0.4442809147191828,
+        "metrics/mAP_large(B)": 0.5857763711996818
+      },
+      "scope": "DetectionValidator.coco_evaluate; predictions retained in jdict; cold COCO object; warm filesystem; no inference",
+      "versions": {
+        "faster-coco-eval": "1.8.0",
+        "ultrafast-pycocotools": "0.1.6",
+        "numpy": "2.4.4",
+        "torch": "2.13.0+cu126",
+        "ultralytics_distribution_metadata": "8.4.120"
+      },
+      "ultralytics_source_version": "8.4.143"
+    }
+  }
+}
