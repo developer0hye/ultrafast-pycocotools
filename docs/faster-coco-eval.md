@@ -57,6 +57,9 @@ The [scaling figure](scaling.md) uses linear axes and connects measured points.
 
 ## Reproduce
 
+The optional faster-coco-eval 1.8.0 comparison requires Python 3.10 or newer.
+The measurements below use Python 3.12.
+
 ```bash
 python -m pip install ".[test,plot]" "faster-coco-eval==1.8.0"
 python bench/reproduce.py quick --out bench/out/three-way \

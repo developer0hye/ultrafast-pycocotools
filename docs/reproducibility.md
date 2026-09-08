@@ -149,7 +149,7 @@ are separate claims.
 
 ## Include faster-coco-eval
 
-Install `faster-coco-eval==1.8.0` and add `--include-faster` to any reproduction
+With Python 3.10+, install `faster-coco-eval==1.8.0` and add `--include-faster` to any reproduction
 command to score the same inputs with all three implementations. Ultrafast's
 byte-equality gate remains strict. Faster-coco-eval's numerical differences
 are reported separately, with absolute tolerance 1e-12 and zero relative
