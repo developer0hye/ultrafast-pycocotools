@@ -33,6 +33,7 @@ use crate::rle::{self, Rle};
 use rayon::prelude::*;
 use std::cmp::Ordering;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
+use std::sync::Arc;
 use std::time::Instant;
 
 /// Where the evaluation spent its time, in nanoseconds.
@@ -97,6 +98,8 @@ pub enum IouType {
 #[derive(Debug)]
 pub enum GeomStore {
     Bboxes(Vec<[f64; 4]>),
+    /// Immutable file geometry shared with the input handle.
+    SharedBboxes(Arc<Vec<[f64; 4]>>),
     Masks(Vec<Rle>),
     Boundaries {
         masks: Vec<Rle>,
@@ -107,6 +110,16 @@ pub enum GeomStore {
         data: Vec<f64>,
         k: usize,
     },
+}
+
+impl GeomStore {
+    fn bbox_slice(&self) -> Option<&[[f64; 4]]> {
+        match self {
+            Self::Bboxes(v) => Some(v),
+            Self::SharedBboxes(v) => Some(v),
+            _ => None,
+        }
+    }
 }
 
 /// Annotations in struct-of-arrays form.
@@ -404,14 +417,15 @@ impl Evaluator {
             .map(|&g| self.gt.iscrowd[g as usize] as u8)
             .collect();
         let mut out = vec![0.0f64; m * n];
+        if let (Some(dv), Some(gv)) = (self.dt.geom.bbox_slice(), self.gt.geom.bbox_slice()) {
+            let d: Vec<[f64; 4]> = dt_idx.iter().map(|&i| dv[i as usize]).collect();
+            let g: Vec<[f64; 4]> = gt_idx.iter().map(|&i| gv[i as usize]).collect();
+            rle::bb_iou(&d, &g, &iscrowd, &mut out);
+            return out;
+        }
         let floor = self.match_floor();
 
         match (&self.dt.geom, &self.gt.geom) {
-            (GeomStore::Bboxes(dv), GeomStore::Bboxes(gv)) => {
-                let d: Vec<[f64; 4]> = dt_idx.iter().map(|&i| dv[i as usize]).collect();
-                let g: Vec<[f64; 4]> = gt_idx.iter().map(|&i| gv[i as usize]).collect();
-                rle::bb_iou(&d, &g, &iscrowd, &mut out);
-            }
             (GeomStore::Masks(dv), GeomStore::Masks(gv)) => {
                 let d: Vec<&Rle> = dt_idx.iter().map(|&i| &dv[i as usize]).collect();
                 let g: Vec<&Rle> = gt_idx.iter().map(|&i| &gv[i as usize]).collect();
@@ -743,7 +757,12 @@ impl Evaluator {
 
         // Indexed parallel collection preserves the public [K][A][I] diagnostic order.
         let eval_imgs = per_cat.into_iter().flatten().collect();
-        (output.into_inner().expect("evaluation output lock poisoned"), eval_imgs)
+        (
+            output
+                .into_inner()
+                .expect("evaluation output lock poisoned"),
+            eval_imgs,
+        )
     }
 
     /// Expand the compact per-image matches into pycocotools' `evalImgs`

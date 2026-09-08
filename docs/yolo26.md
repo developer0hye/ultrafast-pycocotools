@@ -1,5 +1,8 @@
 # YOLO26n: real predictions, identical evaluator inputs
 
+For the newer file-input path, see the [0.1.3 measurements](efficiency-v013.md).
+Those include JSON parsing; the historical timings below exclude it.
+
 Ultrafast 0.1.2 evaluates saved YOLO26n predictions **19.1× faster than
 pycocotools with 53.4% lower peak process memory** in this measured case.
 Compared with faster-coco-eval, it is 3.7× faster with 54.8% lower peak memory.

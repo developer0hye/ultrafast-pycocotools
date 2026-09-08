@@ -459,7 +459,17 @@ class COCOeval:
         p.maxDets = sorted(p.maxDets)
         self.params = p
 
-        gts, dts, img_sizes = self._collect()
+        if (type(self) is COCOeval and not self.lvis_style and p.iouType == "bbox"
+                and type(self.cocoGt) is COCO and type(self.cocoDt) is COCO
+                and (self.cocoGt._compact is not None or self.cocoDt._compact is not None)):
+            categories = p.catIds if p.useCats else []
+            gts = (self.cocoGt._compact if self.cocoGt._compact is not None else
+                   self.cocoGt._eval_annotations(p.imgIds, categories))
+            dts = (self.cocoDt._compact if self.cocoDt._compact is not None else
+                   self.cocoDt._eval_annotations(p.imgIds, categories))
+            img_sizes = {}
+        else:
+            gts, dts, img_sizes = self._collect()
         # A fresh run must not serve stale per-image views.
         self._gts, self._dts, self._ious = {}, {}, None
 

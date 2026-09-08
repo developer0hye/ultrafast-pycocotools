@@ -70,6 +70,8 @@ def main():
     p.add_argument('--out', type=Path, required=True, help='New output directory; never overwritten')
     p.add_argument('--gt', type=Path, help='Original annotation JSON; required except in quick mode')
     p.add_argument('--pred', type=Path, help='Existing predictions, for predictions mode')
+    p.add_argument('--input-mode', choices=('in-memory', 'files'), default='in-memory',
+                   help='Use files to include JSON loading and exercise compact bbox storage')
     p.add_argument('--include-faster', action='store_true', help='Also measure faster-coco-eval and report numerical agreement')
     p.add_argument('--threads', type=int, default=2)
     p.add_argument('--repeats', type=int, default=1)
@@ -122,18 +124,20 @@ def main():
                 raise ValueError(f'Published input mismatch: {key}; refusing an expensive nonmatching run')
     for backend in ('pycocotools', 'ultrafast'):
         run('compare_saved_predictions.py', ['--backend', backend, '--gt', gt, '--pred', pred,
-                                             '--out', a.out / backend, '--repeats', a.repeats],
+                                             '--out', a.out / backend, '--repeats', a.repeats,
+                                             '--input-mode', a.input_mode],
             a.out / f'{backend}.log')
     result = compare(a.out / 'pycocotools', a.out / 'ultrafast')
     if a.include_faster:
         run('compare_saved_predictions.py', ['--backend', 'faster-coco-eval', '--gt', gt, '--pred', pred,
-                                             '--out', a.out / 'faster-coco-eval', '--repeats', a.repeats],
+                                             '--out', a.out / 'faster-coco-eval', '--repeats', a.repeats,
+                                             '--input-mode', a.input_mode],
             a.out / 'faster-coco-eval.log')
         result['faster_coco_eval'] = json.loads((a.out / 'faster-coco-eval/result.json').read_text())
         result['faster_agreement'] = compare_numerically(a.out / 'pycocotools', a.out / 'faster-coco-eval')
     if a.verify_published and result['reference']['array_sha256'] != expected['array_sha256']:
         raise ValueError('Inputs match but evaluation arrays differ from the published reference; check versions')
-    result.update(mode=a.mode, seed=seed, python=platform.python_version(),
+    result.update(mode=a.mode, input_mode=a.input_mode, seed=seed, python=platform.python_version(),
                   versions={name: importlib.metadata.version(name) for name in
                             ('numpy', 'pycocotools', 'ultrafast-pycocotools')},
                   threads=a.threads, cpu_affinity=sorted(os.sched_getaffinity(0))

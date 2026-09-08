@@ -13,7 +13,7 @@ Benchmarks cover public pretrained detector outputs on COCO and a separate
 synthetic scalability workload on the public Objects365 dataset. Both compare
 complete evaluation arrays against pycocotools.
 
-**Status:** 0.1.2, alpha. The installation instructions below build from source.
+**Status:** 0.1.3, alpha. The installation instructions below build from source.
 Validate your application's
 parameters and subclass behavior before replacing its reference evaluator.
 
@@ -86,6 +86,15 @@ omit the derived `segmentation` field unless `derive_segmentation=True` is reque
 Version 0.1.2 further improves the COCO case by **8.9% in time and 1.9% in peak
 RSS** relative to 0.1.1, using native index/metadata loops and releasing completed
 category buffers earlier. [Repeated measurements and limits](docs/efficiency-v012.md).
+
+Version 0.1.3 adds compact bbox file loading: **2.6–2.9× faster and 56–62% less
+peak RSS than 0.1.2** on three tested workloads, including JSON parsing in both
+versions. Annotation dictionaries materialize only when accessed; evaluation
+shares immutable bbox coordinates. Existing dict/list inputs retain their
+previous representation and show no demonstrated speed/memory improvement.
+[Measurements, API behavior and lower bounds](docs/efficiency-v013.md).
+
+![YOLO26n file evaluation time and peak memory versus pycocotools and faster-coco-eval](docs/assets/compact-yolo26n.svg)
 
 ### LVIS and metric names
 

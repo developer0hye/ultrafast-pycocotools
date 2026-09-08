@@ -31,11 +31,11 @@ use std::fmt;
 /// annotation — millions of times. Without a memo we would allocate a fresh
 /// `str` object for each, which costs more memory than the values do.
 /// CPython's `json` interns keys the same way.
-type Memo = HashMap<String, Py<PyString>>;
+pub(crate) type Memo = HashMap<String, Py<PyString>>;
 
-struct Builder<'a, 'py> {
-    py: Python<'py>,
-    memo: &'a mut Memo,
+pub(crate) struct Builder<'a, 'py> {
+    pub(crate) py: Python<'py>,
+    pub(crate) memo: &'a mut Memo,
 }
 
 impl<'a, 'py> Builder<'a, 'py> {
@@ -194,6 +194,11 @@ pub fn read_file_only(path: &str) -> PyResult<usize> {
 #[pyfunction]
 pub fn load_json(py: Python<'_>, path: &str) -> PyResult<Py<PyAny>> {
     let bytes = std::fs::read(path).map_err(|e| PyIOError::new_err(e.to_string()))?;
+    parse_bytes(py, &bytes)
+}
+
+pub(crate) fn parse_bytes(py: Python<'_>, bytes: &[u8]) -> PyResult<Py<PyAny>> {
+    let path = "JSON snapshot";
     let mut memo: Memo = HashMap::with_capacity(64);
     let mut de = serde_json::Deserializer::from_slice(&bytes);
     // COCO annotation files nest only a few levels, but a hostile file could

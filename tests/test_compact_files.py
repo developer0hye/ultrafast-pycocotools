@@ -1,0 +1,195 @@
+"""File snapshots must preserve mutable COCO API behavior and exact evaluation."""
+import copy
+import json
+import pickle
+
+import pytest
+
+import ultrafast_pycocotools as ufc
+from test_eval_parity import assert_bit_identical, run_reference
+
+
+def write_inputs(tmp_path):
+    data = {'images':[{'id':2,'height':128,'width':128},{'id':1,'height':128,'width':128}],
+            'annotations':[{'id':3,'image_id':2,'category_id':1,'bbox':[2,3,12,14],'area':168,'iscrowd':0},
+                           {'id':7,'image_id':1,'category_id':2,'bbox':[0,0,40,50],'area':2000,'iscrowd':1}],
+            'categories':[{'id':1},{'id':2}], 'info':{'custom':'retained'}}
+    dets = [{'image_id':2,'category_id':1,'bbox':[2,3,12,14],'score':.8},
+            {'image_id':1,'category_id':2,'bbox':[1,1,38,48],'score':.8},
+            {'image_id':2,'category_id':2,'bbox':[10,10,4,5],'score':.8}]
+    gt, dt = tmp_path/'gt.json', tmp_path/'dt.json'
+    gt.write_text(json.dumps(data));dt.write_text(json.dumps(dets))
+    return gt, dt, data, dets
+
+
+def evaluate(gt, dt):
+    ev = ufc.COCOeval(gt, dt, 'bbox', print_function=lambda *_: None)
+    ev.run()
+    return ev
+
+
+@pytest.mark.parametrize('view', ['dataset','anns','imgToAnns','catToImgs'])
+def test_public_views_materialize_real_objects_and_disable_snapshot(tmp_path, view):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    gt = ufc.COCO(gp, verbose=False)
+    assert gt._compact is not None
+    assert gt.getImgIds() == [2,1]
+    assert gt.getCatIds() == [1,2]
+    assert gt._compact is not None
+    getattr(gt, view)
+    assert gt._compact is None
+    assert type(gt.dataset) is dict
+    assert type(gt.dataset['annotations']) is list
+    assert gt.dataset == data
+    assert list(gt.dataset) == list(data)
+    assert gt.anns[3] is gt.dataset['annotations'][0]
+    assert gt.imgToAnns[2][0] is gt.anns[3]
+    gt.anns[3]['bbox'] = [80,80,10,10]
+    changed = evaluate(gt, gt.loadRes(dp))
+    reference_gt = ufc.COCO(copy.deepcopy(gt.dataset), verbose=False)
+    expected = evaluate(reference_gt, reference_gt.loadRes(copy.deepcopy(dets)))
+    assert_bit_identical(expected, changed, view)
+
+
+def test_input_snapshot_survives_file_changes_and_deletion(tmp_path):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    ref = run_reference(gp, dp, 'bbox')
+    gt = ufc.COCO(gp, verbose=False);dt = gt.loadRes(dp)
+    assert gt._compact is not None and dt._compact is not None
+    gp.write_text('{}');dp.unlink()
+    assert_bit_identical(ref, evaluate(gt, dt), 'immutable snapshot')
+    assert gt.dataset == data
+    assert dt.anns[1]['bbox'] == dets[0]['bbox']
+    assert dt.anns[1]['id'] == 1 and dt.anns[1]['area'] == 168
+
+
+@pytest.mark.parametrize('input_types', [('file','file'),('file','dict'),('dict','file')])
+def test_mixed_file_and_in_memory_inputs(tmp_path, input_types):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    ref = run_reference(gp, dp, 'bbox')
+    gt = ufc.COCO(gp if input_types[0]=='file' else data, verbose=False)
+    dt = gt.loadRes(dp if input_types[1]=='file' else dets)
+    actual = evaluate(gt, dt)
+    assert_bit_identical(ref, actual, str(input_types))
+    assert (gt._compact is not None) == (input_types[0]=='file')
+    assert (dt._compact is not None) == (input_types[1]=='file')
+    # Diagnostics may materialize annotations, but must describe the same matches.
+    assert actual.computeIoU(2, 1).shape == (1, 1)
+
+
+def test_pickle_and_deepcopy_preserve_index_identity(tmp_path):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    gt = ufc.COCO(gp, verbose=False)
+    for restored in [pickle.loads(pickle.dumps(gt)), copy.deepcopy(gt)]:
+        assert restored.dataset == data
+        assert restored.anns[3] is restored.dataset['annotations'][0]
+        assert restored.imgToAnns[2][0] is restored.anns[3]
+
+
+def test_duplicate_gt_ids_fall_back_to_dictionary_semantics(tmp_path):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    data['annotations'][1]['id'] = 3
+    gp.write_text(json.dumps(data))
+    gt = ufc.COCO(gp, verbose=False)
+    assert gt._compact is None
+    assert gt.anns[3]['image_id'] == 1
+
+
+def test_invalid_detection_image_rejected_at_load_time(tmp_path):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    dets[0]['image_id'] = 999
+    dp.write_text(json.dumps(dets))
+    with pytest.raises(AssertionError, match='current coco set'):
+        ufc.COCO(gp, verbose=False).loadRes(dp)
+
+
+def test_replacing_dataset_preserves_old_indexes_until_rebuild(tmp_path):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    gt = ufc.COCO(gp, verbose=False)
+    gt.dataset = dict(data, annotations=[])
+    assert 3 in gt.anns
+    gt.createIndex()
+    assert gt.anns == {}
+
+
+@pytest.mark.parametrize('params', [
+    {'imgIds': [2]}, {'catIds': [1]}, {'imgIds': [1], 'catIds': [1]},
+    {'useCats': 0}, {'useCats': 0, 'catIds': [2]}, {'maxDets': [1, 2, 100]},
+    {'imgIds': []}, {'catIds': []},
+])
+def test_filtered_and_repeated_evaluation(tmp_path, params):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    def tweak(p):
+        for name, value in params.items():
+            setattr(p, name, value)
+    ref = run_reference(gp, dp, 'bbox', tweak)
+    gt = ufc.COCO(gp, verbose=False)
+    dt = gt.loadRes(dp)
+    ev = ufc.COCOeval(gt, dt, 'bbox', print_function=lambda *_: None)
+    tweak(ev.params)
+    ev.run()
+    assert_bit_identical(ref, ev, str(params))
+    ev.run()
+    assert_bit_identical(ref, ev, 'repeated ' + str(params))
+    assert gt._compact is not None and dt._compact is not None
+
+
+def test_materialization_preserves_independently_edited_metadata_indexes(tmp_path):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    gt = ufc.COCO(gp, verbose=False)
+    images, categories = gt.imgs, gt.cats
+    gt.imgs[99] = {'id': 99}
+    gt.cats[99] = {'id': 99}
+    assert len(gt.anns) == 2
+    assert gt.imgs is images and gt.cats is categories
+    assert 99 in gt.imgs and 99 in gt.cats
+    gt.createIndex()
+    assert 99 not in gt.imgs and 99 not in gt.cats
+
+
+def test_caption_precedence_and_explicit_polygons_fall_back(tmp_path):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    gt = ufc.COCO(gp, verbose=False)
+    explicit = gt.loadRes(dp, derive_segmentation=True)
+    assert explicit._compact is None
+    assert 'segmentation' in explicit.anns[1]
+    dets[0]['caption'] = 'An example caption.'
+    dp.write_text(json.dumps(dets))
+    captions = gt.loadRes(dp)
+    assert captions._compact is None
+    assert 'area' not in captions.anns[1]
+
+
+def test_legacy_pickle_state(tmp_path):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    original = ufc.COCO(data, verbose=False)
+    state = original.__getstate__().copy()
+    for public, private in [('dataset', '_dataset'), ('anns', '_anns'),
+                            ('imgToAnns', '_img_to_anns'), ('catToImgs', '_cat_to_imgs')]:
+        state[public] = state.pop(private)
+    state.pop('_compact')
+    restored = ufc.COCO.__new__(ufc.COCO)
+    restored.__setstate__(state)
+    assert restored.dataset == data
+    assert restored.anns[3] is restored.dataset['annotations'][0]
+
+
+def test_subclass_dataset_access_is_respected(tmp_path):
+    gp, dp, data, dets = write_inputs(tmp_path)
+    class CustomCOCO(ufc.COCO):
+        reads = 0
+        @property
+        def dataset(self):
+            self.reads += 1
+            return super().dataset
+        @dataset.setter
+        def dataset(self, value):
+            ufc.COCO.dataset.fset(self, value)
+    gt = CustomCOCO(gp, verbose=False)
+    assert gt._compact is None
+    before = gt.reads
+    gt.getCatIds()
+    assert gt.reads > before
+    before = gt.reads
+    gt.loadRes(dp)
+    assert gt.reads > before

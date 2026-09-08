@@ -71,7 +71,12 @@ class COCO:
                 an empty handle, which is how :meth:`loadRes` starts.
             verbose: print the progress lines pycocotools prints. Extension;
                 pycocotools has no way to silence them.
+
+        Bbox JSON files retain an immutable snapshot and native columns until
+        annotations are accessed. Public annotation views materialize ordinary
+        mutable dictionaries/lists; subsequent evaluation uses those objects.
         """
+        self._compact = None
         self.dataset: dict = {}
         self.anns: dict = {}
         self.cats: dict = {}
@@ -82,6 +87,15 @@ class COCO:
         if annotation_file is not None:
             self._log("loading annotations into memory...")
             tic = time.time()
+            if type(self) is COCO and isinstance(annotation_file, (str, os.PathLike)):
+                try:
+                    metadata, compact = _ufcoco.load_compact_bbox(str(annotation_file))
+                except (ValueError, OSError):
+                    pass  # Non-bbox schemas and unusual JSON retain the ordinary loader.
+                else:
+                    self._install_compact(metadata, compact)
+                    self._log(f"Done (t={time.time() - tic:0.2f}s)")
+                    return
             dataset = annotation_file if isinstance(annotation_file, dict) else load_json(annotation_file)
             assert isinstance(dataset, dict), (
                 f"annotation file format {type(dataset)} not supported"
@@ -90,11 +104,87 @@ class COCO:
             self.dataset = dataset
             self.createIndex()
 
+    def _install_compact(self, metadata, compact):
+        self._dataset = metadata
+        self._compact = compact
+        self._anns = {}
+        self._img_to_anns = defaultdict(list)
+        self._cat_to_imgs = defaultdict(list)
+        self.imgs = {image["id"]: image for image in metadata.get("images", [])}
+        self.cats = {category["id"]: category for category in metadata.get("categories", [])}
+
+    def _ensure_materialized(self):
+        compact = getattr(self, "_compact", None)
+        if compact is not None:
+            # Once a mutable view escapes, always evaluate from those public objects.
+            annotations = compact.annotations()
+            self._compact = None
+            self._dataset["annotations"] = annotations
+            # Public metadata indexes may already have been edited independently.
+            imgs, cats = self.imgs, self.cats
+            self.createIndex()
+            self.imgs, self.cats = imgs, cats
+
+    @property
+    def dataset(self):
+        self._ensure_materialized()
+        return self._dataset
+
+    @dataset.setter
+    def dataset(self, value):
+        self._ensure_materialized()
+        self._dataset = value
+
+    @property
+    def anns(self):
+        self._ensure_materialized()
+        return self._anns
+
+    @anns.setter
+    def anns(self, value):
+        self._ensure_materialized()
+        self._anns = value
+
+    @property
+    def imgToAnns(self):
+        self._ensure_materialized()
+        return self._img_to_anns
+
+    @imgToAnns.setter
+    def imgToAnns(self, value):
+        self._ensure_materialized()
+        self._img_to_anns = value
+
+    @property
+    def catToImgs(self):
+        self._ensure_materialized()
+        return self._cat_to_imgs
+
+    @catToImgs.setter
+    def catToImgs(self, value):
+        self._ensure_materialized()
+        self._cat_to_imgs = value
+
+    def __getstate__(self):
+        self._ensure_materialized()
+        return self.__dict__
+
+    def __setstate__(self, state):
+        # Accept pickles from earlier releases that stored public attributes directly.
+        for public, private in [('dataset', '_dataset'), ('anns', '_anns'),
+                                ('imgToAnns', '_img_to_anns'), ('catToImgs', '_cat_to_imgs')]:
+            if public in state and private not in state:
+                state[private] = state.pop(public)
+        state.setdefault('_compact', None)
+        self.__dict__.update(state)
+
     def _log(self, msg: str) -> None:
         if self.verbose:
             print(msg)
 
     def createIndex(self) -> None:
+        if self._compact is not None:
+            self._ensure_materialized()
         self._log("creating index...")
         anns, cats, imgs = {}, {}, {}
         imgToAnns, catToImgs = defaultdict(list), defaultdict(list)
@@ -132,13 +222,14 @@ class COCO:
 
     def _eval_annotations(self, image_ids, category_ids):
         """Avoid intermediate annotation/id lists while preserving getAnnIds/loadAnns order."""
-        source = (itertools.chain.from_iterable(self.imgToAnns.get(i, ()) for i in image_ids)
+        anns, image_index = self.anns, self.imgToAnns
+        source = (itertools.chain.from_iterable(image_index.get(i, ()) for i in image_ids)
                   if image_ids else iter(self.dataset['annotations']))
         categories = set(category_ids)
         # Resolve through anns even for duplicate IDs, exactly as loadAnns does.
         if categories:
-            return [self.anns[ann['id']] for ann in source if ann['category_id'] in categories]
-        return [self.anns[ann['id']] for ann in source]
+            return [anns[ann['id']] for ann in source if ann['category_id'] in categories]
+        return [anns[ann['id']] for ann in source]
 
     def info(self) -> None:
         for key, value in self.dataset["info"].items():
@@ -178,7 +269,8 @@ class COCO:
         supNms = supNms if _is_array_like(supNms) else [supNms]
         catIds = catIds if _is_array_like(catIds) else [catIds]
 
-        cats = self.dataset["categories"]
+        dataset = self._dataset if type(self) is COCO else self.dataset
+        cats = dataset["categories"]
         if len(catNms) == len(supNms) == len(catIds) == 0:
             return [cat["id"] for cat in cats]
         if len(catNms) != 0:
@@ -205,10 +297,11 @@ class COCO:
         return list(ids)
 
     def loadAnns(self, ids=[]) -> list:
+        anns = self.anns
         if _is_array_like(ids):
-            return [self.anns[i] for i in ids]
+            return [anns[i] for i in ids]
         if isinstance(ids, int):
-            return [self.anns[ids]]
+            return [anns[ids]]
         return []
 
     def loadCats(self, ids=[]) -> list:
@@ -324,14 +417,28 @@ class COCO:
                 needed. Use True only if application code requires the derived
                 field to exist directly in each annotation dictionary.
         """
+        dataset = self._dataset if type(self) is COCO else self.dataset
         res = COCO(verbose=self.verbose)
         res._derive_segmentation = True  # Only the box-result branch enables implicit polygons.
-        res.dataset["info"] = copy.deepcopy(self.dataset.get("info", {}))
-        res.dataset["images"] = [img for img in self.dataset["images"]]
+        res.dataset["info"] = copy.deepcopy(dataset.get("info", {}))
+        res.dataset["images"] = [img for img in dataset["images"]]
 
         self._log("Loading and preparing results...")
         tic = time.time()
         if isinstance(resFile, (str, os.PathLike)):
+            if type(self) is COCO and not derive_segmentation:
+                try:
+                    _, compact = _ufcoco.load_compact_bbox(str(resFile), results=True)
+                except (ValueError, OSError):
+                    pass
+                else:
+                    assert compact.valid_images(self.getImgIds()), "Results do not correspond to current coco set"
+                    res._dataset["categories"] = copy.deepcopy(dataset.get("categories", []))
+                    res._dataset["annotations"] = None  # Materialized before any public dataset access.
+                    res._derive_segmentation = False
+                    res._install_compact(res._dataset, compact)
+                    self._log(f"DONE (t={time.time() - tic:0.2f}s)")
+                    return res
             anns = load_json(resFile)
         elif isinstance(resFile, np.ndarray):
             anns = self.loadNumpyAnnotations(resFile)
@@ -346,7 +453,7 @@ class COCO:
             del valid_images
 
         if len(anns) == 0:
-            res.dataset["categories"] = copy.deepcopy(self.dataset.get("categories", []))
+            res.dataset["categories"] = copy.deepcopy(dataset.get("categories", []))
         elif "caption" in anns[0]:
             imgIds = set(img["id"] for img in res.dataset["images"]) & set(
                 ann["image_id"] for ann in anns
@@ -358,7 +465,7 @@ class COCO:
                 ann["id"] = idx + 1
         elif "bbox" in anns[0] and anns[0]["bbox"] != []:
             res._derive_segmentation = derive_segmentation
-            res.dataset["categories"] = copy.deepcopy(self.dataset["categories"])
+            res.dataset["categories"] = copy.deepcopy(dataset["categories"])
             if not derive_segmentation and type(anns) is list:
                 _ufcoco.prepare_bbox_results(anns)
             else:
@@ -371,7 +478,7 @@ class COCO:
                     ann["id"] = idx + 1
                     ann["iscrowd"] = 0
         elif "segmentation" in anns[0]:
-            res.dataset["categories"] = copy.deepcopy(self.dataset["categories"])
+            res.dataset["categories"] = copy.deepcopy(dataset["categories"])
             for idx, ann in enumerate(anns):
                 ann["area"] = maskUtils.area(ann["segmentation"])
                 if "bbox" not in ann:
@@ -379,7 +486,7 @@ class COCO:
                 ann["id"] = idx + 1
                 ann["iscrowd"] = 0
         elif "keypoints" in anns[0]:
-            res.dataset["categories"] = copy.deepcopy(self.dataset["categories"])
+            res.dataset["categories"] = copy.deepcopy(dataset["categories"])
             for idx, ann in enumerate(anns):
                 s = ann["keypoints"]
                 x, y = s[0::3], s[1::3]

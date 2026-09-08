@@ -7,7 +7,7 @@ constrained by numerical equivalence.
 
 Profiling numbers below are historical development measurements, with the input
 and timing scope described in each section. For the current default behavior,
-see the [0.1.1 efficiency report](docs/efficiency.md).
+see the [0.1.3 efficiency report](docs/efficiency-v013.md).
 
 ## Where to start
 
@@ -19,6 +19,24 @@ see the [0.1.1 efficiency report](docs/efficiency.md).
 | Reduce memory on large datasets | [Data structures](#data-structures-dense-tables-do-not-scale-to-objects365) |
 | Understand evaluation order | [Loop structure](#loop-structure-fused-evaluation-and-accumulation) |
 | Add a metric | [Extension points](#extension-points) |
+
+## Compact file inputs
+
+Standard bbox file handles keep native annotation columns plus an owned JSON
+snapshot. `CompactBbox` lives in `rust/ufcoco-py/src/compact.rs`; it does not
+construct Python annotation dictionaries unless a public mutable view is
+requested. Full selections share `Arc<Vec<[f64; 4]>>` coordinates with the core;
+filtered selections copy only selected coordinates. Scalar arithmetic and the
+core's stable grouping/matching order are unchanged.
+
+A public annotation view materializes ordinary Python objects and discards the
+compact cache. Later evaluation therefore observes mutations. Existing metadata
+index identity is preserved during this transition; explicit `createIndex()`
+still rebuilds indexes. The owned snapshot preserves unknown fields and remains
+valid after file modification/deletion. Pickling and deepcopy materialize first.
+Subclasses, unsupported schemas and non-bbox evaluators use the ordinary path.
+The [0.1.3 report](docs/efficiency-v013.md) separates output-storage lower bounds
+from optional representation costs and measured process RSS.
 
 ## Three equivalence rules
 

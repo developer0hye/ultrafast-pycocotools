@@ -13,6 +13,7 @@
 //! in the dataset + every RLE".
 
 mod alloc;
+mod compact;
 mod json;
 mod mask;
 
@@ -256,6 +257,22 @@ type BuiltMask = (Rle, Option<Rle>);
 
 /// An empty `Instances` sized for `n` annotations of `iou_type`.
 fn new_instances(n: usize, iou_type: IouType) -> Instances {
+    let geom = match iou_type {
+        IouType::Bbox => GeomStore::Bboxes(Vec::with_capacity(n)),
+        IouType::Segm => GeomStore::Masks(Vec::with_capacity(n)),
+        IouType::Boundary => GeomStore::Boundaries {
+            masks: Vec::with_capacity(n),
+            boundaries: Vec::with_capacity(n),
+        },
+        IouType::Keypoints => GeomStore::Keypoints {
+            data: Vec::new(),
+            k: 0,
+        },
+    };
+    new_instances_with_geom(n, geom)
+}
+
+fn new_instances_with_geom(n: usize, geom: GeomStore) -> Instances {
     Instances {
         ids: Vec::with_capacity(n),
         scores: Vec::with_capacity(n),
@@ -266,18 +283,7 @@ fn new_instances(n: usize, iou_type: IouType) -> Instances {
         bboxes: Vec::new(),
         img_slot: Vec::with_capacity(n),
         cat_slot: Vec::with_capacity(n),
-        geom: match iou_type {
-            IouType::Bbox => GeomStore::Bboxes(Vec::with_capacity(n)),
-            IouType::Segm => GeomStore::Masks(Vec::with_capacity(n)),
-            IouType::Boundary => GeomStore::Boundaries {
-                masks: Vec::with_capacity(n),
-                boundaries: Vec::with_capacity(n),
-            },
-            IouType::Keypoints => GeomStore::Keypoints {
-                data: Vec::new(),
-                k: 0,
-            },
-        },
+        geom,
     }
 }
 
@@ -549,8 +555,8 @@ impl Evaluator {
     #[allow(clippy::too_many_arguments)]
     fn new(
         py: Python<'_>,
-        gt_anns: &Bound<'_, PyList>,
-        dt_anns: &Bound<'_, PyList>,
+        gt_anns: &Bound<'_, PyAny>,
+        dt_anns: &Bound<'_, PyAny>,
         img_sizes: HashMap<i64, (u32, u32)>,
         img_ids: Vec<i64>,
         cat_ids: Vec<i64>,
@@ -576,16 +582,40 @@ impl Evaluator {
             .map(|(i, &v)| (v, i as u32))
             .collect();
 
-        let (gt, dt, extract) = extract_both(
+        let empty = PyList::empty(py);
+        let compact_gt = gt_anns.extract::<PyRef<compact::CompactBbox>>().ok();
+        let compact_dt = dt_anns.extract::<PyRef<compact::CompactBbox>>().ok();
+        if (compact_gt.is_some() || compact_dt.is_some()) && it != IouType::Bbox {
+            return Err(PyValueError::new_err(
+                "compact storage requires bbox evaluation",
+            ));
+        }
+        let gt_list = if compact_gt.is_some() {
+            &empty
+        } else {
+            gt_anns.cast::<PyList>()?
+        };
+        let dt_list = if compact_dt.is_some() {
+            &empty
+        } else {
+            dt_anns.cast::<PyList>()?
+        };
+        let (mut gt, mut dt, extract) = extract_both(
             py,
-            gt_anns,
-            dt_anns,
+            gt_list,
+            dt_list,
             it,
             &img_sizes,
             &img_map,
             &cat_map,
             boundary_dilation,
         )?;
+        if let Some(source) = compact_gt {
+            gt = source.instances(true, &img_map, &cat_map);
+        }
+        if let Some(source) = compact_dt {
+            dt = source.instances(false, &img_map, &cat_map);
+        }
 
         let params = EvalParams {
             img_ids,
@@ -834,6 +864,8 @@ fn append_index(
 #[pymodule]
 fn _ufcoco(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Evaluator>()?;
+    m.add_class::<compact::CompactBbox>()?;
+    m.add_function(wrap_pyfunction!(compact::load_compact_bbox, m)?)?;
     m.add_function(wrap_pyfunction!(index_annotations, m)?)?;
     m.add_function(wrap_pyfunction!(prepare_bbox_results, m)?)?;
     m.add_function(wrap_pyfunction!(mask::encode, m)?)?;

@@ -30,6 +30,8 @@ def main():
     p.add_argument('--pred', type=Path, required=True)
     p.add_argument('--out', type=Path, required=True)
     p.add_argument('--backend', choices=['pycocotools', 'faster-coco-eval', 'ultrafast'], required=True)
+    p.add_argument('--input-mode', choices=['in-memory', 'files'], default='in-memory',
+                   help='files includes JSON parsing in scoring time and avoids preloading Python inputs')
     p.add_argument('--repeats', type=int, default=1)
     a = p.parse_args()
     if a.repeats < 1:
@@ -42,26 +44,43 @@ def main():
     else:
         from ultrafast_pycocotools import COCO, COCOeval
     a.out.mkdir(parents=True, exist_ok=False)
-    t = time.perf_counter()
-    gt_dict = json.loads(a.gt.read_text())
-    predictions = json.loads(a.pred.read_text())
-    parse_seconds = time.perf_counter() - t
-    image_ids = sorted(i['id'] for i in gt_dict['images'])
-    assert {d['image_id'] for d in predictions} <= set(image_ids)
+    if a.input_mode == 'in-memory':
+        t = time.perf_counter()
+        gt_dict = json.loads(a.gt.read_text())
+        predictions = json.loads(a.pred.read_text())
+        parse_seconds = time.perf_counter() - t
+        image_ids = sorted(i['id'] for i in gt_dict['images'])
+        prediction_count = len(predictions)
+        assert {d['image_id'] for d in predictions} <= set(image_ids)
+    else:
+        parse_seconds = None  # File parsing is included in the load timings below.
+    storage = None
     runs = []
     previous = None
     for repeat in range(a.repeats):
         times = {}
         with contextlib.redirect_stdout(io.StringIO()):
             t = time.perf_counter()
-            gt = COCO()
-            gt.dataset = gt_dict
-            gt.createIndex()
+            if a.input_mode == 'files':
+                gt = COCO(str(a.gt))
+            else:
+                gt = COCO()
+                gt.dataset = gt_dict
+                gt.createIndex()
             times['gt_seconds'] = time.perf_counter() - t
             t = time.perf_counter()
             # Match an in-memory evaluator loadRes call, including defensive copies.
-            dt = gt.loadRes([dict(d) for d in predictions])
+            dt = gt.loadRes(str(a.pred) if a.input_mode == 'files' else [dict(d) for d in predictions])
             times['load_res_seconds'] = time.perf_counter() - t
+            if a.input_mode == 'files':
+                image_ids = sorted(gt.getImgIds())
+                compact = getattr(dt, '_compact', None)
+                prediction_count = compact.annotation_count if compact is not None else len(dt.anns)
+                storage = {name: ({'snapshot_bytes': handle._compact.snapshot_bytes,
+                                  'column_bytes': handle._compact.column_bytes}
+                                 if getattr(handle, '_compact', None) is not None else None)
+                           for name, handle in [('gt', gt), ('dt', dt)]}
+                del compact
             ev = COCOeval(gt, dt, 'bbox')
             ev.params.imgIds = image_ids
             for method in ('evaluate', 'accumulate', 'summarize'):
@@ -79,9 +98,11 @@ def main():
         times['total_scoring_seconds'] = sum(times.values())
         runs.append(times)
         del ev, gt, dt
-    result = {'backend': a.backend, 'images': len(image_ids), 'detections': len(predictions),
+    result = {'backend': a.backend, 'images': len(image_ids), 'detections': prediction_count,
               'gt_sha256': digest(a.gt), 'pred_sha256': digest(a.pred),
               'input_json_parse_seconds': parse_seconds, 'runs': runs,
+              'input_mode': a.input_mode, 'compact_storage': storage,
+              'output_array_bytes': sum(v.nbytes for v in previous.values()),
               'stats': previous['stats'].tolist(),
               'array_sha256': {k: hashlib.sha256(v.tobytes()).hexdigest() for k, v in previous.items()},
               'peak_rss_MiB': (resource.getrusage(resource.RUSAGE_SELF).ru_maxrss /
@@ -95,7 +116,7 @@ def main():
     result['result_loading'] = 'package default'
     (a.out / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps({'backend': a.backend, 'images': len(image_ids),
-                      'detections': len(predictions), 'AP': result['stats'][0], 'runs': runs}))
+                      'detections': prediction_count, 'AP': result['stats'][0], 'runs': runs}))
 
 
 if __name__ == '__main__':

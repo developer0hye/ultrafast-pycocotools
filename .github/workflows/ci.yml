@@ -60,6 +60,8 @@ jobs:
         run: python -m pytest -q --strict-markers --junitxml=test-results.xml
       - name: Generate data and compare scorers in separate processes
         run: python bench/reproduce.py quick --out bench/out/ci-quick
+      - name: Compare compact file inputs against the reference
+        run: python bench/reproduce.py quick --input-mode files --out bench/out/ci-files
       - name: Check published hashes in the reference environment
         if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12' && matrix.numpy == '2'
         run: |
