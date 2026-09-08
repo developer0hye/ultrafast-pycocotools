@@ -263,8 +263,64 @@ pub fn detection_geometry_keep(
     max_det: usize,
 ) -> Vec<bool> {
     let n_groups = if use_cats { category_count } else { 1 };
-    let groups = Grouping::build(&dt.img_slot, &dt.cat_slot, n_groups, use_cats);
     let mut keep = vec![true; dt.len()];
+    // Most image/category groups never reach the cap. When the slot grid is
+    // small, count first and sort only overflowing groups, instead of building
+    // and sorting a second complete CSR index before the matching engine does.
+    // Bound the temporary grid by the input size; sparse large-taxonomy inputs
+    // retain the ordinary sparse grouping path below.
+    let image_count = dt
+        .img_slot
+        .iter()
+        .copied()
+        .filter(|&i| i != u32::MAX)
+        .max()
+        .map_or(0, |i| i as usize + 1);
+    if let Some(cells) = image_count
+        .checked_mul(n_groups)
+        .filter(|&n| n <= dt.len().saturating_mul(2))
+    {
+        let key = |i: usize| {
+            dt.img_slot[i] as usize * n_groups + if use_cats { dt.cat_slot[i] as usize } else { 0 }
+        };
+        let valid = |i: usize| dt.img_slot[i] != u32::MAX && dt.cat_slot[i] != u32::MAX;
+        let mut counts = vec![0u32; cells];
+        for i in 0..dt.len() {
+            if valid(i) {
+                counts[key(i)] += 1;
+            }
+        }
+        let mut order: Vec<usize> = (0..dt.len())
+            .filter(|&i| valid(i) && counts[key(i)] as usize > max_det)
+            .collect();
+        order.sort_by(|&a, &b| {
+            key(a)
+                .cmp(&key(b))
+                .then_with(|| cmp_desc_score(dt.scores[a], dt.scores[b]))
+                .then_with(|| {
+                    if use_cats {
+                        Ordering::Equal
+                    } else {
+                        dt.cat_slot[a].cmp(&dt.cat_slot[b])
+                    }
+                })
+        });
+        let mut previous = usize::MAX;
+        let mut rank = 0;
+        for i in order {
+            let group = key(i);
+            if group != previous {
+                previous = group;
+                rank = 0;
+            }
+            if rank >= max_det {
+                keep[i] = false;
+            }
+            rank += 1;
+        }
+        return keep;
+    }
+    let groups = Grouping::build(&dt.img_slot, &dt.cat_slot, n_groups, use_cats);
     let mut order = Vec::new();
     for group in 0..n_groups {
         for run in groups.group(group) {
@@ -1137,6 +1193,11 @@ mod tests {
             vec![false, true, true, false, true, false]
         );
         assert_eq!(detection_geometry_keep(&dt, 2, false, 0), vec![false; 6]);
+        dt.img_slot[4] = 100_000;
+        assert_eq!(
+            detection_geometry_keep(&dt, 2, false, 2),
+            vec![false, true, true, false, true, true]
+        );
     }
 
     /// One image, one category, one IoU threshold, three recall thresholds.
