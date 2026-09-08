@@ -53,7 +53,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install ".[test,lvis-test]" "numpy>=${{ matrix.numpy }},<${{ matrix.numpy == '1' && '2' || '3' }}" "pycocotools==2.0.11"
-          python -c "import ultrafast_pycocotools._ufcoco, pycocotools.cocoeval, numpy; print('Native extension and reference imported; NumPy', numpy.__version__)"
+          python -c "import ultrafast_pycocotools._ufcoco, pycocotools.cocoeval, lvis, numpy; print('Native extension, COCO and LVIS references imported; NumPy', numpy.__version__)"
       - name: Fetch and verify official LVIS example
         run: python bench/fetch_lvis_fixture.py
       - name: Full API, metric parity and determinism suite
