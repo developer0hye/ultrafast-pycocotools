@@ -17,6 +17,7 @@ Actions are pinned to commit SHAs, and jobs have read-only repository access.
 | Edge cases and API | Crowds, tied scores, area boundaries, RLE/masks, query ordering, subclass overrides and diagnostics |
 | Determinism | Comparison across Rayon thread counts |
 | Reproduction | Fresh synthetic inputs, both in-memory and compact file loading, isolated backend processes, published hashes on the recorded reference environment |
+| RF-DETR integration | Dedicated CPU job with pinned RF-DETR/TorchMetrics; bbox/segmentation metrics, lifecycle and two-rank Gloo state merge |
 | Additional backend | Linux / Python 3.12 checks faster-coco-eval 1.8.0 on identical generated inputs; numerical agreement is distinct from byte identity |
 | Benchmark integrity | Changed inputs fail before scoring; one-ULP array changes fail; nested scaling subsets preserve input order and categories |
 
@@ -32,8 +33,8 @@ three operating systems, with Matplotlib using its noninteractive Agg backend. L
 14 days, including on failure. Timing is not a pass/fail threshold on shared
 hosted runners.
 
-The required **CI** check succeeds only when every Python matrix entry and both
-Rust builds succeed. Failed, cancelled or skipped prerequisite jobs make that
+The required **CI** check succeeds only when every Python matrix entry, both
+Rust builds and the RF-DETR integration job succeed. Failed, cancelled or skipped prerequisite jobs make that
 check fail. The `main` branch requires this check on an up-to-date commit;
 administrators are included in enforcement. Force pushes and branch deletion
 are disabled. Changes are tested on a branch before main is updated; pull requests use the

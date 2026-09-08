@@ -149,6 +149,19 @@ passes a separate numerical tolerance check; its arrays are not byte-identical.
 [SVG](docs/assets/scaling.svg) · [PDF](docs/assets/scaling.pdf) ·
 [Raw measurements](bench/results/scaling.json).
 
+## RF-DETR integration
+
+The optional adapter connects ultrafast to RF-DETR's actual one-pass training
+metric, which otherwise uses faster-coco-eval. Tests cover bbox/segmentation,
+per-class metrics, reset/pickle and two-rank CPU state merging. A separate
+RF-DETR Nano benchmark uses all 5,000 COCO validation images and 1.5 million
+real predictions. In the actual RF-DETR metric replay, it is **2.09× faster with
+37.2% less peak RSS** than the existing faster-coco-eval backend, with identical
+aggregate and per-class metric tensors.
+[Measurements and opt-in integration](docs/rfdetr.md).
+
+![RF-DETR metric replay speed and memory](docs/assets/rfdetr-metric.svg)
+
 ## YOLO26n benchmark (0.1.2)
 
 **19.1× faster · 53.4% lower peak RSS than pycocotools**, using identical
