@@ -1,0 +1,50 @@
+{
+  "python": "3.12.13 (main, Mar  3 2026, 15:35:03) [Clang 21.1.4 ]",
+  "numpy": "2.4.4",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "iou_type": "segm",
+  "storage": {
+    "gt": {
+      "snapshot_bytes": 19987840,
+      "column_bytes": 2942480,
+      "annotation_count": 36781
+    },
+    "dt": {
+      "snapshot_bytes": 331277021,
+      "column_bytes": 40597368,
+      "annotation_count": 724953
+    }
+  },
+  "native_path": "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-opt/python/ultrafast_pycocotools/_ufcoco.cpython-312-darwin.so",
+  "native_sha256": "1115f973efef50b8c2d788100ed28099a4071635d9816a0fc01a224e3f23d9dd",
+  "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+  "dt_sha256": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+  "array_bytes": {
+    "precision": 7756800,
+    "recall": 76800,
+    "scores": 7756800
+  },
+  "array_hashes": {
+    "precision": "91fd10baa35f91afe60a370f1363733682d1221e3a283650be43d7f6d48e37a6",
+    "recall": "c6b629ae3935205757247f4b55e479347c3c3e5f57ac347a7357d2fb1b1e66d1",
+    "scores": "c2101caf3eb9e2dd7c8dc4f2a8a894e07106807e90d08ad1d5765570470543d3"
+  },
+  "compact_after": [
+    true,
+    true
+  ],
+  "stats": [
+    0.3436595380932048,
+    0.5385525392988464,
+    0.3644561943722224,
+    0.14920930726509513,
+    0.38233001176124254,
+    0.5217235966750563,
+    0.29347661900258953,
+    0.4642012251982567,
+    0.49898527290264416,
+    0.2738044950465343,
+    0.5608445107429896,
+    0.702358022024834
+  ]
+}

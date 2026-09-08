@@ -1,0 +1,5362 @@
+[
+  {
+    "name": "segment-0-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-0-baseline.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 22.820973756024614,
+    "samples": [
+      {
+        "elapsed": 0.003330622799694538,
+        "host_cpu_percent": 100.0,
+        "available_ram": 31713562624,
+        "rss": 6381568
+      },
+      {
+        "elapsed": 0.5036489160265774,
+        "host_cpu_percent": 11.9,
+        "available_ram": 31532298240,
+        "rss": 479461376
+      },
+      {
+        "elapsed": 1.0039443518035114,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31465312256,
+        "rss": 546328576
+      },
+      {
+        "elapsed": 1.5042413908522576,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31399202816,
+        "rss": 643809280
+      },
+      {
+        "elapsed": 2.0045076119713485,
+        "host_cpu_percent": 8.7,
+        "available_ram": 31357087744,
+        "rss": 771383296
+      },
+      {
+        "elapsed": 2.5048135889228433,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30685261824,
+        "rss": 1287753728
+      },
+      {
+        "elapsed": 3.0051427658181638,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30726225920,
+        "rss": 1394913280
+      },
+      {
+        "elapsed": 3.5055164508521557,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30448115712,
+        "rss": 1683304448
+      },
+      {
+        "elapsed": 4.0058467970229685,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30153388032,
+        "rss": 1971306496
+      },
+      {
+        "elapsed": 4.506174070993438,
+        "host_cpu_percent": 8.6,
+        "available_ram": 30054318080,
+        "rss": 2074628096
+      },
+      {
+        "elapsed": 5.0065573018509895,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30129446912,
+        "rss": 1999425536
+      },
+      {
+        "elapsed": 5.506881570909172,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29949341696,
+        "rss": 2178404352
+      },
+      {
+        "elapsed": 6.007184213958681,
+        "host_cpu_percent": 14.7,
+        "available_ram": 29916114944,
+        "rss": 2192199680
+      },
+      {
+        "elapsed": 6.507542758947238,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29635551232,
+        "rss": 2496512000
+      },
+      {
+        "elapsed": 7.007871696026996,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29264306176,
+        "rss": 2872012800
+      },
+      {
+        "elapsed": 7.5082042899448425,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28900577280,
+        "rss": 3234062336
+      },
+      {
+        "elapsed": 8.008539289003238,
+        "host_cpu_percent": 8.7,
+        "available_ram": 28874149888,
+        "rss": 2962325504
+      },
+      {
+        "elapsed": 8.508860905887559,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28882624512,
+        "rss": 2962415616
+      },
+      {
+        "elapsed": 9.009206722024828,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28882624512,
+        "rss": 2962415616
+      },
+      {
+        "elapsed": 9.509529366856441,
+        "host_cpu_percent": 14.7,
+        "available_ram": 28874420224,
+        "rss": 2982604800
+      },
+      {
+        "elapsed": 10.009843594860286,
+        "host_cpu_percent": 18.7,
+        "available_ram": 28340396032,
+        "rss": 3503726592
+      },
+      {
+        "elapsed": 10.510171195026487,
+        "host_cpu_percent": 15.8,
+        "available_ram": 28227088384,
+        "rss": 3647750144
+      },
+      {
+        "elapsed": 11.01047861482948,
+        "host_cpu_percent": 14.8,
+        "available_ram": 28280537088,
+        "rss": 3591356416
+      },
+      {
+        "elapsed": 11.510807621991262,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29093466112,
+        "rss": 3008405504
+      },
+      {
+        "elapsed": 12.011140468996018,
+        "host_cpu_percent": 10.7,
+        "available_ram": 29069447168,
+        "rss": 3031605248
+      },
+      {
+        "elapsed": 12.511448284843937,
+        "host_cpu_percent": 12.5,
+        "available_ram": 28945530880,
+        "rss": 3159457792
+      },
+      {
+        "elapsed": 13.011785233858973,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28598714368,
+        "rss": 3499372544
+      },
+      {
+        "elapsed": 13.512122147949412,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28268384256,
+        "rss": 3835166720
+      },
+      {
+        "elapsed": 14.012468455825001,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28123660288,
+        "rss": 3970568192
+      },
+      {
+        "elapsed": 14.512833799002692,
+        "host_cpu_percent": 14.2,
+        "available_ram": 28217491456,
+        "rss": 3623546880
+      },
+      {
+        "elapsed": 15.01315505686216,
+        "host_cpu_percent": 19.5,
+        "available_ram": 28151517184,
+        "rss": 3682353152
+      },
+      {
+        "elapsed": 15.513503837864846,
+        "host_cpu_percent": 15.5,
+        "available_ram": 28166000640,
+        "rss": 3649449984
+      },
+      {
+        "elapsed": 16.0138327809982,
+        "host_cpu_percent": 12.7,
+        "available_ram": 28205969408,
+        "rss": 3562414080
+      },
+      {
+        "elapsed": 16.51416213088669,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28743114752,
+        "rss": 3027116032
+      },
+      {
+        "elapsed": 17.01451151794754,
+        "host_cpu_percent": 13.0,
+        "available_ram": 28743319552,
+        "rss": 3032981504
+      },
+      {
+        "elapsed": 17.514838999835774,
+        "host_cpu_percent": 10.2,
+        "available_ram": 28517810176,
+        "rss": 3255541760
+      },
+      {
+        "elapsed": 18.015155436936766,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28179222528,
+        "rss": 3595542528
+      },
+      {
+        "elapsed": 18.51554237981327,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28291887104,
+        "rss": 3895267328
+      },
+      {
+        "elapsed": 19.015883212909102,
+        "host_cpu_percent": 9.7,
+        "available_ram": 28494086144,
+        "rss": 3620122624
+      },
+      {
+        "elapsed": 19.516196861863136,
+        "host_cpu_percent": 9.0,
+        "available_ram": 28485746688,
+        "rss": 3620212736
+      },
+      {
+        "elapsed": 20.016519277822226,
+        "host_cpu_percent": 17.7,
+        "available_ram": 28485488640,
+        "rss": 3629002752
+      },
+      {
+        "elapsed": 20.51686898083426,
+        "host_cpu_percent": 17.4,
+        "available_ram": 28463792128,
+        "rss": 3649679360
+      },
+      {
+        "elapsed": 21.017193728825077,
+        "host_cpu_percent": 16.7,
+        "available_ram": 28463792128,
+        "rss": 3649925120
+      },
+      {
+        "elapsed": 21.517513751983643,
+        "host_cpu_percent": 10.0,
+        "available_ram": 29219012608,
+        "rss": 2682290176
+      },
+      {
+        "elapsed": 22.017817968968302,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29219012608,
+        "rss": 2682290176
+      },
+      {
+        "elapsed": 22.51810882682912,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30156967936,
+        "rss": 1752551424
+      }
+    ]
+  },
+  {
+    "name": "segment-0-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-0-candidate.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 15.053591222967952,
+    "samples": [
+      {
+        "elapsed": 0.000506978016346693,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31367127040,
+        "rss": 1388544
+      },
+      {
+        "elapsed": 0.5008139580022544,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31170412544,
+        "rss": 505942016
+      },
+      {
+        "elapsed": 1.0010984409600496,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31123800064,
+        "rss": 555356160
+      },
+      {
+        "elapsed": 1.5014001380186528,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31062511616,
+        "rss": 745656320
+      },
+      {
+        "elapsed": 2.001783741870895,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31042342912,
+        "rss": 777953280
+      },
+      {
+        "elapsed": 2.5020688199438155,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30411341824,
+        "rss": 1191124992
+      },
+      {
+        "elapsed": 3.0023745228536427,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30336999424,
+        "rss": 1474543616
+      },
+      {
+        "elapsed": 3.5027453298680484,
+        "host_cpu_percent": 8.6,
+        "available_ram": 30048456704,
+        "rss": 1761320960
+      },
+      {
+        "elapsed": 4.003059875918552,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29785526272,
+        "rss": 2040508416
+      },
+      {
+        "elapsed": 4.503374876920134,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29799641088,
+        "rss": 1786601472
+      },
+      {
+        "elapsed": 5.003737512044609,
+        "host_cpu_percent": 9.7,
+        "available_ram": 29703839744,
+        "rss": 2128965632
+      },
+      {
+        "elapsed": 5.504033179953694,
+        "host_cpu_percent": 9.8,
+        "available_ram": 29607927808,
+        "rss": 2219782144
+      },
+      {
+        "elapsed": 6.004448717925698,
+        "host_cpu_percent": 13.8,
+        "available_ram": 29640785920,
+        "rss": 2179854336
+      },
+      {
+        "elapsed": 6.504811121849343,
+        "host_cpu_percent": 10.0,
+        "available_ram": 29640900608,
+        "rss": 2184404992
+      },
+      {
+        "elapsed": 7.005131663987413,
+        "host_cpu_percent": 16.5,
+        "available_ram": 29586128896,
+        "rss": 2307850240
+      },
+      {
+        "elapsed": 7.50546467397362,
+        "host_cpu_percent": 16.1,
+        "available_ram": 29445492736,
+        "rss": 2587119616
+      },
+      {
+        "elapsed": 8.005764555884525,
+        "host_cpu_percent": 16.8,
+        "available_ram": 29429121024,
+        "rss": 2605985792
+      },
+      {
+        "elapsed": 8.506075449986383,
+        "host_cpu_percent": 10.5,
+        "available_ram": 29495291904,
+        "rss": 2559586304
+      },
+      {
+        "elapsed": 9.006385534070432,
+        "host_cpu_percent": 12.0,
+        "available_ram": 29496225792,
+        "rss": 2559586304
+      },
+      {
+        "elapsed": 9.506709355860949,
+        "host_cpu_percent": 16.9,
+        "available_ram": 29495738368,
+        "rss": 2559590400
+      },
+      {
+        "elapsed": 10.00699610891752,
+        "host_cpu_percent": 15.0,
+        "available_ram": 29496770560,
+        "rss": 2592366592
+      },
+      {
+        "elapsed": 10.507297610864043,
+        "host_cpu_percent": 15.3,
+        "available_ram": 29463166976,
+        "rss": 2608283648
+      },
+      {
+        "elapsed": 11.007629045052454,
+        "host_cpu_percent": 14.8,
+        "available_ram": 29636628480,
+        "rss": 2343407616
+      },
+      {
+        "elapsed": 11.507948393002152,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29506396160,
+        "rss": 2584489984
+      },
+      {
+        "elapsed": 12.008260716916993,
+        "host_cpu_percent": 14.5,
+        "available_ram": 29490372608,
+        "rss": 2605174784
+      },
+      {
+        "elapsed": 12.508573292056099,
+        "host_cpu_percent": 16.7,
+        "available_ram": 29490372608,
+        "rss": 2605178880
+      },
+      {
+        "elapsed": 13.008908475982025,
+        "host_cpu_percent": 14.7,
+        "available_ram": 29450280960,
+        "rss": 2631385088
+      },
+      {
+        "elapsed": 13.509223250905052,
+        "host_cpu_percent": 16.7,
+        "available_ram": 29450489856,
+        "rss": 2631704576
+      },
+      {
+        "elapsed": 14.009534056065604,
+        "host_cpu_percent": 10.8,
+        "available_ram": 29618679808,
+        "rss": 2193530880
+      },
+      {
+        "elapsed": 14.50980319804512,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30135029760,
+        "rss": 1659891712
+      },
+      {
+        "elapsed": 15.01012185588479,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30623739904,
+        "rss": 0
+      }
+    ]
+  },
+  {
+    "name": "segment-1-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-1-candidate.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 15.237822068855166,
+    "samples": [
+      {
+        "elapsed": 0.0005690930411219597,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31332290560,
+        "rss": 1380352
+      },
+      {
+        "elapsed": 0.5008334319572896,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31135051776,
+        "rss": 505417728
+      },
+      {
+        "elapsed": 1.001119895838201,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31071363072,
+        "rss": 555249664
+      },
+      {
+        "elapsed": 1.5014272530097514,
+        "host_cpu_percent": 10.3,
+        "available_ram": 31009292288,
+        "rss": 745758720
+      },
+      {
+        "elapsed": 2.0017335100565106,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30987022336,
+        "rss": 774696960
+      },
+      {
+        "elapsed": 2.502033632947132,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30371442688,
+        "rss": 1172570112
+      },
+      {
+        "elapsed": 3.0023982708808035,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30314332160,
+        "rss": 1457762304
+      },
+      {
+        "elapsed": 3.502723780926317,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30018584576,
+        "rss": 1743884288
+      },
+      {
+        "elapsed": 4.003075686050579,
+        "host_cpu_percent": 8.6,
+        "available_ram": 29739061248,
+        "rss": 2027302912
+      },
+      {
+        "elapsed": 4.503381745889783,
+        "host_cpu_percent": 8.4,
+        "available_ram": 29804630016,
+        "rss": 1773568000
+      },
+      {
+        "elapsed": 5.003694654908031,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29675864064,
+        "rss": 2120794112
+      },
+      {
+        "elapsed": 5.504009834956378,
+        "host_cpu_percent": 9.5,
+        "available_ram": 29594300416,
+        "rss": 2220253184
+      },
+      {
+        "elapsed": 6.004350941861048,
+        "host_cpu_percent": 13.6,
+        "available_ram": 29627392000,
+        "rss": 2180648960
+      },
+      {
+        "elapsed": 6.504682581871748,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29627506688,
+        "rss": 2180648960
+      },
+      {
+        "elapsed": 7.005008799023926,
+        "host_cpu_percent": 15.2,
+        "available_ram": 29595705344,
+        "rss": 2220769280
+      },
+      {
+        "elapsed": 7.505375502863899,
+        "host_cpu_percent": 17.5,
+        "available_ram": 29306978304,
+        "rss": 2563710976
+      },
+      {
+        "elapsed": 8.005722820060328,
+        "host_cpu_percent": 15.5,
+        "available_ram": 29241233408,
+        "rss": 2607661056
+      },
+      {
+        "elapsed": 8.506080973893404,
+        "host_cpu_percent": 12.7,
+        "available_ram": 29307518976,
+        "rss": 2561265664
+      },
+      {
+        "elapsed": 9.006423061015084,
+        "host_cpu_percent": 9.5,
+        "available_ram": 29307518976,
+        "rss": 2561265664
+      },
+      {
+        "elapsed": 9.506748000858352,
+        "host_cpu_percent": 16.4,
+        "available_ram": 29317197824,
+        "rss": 2561265664
+      },
+      {
+        "elapsed": 10.00710792094469,
+        "host_cpu_percent": 15.7,
+        "available_ram": 29292425216,
+        "rss": 2580934656
+      },
+      {
+        "elapsed": 10.507437827065587,
+        "host_cpu_percent": 15.0,
+        "available_ram": 29292167168,
+        "rss": 2595618816
+      },
+      {
+        "elapsed": 11.007765309885144,
+        "host_cpu_percent": 16.8,
+        "available_ram": 29289156608,
+        "rss": 2608705536
+      },
+      {
+        "elapsed": 11.508088898845017,
+        "host_cpu_percent": 9.3,
+        "available_ram": 29347315712,
+        "rss": 2549862400
+      },
+      {
+        "elapsed": 12.00840345886536,
+        "host_cpu_percent": 12.9,
+        "available_ram": 29314351104,
+        "rss": 2583453696
+      },
+      {
+        "elapsed": 12.508727448061109,
+        "host_cpu_percent": 16.3,
+        "available_ram": 29323853824,
+        "rss": 2583453696
+      },
+      {
+        "elapsed": 13.009078682865947,
+        "host_cpu_percent": 14.8,
+        "available_ram": 29315665920,
+        "rss": 2620948480
+      },
+      {
+        "elapsed": 13.509412684943527,
+        "host_cpu_percent": 15.4,
+        "available_ram": 29315743744,
+        "rss": 2610184192
+      },
+      {
+        "elapsed": 14.009725977899507,
+        "host_cpu_percent": 13.8,
+        "available_ram": 29528510464,
+        "rss": 2192642048
+      },
+      {
+        "elapsed": 14.510027728043497,
+        "host_cpu_percent": 9.8,
+        "available_ram": 29517430784,
+        "rss": 2192642048
+      },
+      {
+        "elapsed": 15.010396078927442,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30232391680,
+        "rss": 1365311488
+      }
+    ]
+  },
+  {
+    "name": "segment-1-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-1-baseline.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 22.32034620293416,
+    "samples": [
+      {
+        "elapsed": 0.0005548300687223673,
+        "host_cpu_percent": 50.0,
+        "available_ram": 30972391424,
+        "rss": 1339392
+      },
+      {
+        "elapsed": 0.5008104559965432,
+        "host_cpu_percent": 9.8,
+        "available_ram": 30967095296,
+        "rss": 505987072
+      },
+      {
+        "elapsed": 1.001101456116885,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30912077824,
+        "rss": 555298816
+      },
+      {
+        "elapsed": 1.5014480201061815,
+        "host_cpu_percent": 10.0,
+        "available_ram": 30851715072,
+        "rss": 745807872
+      },
+      {
+        "elapsed": 2.0017699101008475,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30820532224,
+        "rss": 777650176
+      },
+      {
+        "elapsed": 2.5020726900547743,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30206750720,
+        "rss": 1177722880
+      },
+      {
+        "elapsed": 3.0024390760809183,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30162657280,
+        "rss": 1450110976
+      },
+      {
+        "elapsed": 3.50275631994009,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29900894208,
+        "rss": 1722191872
+      },
+      {
+        "elapsed": 4.003071283921599,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29646557184,
+        "rss": 1988603904
+      },
+      {
+        "elapsed": 4.503431461984292,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29563994112,
+        "rss": 2074005504
+      },
+      {
+        "elapsed": 5.003756629070267,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29573861376,
+        "rss": 2079834112
+      },
+      {
+        "elapsed": 5.50409682514146,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29474623488,
+        "rss": 2185306112
+      },
+      {
+        "elapsed": 6.004463634919375,
+        "host_cpu_percent": 14.8,
+        "available_ram": 29443215360,
+        "rss": 2230005760
+      },
+      {
+        "elapsed": 6.504790289094672,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29403287552,
+        "rss": 2283393024
+      },
+      {
+        "elapsed": 7.005139131098986,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29230534656,
+        "rss": 2456825856
+      },
+      {
+        "elapsed": 7.505476237973198,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28869476352,
+        "rss": 2830696448
+      },
+      {
+        "elapsed": 8.005802985979244,
+        "host_cpu_percent": 8.2,
+        "available_ram": 28497772544,
+        "rss": 3207798784
+      },
+      {
+        "elapsed": 8.506145284045488,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28373745664,
+        "rss": 3315425280
+      },
+      {
+        "elapsed": 9.006526774959639,
+        "host_cpu_percent": 14.9,
+        "available_ram": 28436049920,
+        "rss": 2982584320
+      },
+      {
+        "elapsed": 9.506852118996903,
+        "host_cpu_percent": 19.3,
+        "available_ram": 28006322176,
+        "rss": 3526832128
+      },
+      {
+        "elapsed": 10.0071825820487,
+        "host_cpu_percent": 15.8,
+        "available_ram": 27873140736,
+        "rss": 3646287872
+      },
+      {
+        "elapsed": 10.507489325013012,
+        "host_cpu_percent": 14.5,
+        "available_ram": 27961106432,
+        "rss": 3582332928
+      },
+      {
+        "elapsed": 11.007813052972779,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28667793408,
+        "rss": 3007610880
+      },
+      {
+        "elapsed": 11.508130581118166,
+        "host_cpu_percent": 11.2,
+        "available_ram": 28652023808,
+        "rss": 3030818816
+      },
+      {
+        "elapsed": 12.008471467066556,
+        "host_cpu_percent": 12.0,
+        "available_ram": 28503957504,
+        "rss": 3182039040
+      },
+      {
+        "elapsed": 12.508809766964987,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28165349376,
+        "rss": 3518001152
+      },
+      {
+        "elapsed": 13.009136544074863,
+        "host_cpu_percent": 8.3,
+        "available_ram": 27917148160,
+        "rss": 3851231232
+      },
+      {
+        "elapsed": 13.509524059016258,
+        "host_cpu_percent": 8.8,
+        "available_ram": 27837788160,
+        "rss": 3970293760
+      },
+      {
+        "elapsed": 14.009862930048257,
+        "host_cpu_percent": 8.7,
+        "available_ram": 28013707264,
+        "rss": 3615858688
+      },
+      {
+        "elapsed": 14.510195354931056,
+        "host_cpu_percent": 15.7,
+        "available_ram": 28024983552,
+        "rss": 3623428096
+      },
+      {
+        "elapsed": 15.01053134794347,
+        "host_cpu_percent": 18.8,
+        "available_ram": 27983728640,
+        "rss": 3633827840
+      },
+      {
+        "elapsed": 15.510859209112823,
+        "host_cpu_percent": 16.0,
+        "available_ram": 27991506944,
+        "rss": 3648405504
+      },
+      {
+        "elapsed": 16.01121436106041,
+        "host_cpu_percent": 11.8,
+        "available_ram": 28900630528,
+        "rss": 2743365632
+      },
+      {
+        "elapsed": 16.511533695971593,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28846968832,
+        "rss": 3025932288
+      },
+      {
+        "elapsed": 17.011835283134133,
+        "host_cpu_percent": 13.6,
+        "available_ram": 28838490112,
+        "rss": 3028951040
+      },
+      {
+        "elapsed": 17.512204824015498,
+        "host_cpu_percent": 9.5,
+        "available_ram": 28584595456,
+        "rss": 3289231360
+      },
+      {
+        "elapsed": 18.012562941061333,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28253978624,
+        "rss": 3621474304
+      },
+      {
+        "elapsed": 18.512898968998343,
+        "host_cpu_percent": 8.5,
+        "available_ram": 27981512704,
+        "rss": 3892072448
+      },
+      {
+        "elapsed": 19.013251315103844,
+        "host_cpu_percent": 9.0,
+        "available_ram": 27978403840,
+        "rss": 3616960512
+      },
+      {
+        "elapsed": 19.51360184396617,
+        "host_cpu_percent": 17.9,
+        "available_ram": 27986735104,
+        "rss": 3627483136
+      },
+      {
+        "elapsed": 20.01394197694026,
+        "host_cpu_percent": 17.5,
+        "available_ram": 27977347072,
+        "rss": 3646951424
+      },
+      {
+        "elapsed": 20.514271694002673,
+        "host_cpu_percent": 16.8,
+        "available_ram": 27977351168,
+        "rss": 3650600960
+      },
+      {
+        "elapsed": 21.01458843308501,
+        "host_cpu_percent": 9.8,
+        "available_ram": 28948537344,
+        "rss": 2685440000
+      },
+      {
+        "elapsed": 21.514885924989358,
+        "host_cpu_percent": 8.2,
+        "available_ram": 28948537344,
+        "rss": 2685440000
+      },
+      {
+        "elapsed": 22.015165799995884,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29883801600,
+        "rss": 1755881472
+      }
+    ]
+  },
+  {
+    "name": "segment-2-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-2-baseline.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 22.33713298616931,
+    "samples": [
+      {
+        "elapsed": 0.00046693417243659496,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31151083520,
+        "rss": 1134592
+      },
+      {
+        "elapsed": 0.5007560201920569,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31163932672,
+        "rss": 505020416
+      },
+      {
+        "elapsed": 1.0010452570859343,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31163932672,
+        "rss": 554872832
+      },
+      {
+        "elapsed": 1.5013356590643525,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31163076608,
+        "rss": 745787392
+      },
+      {
+        "elapsed": 2.0016856701113284,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31163265024,
+        "rss": 777551872
+      },
+      {
+        "elapsed": 2.501988092204556,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30552391680,
+        "rss": 1173880832
+      },
+      {
+        "elapsed": 3.0023153591901064,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30495055872,
+        "rss": 1455001600
+      },
+      {
+        "elapsed": 3.502649546135217,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30213988352,
+        "rss": 1739321344
+      },
+      {
+        "elapsed": 4.002929759211838,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29940150272,
+        "rss": 2019299328
+      },
+      {
+        "elapsed": 4.503249138128012,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29936562176,
+        "rss": 1768775680
+      },
+      {
+        "elapsed": 5.003588115097955,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29698887680,
+        "rss": 2123268096
+      },
+      {
+        "elapsed": 5.50392541103065,
+        "host_cpu_percent": 9.2,
+        "available_ram": 29622550528,
+        "rss": 2221223936
+      },
+      {
+        "elapsed": 6.004258904140443,
+        "host_cpu_percent": 14.3,
+        "available_ram": 29569781760,
+        "rss": 2277122048
+      },
+      {
+        "elapsed": 6.504584643989801,
+        "host_cpu_percent": 9.7,
+        "available_ram": 29563256832,
+        "rss": 2283388928
+      },
+      {
+        "elapsed": 7.004917250014842,
+        "host_cpu_percent": 8.8,
+        "available_ram": 29550161920,
+        "rss": 2505793536
+      },
+      {
+        "elapsed": 7.505249024135992,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29172563968,
+        "rss": 2880770048
+      },
+      {
+        "elapsed": 8.005609322106466,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28817522688,
+        "rss": 3238318080
+      },
+      {
+        "elapsed": 8.505958904046565,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28804943872,
+        "rss": 2960936960
+      },
+      {
+        "elapsed": 9.006283784052357,
+        "host_cpu_percent": 15.8,
+        "available_ram": 28764418048,
+        "rss": 3025539072
+      },
+      {
+        "elapsed": 9.506659110076725,
+        "host_cpu_percent": 18.7,
+        "available_ram": 28266479616,
+        "rss": 3582832640
+      },
+      {
+        "elapsed": 10.006993734044954,
+        "host_cpu_percent": 15.5,
+        "available_ram": 28179517440,
+        "rss": 3646550016
+      },
+      {
+        "elapsed": 10.507316399132833,
+        "host_cpu_percent": 13.6,
+        "available_ram": 28253777920,
+        "rss": 3573149696
+      },
+      {
+        "elapsed": 11.007633712142706,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28846047232,
+        "rss": 3004547072
+      },
+      {
+        "elapsed": 11.50793165806681,
+        "host_cpu_percent": 11.5,
+        "available_ram": 28841590784,
+        "rss": 3027755008
+      },
+      {
+        "elapsed": 12.008264546049759,
+        "host_cpu_percent": 11.7,
+        "available_ram": 28670046208,
+        "rss": 3198672896
+      },
+      {
+        "elapsed": 12.50859577418305,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28340715520,
+        "rss": 3531481088
+      },
+      {
+        "elapsed": 13.008923619054258,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28018655232,
+        "rss": 3858341888
+      },
+      {
+        "elapsed": 13.509260844206437,
+        "host_cpu_percent": 9.0,
+        "available_ram": 28191088640,
+        "rss": 3972501504
+      },
+      {
+        "elapsed": 14.00960330106318,
+        "host_cpu_percent": 9.8,
+        "available_ram": 28256047104,
+        "rss": 3618066432
+      },
+      {
+        "elapsed": 14.509942409116775,
+        "host_cpu_percent": 15.0,
+        "available_ram": 28248006656,
+        "rss": 3625553920
+      },
+      {
+        "elapsed": 15.010279478039593,
+        "host_cpu_percent": 18.8,
+        "available_ram": 28141969408,
+        "rss": 3633819648
+      },
+      {
+        "elapsed": 15.510602165013552,
+        "host_cpu_percent": 16.5,
+        "available_ram": 28139102208,
+        "rss": 3648475136
+      },
+      {
+        "elapsed": 16.01092358212918,
+        "host_cpu_percent": 12.2,
+        "available_ram": 28778016768,
+        "rss": 2961195008
+      },
+      {
+        "elapsed": 16.51122855511494,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28844191744,
+        "rss": 3031973888
+      },
+      {
+        "elapsed": 17.011519003193825,
+        "host_cpu_percent": 13.7,
+        "available_ram": 28851372032,
+        "rss": 3035348992
+      },
+      {
+        "elapsed": 17.51184825017117,
+        "host_cpu_percent": 9.7,
+        "available_ram": 28605468672,
+        "rss": 3278221312
+      },
+      {
+        "elapsed": 18.01217467011884,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28275097600,
+        "rss": 3614666752
+      },
+      {
+        "elapsed": 18.51250641606748,
+        "host_cpu_percent": 8.7,
+        "available_ram": 27996819456,
+        "rss": 3897704448
+      },
+      {
+        "elapsed": 19.0128977780696,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28046389248,
+        "rss": 3606867968
+      },
+      {
+        "elapsed": 19.513234768994153,
+        "host_cpu_percent": 18.5,
+        "available_ram": 28294881280,
+        "rss": 3620208640
+      },
+      {
+        "elapsed": 20.0135503441561,
+        "host_cpu_percent": 18.0,
+        "available_ram": 28286218240,
+        "rss": 3649789952
+      },
+      {
+        "elapsed": 20.513883606065065,
+        "host_cpu_percent": 16.7,
+        "available_ram": 28286218240,
+        "rss": 3649957888
+      },
+      {
+        "elapsed": 21.01420164317824,
+        "host_cpu_percent": 10.0,
+        "available_ram": 29247356928,
+        "rss": 2677661696
+      },
+      {
+        "elapsed": 21.51450305012986,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29247356928,
+        "rss": 2677661696
+      },
+      {
+        "elapsed": 22.014832694083452,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30180581376,
+        "rss": 1750122496
+      }
+    ]
+  },
+  {
+    "name": "segment-2-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-2-candidate.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 15.06147245480679,
+    "samples": [
+      {
+        "elapsed": 0.0005125089082866907,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31496306688,
+        "rss": 1138688
+      },
+      {
+        "elapsed": 0.5007683169096708,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31304159232,
+        "rss": 505524224
+      },
+      {
+        "elapsed": 1.0010562359821051,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31258124288,
+        "rss": 554958848
+      },
+      {
+        "elapsed": 1.5013623519334942,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31197466624,
+        "rss": 745689088
+      },
+      {
+        "elapsed": 2.001686360919848,
+        "host_cpu_percent": 8.7,
+        "available_ram": 31174696960,
+        "rss": 777113600
+      },
+      {
+        "elapsed": 2.5020360390190035,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30547251200,
+        "rss": 1178845184
+      },
+      {
+        "elapsed": 3.002364182844758,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30481936384,
+        "rss": 1464107008
+      },
+      {
+        "elapsed": 3.502717876806855,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30186336256,
+        "rss": 1751863296
+      },
+      {
+        "elapsed": 4.003048202954233,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29907677184,
+        "rss": 2037628928
+      },
+      {
+        "elapsed": 4.503366600954905,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29918957568,
+        "rss": 1784307712
+      },
+      {
+        "elapsed": 5.003690839977935,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29821423616,
+        "rss": 2130526208
+      },
+      {
+        "elapsed": 5.504059887025505,
+        "host_cpu_percent": 9.8,
+        "available_ram": 29736771584,
+        "rss": 2219745280
+      },
+      {
+        "elapsed": 6.004390346817672,
+        "host_cpu_percent": 13.2,
+        "available_ram": 29730656256,
+        "rss": 2181120000
+      },
+      {
+        "elapsed": 6.504742597928271,
+        "host_cpu_percent": 10.5,
+        "available_ram": 29729755136,
+        "rss": 2184814592
+      },
+      {
+        "elapsed": 7.005052794003859,
+        "host_cpu_percent": 16.6,
+        "available_ram": 29606666240,
+        "rss": 2330611712
+      },
+      {
+        "elapsed": 7.505376907996833,
+        "host_cpu_percent": 16.2,
+        "available_ram": 29332733952,
+        "rss": 2591064064
+      },
+      {
+        "elapsed": 8.005710106808692,
+        "host_cpu_percent": 16.8,
+        "available_ram": 29328220160,
+        "rss": 2608340992
+      },
+      {
+        "elapsed": 8.506031909957528,
+        "host_cpu_percent": 10.0,
+        "available_ram": 29372403712,
+        "rss": 2561941504
+      },
+      {
+        "elapsed": 9.00633631600067,
+        "host_cpu_percent": 12.3,
+        "available_ram": 29380743168,
+        "rss": 2561941504
+      },
+      {
+        "elapsed": 9.506658392958343,
+        "host_cpu_percent": 16.7,
+        "available_ram": 29380497408,
+        "rss": 2561945600
+      },
+      {
+        "elapsed": 10.007002169964835,
+        "host_cpu_percent": 15.0,
+        "available_ram": 29347725312,
+        "rss": 2597343232
+      },
+      {
+        "elapsed": 10.507340135984123,
+        "host_cpu_percent": 15.2,
+        "available_ram": 29306310656,
+        "rss": 2610057216
+      },
+      {
+        "elapsed": 11.007670728955418,
+        "host_cpu_percent": 14.3,
+        "available_ram": 29534580736,
+        "rss": 2388557824
+      },
+      {
+        "elapsed": 11.508055123034865,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29378142208,
+        "rss": 2568331264
+      },
+      {
+        "elapsed": 12.008379905018955,
+        "host_cpu_percent": 15.0,
+        "available_ram": 29369098240,
+        "rss": 2581721088
+      },
+      {
+        "elapsed": 12.508702205028385,
+        "host_cpu_percent": 16.5,
+        "available_ram": 29369098240,
+        "rss": 2581725184
+      },
+      {
+        "elapsed": 13.009048604872078,
+        "host_cpu_percent": 14.8,
+        "available_ram": 29354573824,
+        "rss": 2609106944
+      },
+      {
+        "elapsed": 13.509375013876706,
+        "host_cpu_percent": 16.8,
+        "available_ram": 29352787968,
+        "rss": 2610151424
+      },
+      {
+        "elapsed": 14.009721162030473,
+        "host_cpu_percent": 10.8,
+        "available_ram": 29749362688,
+        "rss": 2194391040
+      },
+      {
+        "elapsed": 14.510044752852991,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30266036224,
+        "rss": 1674170368
+      },
+      {
+        "elapsed": 15.010379689978436,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30592069632,
+        "rss": 0
+      }
+    ]
+  },
+  {
+    "name": "segment-3-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-3-candidate.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 15.288681376026943,
+    "samples": [
+      {
+        "elapsed": 0.0004861720371991396,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31404199936,
+        "rss": 1314816
+      },
+      {
+        "elapsed": 0.5007884840015322,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31224057856,
+        "rss": 504475648
+      },
+      {
+        "elapsed": 1.0010865691583604,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31178743808,
+        "rss": 554618880
+      },
+      {
+        "elapsed": 1.5013851840049028,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31116873728,
+        "rss": 745615360
+      },
+      {
+        "elapsed": 2.001731662079692,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31095906304,
+        "rss": 774774784
+      },
+      {
+        "elapsed": 2.502039368962869,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30473125888,
+        "rss": 1174278144
+      },
+      {
+        "elapsed": 3.0023727850057185,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30416453632,
+        "rss": 1460383744
+      },
+      {
+        "elapsed": 3.502734783105552,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30129565696,
+        "rss": 1748082688
+      },
+      {
+        "elapsed": 4.003067679936066,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29858996224,
+        "rss": 2034581504
+      },
+      {
+        "elapsed": 4.503398339962587,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29898121216,
+        "rss": 1779884032
+      },
+      {
+        "elapsed": 5.003770636161789,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29767094272,
+        "rss": 2131140608
+      },
+      {
+        "elapsed": 5.5041123509872705,
+        "host_cpu_percent": 9.5,
+        "available_ram": 29676724224,
+        "rss": 2219102208
+      },
+      {
+        "elapsed": 6.004467734135687,
+        "host_cpu_percent": 13.5,
+        "available_ram": 29673000960,
+        "rss": 2181091328
+      },
+      {
+        "elapsed": 6.50485147209838,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29681389568,
+        "rss": 2181091328
+      },
+      {
+        "elapsed": 7.005174431018531,
+        "host_cpu_percent": 15.7,
+        "available_ram": 29673582592,
+        "rss": 2228060160
+      },
+      {
+        "elapsed": 7.505494588054717,
+        "host_cpu_percent": 17.2,
+        "available_ram": 29452668928,
+        "rss": 2573774848
+      },
+      {
+        "elapsed": 8.005834307987243,
+        "host_cpu_percent": 15.8,
+        "available_ram": 29404332032,
+        "rss": 2607550464
+      },
+      {
+        "elapsed": 8.50616119406186,
+        "host_cpu_percent": 12.5,
+        "available_ram": 29529690112,
+        "rss": 2500255744
+      },
+      {
+        "elapsed": 9.006521026138216,
+        "host_cpu_percent": 9.3,
+        "available_ram": 29480275968,
+        "rss": 2556760064
+      },
+      {
+        "elapsed": 9.506849094992504,
+        "host_cpu_percent": 16.3,
+        "available_ram": 29480275968,
+        "rss": 2557538304
+      },
+      {
+        "elapsed": 10.007185189053416,
+        "host_cpu_percent": 15.7,
+        "available_ram": 29472915456,
+        "rss": 2576158720
+      },
+      {
+        "elapsed": 10.507518097991124,
+        "host_cpu_percent": 15.0,
+        "available_ram": 29419499520,
+        "rss": 2596503552
+      },
+      {
+        "elapsed": 11.007851638132706,
+        "host_cpu_percent": 16.5,
+        "available_ram": 29406027776,
+        "rss": 2609414144
+      },
+      {
+        "elapsed": 11.508180028991774,
+        "host_cpu_percent": 9.0,
+        "available_ram": 29492842496,
+        "rss": 2550009856
+      },
+      {
+        "elapsed": 12.008497626986355,
+        "host_cpu_percent": 13.0,
+        "available_ram": 29468250112,
+        "rss": 2583810048
+      },
+      {
+        "elapsed": 12.508875508094206,
+        "host_cpu_percent": 17.7,
+        "available_ram": 29466988544,
+        "rss": 2583810048
+      },
+      {
+        "elapsed": 13.009188275085762,
+        "host_cpu_percent": 15.0,
+        "available_ram": 29425958912,
+        "rss": 2619994112
+      },
+      {
+        "elapsed": 13.509517738129944,
+        "host_cpu_percent": 15.5,
+        "available_ram": 29405777920,
+        "rss": 2610823168
+      },
+      {
+        "elapsed": 14.009852006100118,
+        "host_cpu_percent": 13.8,
+        "available_ram": 29639139328,
+        "rss": 2191839232
+      },
+      {
+        "elapsed": 14.510150011163205,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29638881280,
+        "rss": 2191839232
+      },
+      {
+        "elapsed": 15.010443395934999,
+        "host_cpu_percent": 10.9,
+        "available_ram": 30404579328,
+        "rss": 1363562496
+      }
+    ]
+  },
+  {
+    "name": "segment-3-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-3-baseline.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 22.373915611067787,
+    "samples": [
+      {
+        "elapsed": 0.0005727529060095549,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31316115456,
+        "rss": 1388544
+      },
+      {
+        "elapsed": 0.500846428098157,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31314829312,
+        "rss": 504684544
+      },
+      {
+        "elapsed": 1.0011483989655972,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31282237440,
+        "rss": 554827776
+      },
+      {
+        "elapsed": 1.5014874141197652,
+        "host_cpu_percent": 10.2,
+        "available_ram": 31231332352,
+        "rss": 678944768
+      },
+      {
+        "elapsed": 2.001799645135179,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31199936512,
+        "rss": 774823936
+      },
+      {
+        "elapsed": 2.5021080770529807,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30645399552,
+        "rss": 1169387520
+      },
+      {
+        "elapsed": 3.0024796270299703,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30597009408,
+        "rss": 1449381888
+      },
+      {
+        "elapsed": 3.502807917073369,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30315708416,
+        "rss": 1734184960
+      },
+      {
+        "elapsed": 4.00314300111495,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30043480064,
+        "rss": 2016030720
+      },
+      {
+        "elapsed": 4.503509316127747,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30078836736,
+        "rss": 1764044800
+      },
+      {
+        "elapsed": 5.003827674081549,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29947273216,
+        "rss": 2118328320
+      },
+      {
+        "elapsed": 5.504152928944677,
+        "host_cpu_percent": 8.8,
+        "available_ram": 29853626368,
+        "rss": 2220154880
+      },
+      {
+        "elapsed": 6.0045002431143075,
+        "host_cpu_percent": 14.3,
+        "available_ram": 29812256768,
+        "rss": 2271076352
+      },
+      {
+        "elapsed": 6.5048349760472775,
+        "host_cpu_percent": 8.2,
+        "available_ram": 29795676160,
+        "rss": 2283466752
+      },
+      {
+        "elapsed": 7.005173380021006,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29650972672,
+        "rss": 2435219456
+      },
+      {
+        "elapsed": 7.505594915011898,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29274664960,
+        "rss": 2811351040
+      },
+      {
+        "elapsed": 8.005931070074439,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28903677952,
+        "rss": 3187335168
+      },
+      {
+        "elapsed": 8.506253947969526,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28763717632,
+        "rss": 3325517824
+      },
+      {
+        "elapsed": 9.006578163011,
+        "host_cpu_percent": 14.2,
+        "available_ram": 28821463040,
+        "rss": 2980519936
+      },
+      {
+        "elapsed": 9.50689248694107,
+        "host_cpu_percent": 19.4,
+        "available_ram": 28321488896,
+        "rss": 3499225088
+      },
+      {
+        "elapsed": 10.007223604014143,
+        "host_cpu_percent": 16.0,
+        "available_ram": 28214829056,
+        "rss": 3646652416
+      },
+      {
+        "elapsed": 10.507524257991463,
+        "host_cpu_percent": 14.7,
+        "available_ram": 28275200000,
+        "rss": 3588984832
+      },
+      {
+        "elapsed": 11.007851945003495,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29088747520,
+        "rss": 3004788736
+      },
+      {
+        "elapsed": 11.50817074207589,
+        "host_cpu_percent": 10.8,
+        "available_ram": 29057613824,
+        "rss": 3027996672
+      },
+      {
+        "elapsed": 12.008519486989826,
+        "host_cpu_percent": 12.6,
+        "available_ram": 28917379072,
+        "rss": 3162611712
+      },
+      {
+        "elapsed": 12.50885550212115,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28598308864,
+        "rss": 3497725952
+      },
+      {
+        "elapsed": 13.009211525088176,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28267950080,
+        "rss": 3829104640
+      },
+      {
+        "elapsed": 13.509560265112668,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28169306112,
+        "rss": 3933974528
+      },
+      {
+        "elapsed": 14.009903680998832,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28195237888,
+        "rss": 3618304000
+      },
+      {
+        "elapsed": 14.510249735089019,
+        "host_cpu_percent": 14.8,
+        "available_ram": 28207144960,
+        "rss": 3625783296
+      },
+      {
+        "elapsed": 15.010567259974778,
+        "host_cpu_percent": 19.7,
+        "available_ram": 28165599232,
+        "rss": 3710234624
+      },
+      {
+        "elapsed": 15.510883164126426,
+        "host_cpu_percent": 15.5,
+        "available_ram": 28205273088,
+        "rss": 3648012288
+      },
+      {
+        "elapsed": 16.011210765922442,
+        "host_cpu_percent": 12.5,
+        "available_ram": 28330033152,
+        "rss": 3507924992
+      },
+      {
+        "elapsed": 16.511532209115103,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28863922176,
+        "rss": 3029602304
+      },
+      {
+        "elapsed": 17.011840974912047,
+        "host_cpu_percent": 12.8,
+        "available_ram": 28863664128,
+        "rss": 3034501120
+      },
+      {
+        "elapsed": 17.512171668931842,
+        "host_cpu_percent": 10.0,
+        "available_ram": 28847816704,
+        "rss": 3275501568
+      },
+      {
+        "elapsed": 18.012549886945635,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28503306240,
+        "rss": 3611656192
+      },
+      {
+        "elapsed": 18.512897341046482,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28222550016,
+        "rss": 3896852480
+      },
+      {
+        "elapsed": 19.01324758399278,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28224991232,
+        "rss": 3605975040
+      },
+      {
+        "elapsed": 19.513579515041783,
+        "host_cpu_percent": 17.6,
+        "available_ram": 28230787072,
+        "rss": 3619217408
+      },
+      {
+        "elapsed": 20.013919563032687,
+        "host_cpu_percent": 17.5,
+        "available_ram": 28155650048,
+        "rss": 3649138688
+      },
+      {
+        "elapsed": 20.51424821605906,
+        "host_cpu_percent": 17.0,
+        "available_ram": 28149432320,
+        "rss": 3649536000
+      },
+      {
+        "elapsed": 21.014542767079547,
+        "host_cpu_percent": 10.5,
+        "available_ram": 28914073600,
+        "rss": 2683822080
+      },
+      {
+        "elapsed": 21.514848114922643,
+        "host_cpu_percent": 8.7,
+        "available_ram": 28907929600,
+        "rss": 2683822080
+      },
+      {
+        "elapsed": 22.015152948908508,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29826781184,
+        "rss": 1756315648
+      }
+    ]
+  },
+  {
+    "name": "segment-4-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-4-baseline.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 22.312122838106006,
+    "samples": [
+      {
+        "elapsed": 0.0005206950008869171,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31137222656,
+        "rss": 1134592
+      },
+      {
+        "elapsed": 0.5007872569840401,
+        "host_cpu_percent": 10.1,
+        "available_ram": 31153520640,
+        "rss": 504995840
+      },
+      {
+        "elapsed": 1.0010802370961756,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31149932544,
+        "rss": 555204608
+      },
+      {
+        "elapsed": 1.5014143791049719,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31077097472,
+        "rss": 745844736
+      },
+      {
+        "elapsed": 2.0017423359677196,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31045226496,
+        "rss": 777588736
+      },
+      {
+        "elapsed": 2.502048155060038,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30421860352,
+        "rss": 1175433216
+      },
+      {
+        "elapsed": 3.002382061909884,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30365396992,
+        "rss": 1456631808
+      },
+      {
+        "elapsed": 3.50271234405227,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30077792256,
+        "rss": 1741836288
+      },
+      {
+        "elapsed": 4.003045651130378,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29798342656,
+        "rss": 2024071168
+      },
+      {
+        "elapsed": 4.5033905459567904,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29798191104,
+        "rss": 1770696704
+      },
+      {
+        "elapsed": 5.0037065299693495,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29722472448,
+        "rss": 2119544832
+      },
+      {
+        "elapsed": 5.504033754114062,
+        "host_cpu_percent": 9.2,
+        "available_ram": 29606268928,
+        "rss": 2219712512
+      },
+      {
+        "elapsed": 6.00433717505075,
+        "host_cpu_percent": 14.0,
+        "available_ram": 29551017984,
+        "rss": 2276491264
+      },
+      {
+        "elapsed": 6.504660103935748,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29547032576,
+        "rss": 2283429888
+      },
+      {
+        "elapsed": 7.004988600965589,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29325389824,
+        "rss": 2517344256
+      },
+      {
+        "elapsed": 7.505320778116584,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28953767936,
+        "rss": 2894761984
+      },
+      {
+        "elapsed": 8.00565514806658,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28598743040,
+        "rss": 3247538176
+      },
+      {
+        "elapsed": 8.505981971044093,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28586119168,
+        "rss": 2960973824
+      },
+      {
+        "elapsed": 9.006335468031466,
+        "host_cpu_percent": 16.5,
+        "available_ram": 28541730816,
+        "rss": 3051663360
+      },
+      {
+        "elapsed": 9.50667063309811,
+        "host_cpu_percent": 19.0,
+        "available_ram": 28023402496,
+        "rss": 3592749056
+      },
+      {
+        "elapsed": 10.006998847937211,
+        "host_cpu_percent": 15.5,
+        "available_ram": 28010106880,
+        "rss": 3646451712
+      },
+      {
+        "elapsed": 10.507331155007705,
+        "host_cpu_percent": 13.5,
+        "available_ram": 28093181952,
+        "rss": 3568861184
+      },
+      {
+        "elapsed": 11.007655919995159,
+        "host_cpu_percent": 9.8,
+        "available_ram": 28858208256,
+        "rss": 3005104128
+      },
+      {
+        "elapsed": 11.507986424025148,
+        "host_cpu_percent": 11.5,
+        "available_ram": 28834029568,
+        "rss": 3028312064
+      },
+      {
+        "elapsed": 12.008328672032803,
+        "host_cpu_percent": 11.7,
+        "available_ram": 28644564992,
+        "rss": 3204284416
+      },
+      {
+        "elapsed": 12.50865993811749,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28314406912,
+        "rss": 3540623360
+      },
+      {
+        "elapsed": 13.00898291892372,
+        "host_cpu_percent": 8.5,
+        "available_ram": 27984019456,
+        "rss": 3865731072
+      },
+      {
+        "elapsed": 13.509331953944638,
+        "host_cpu_percent": 8.3,
+        "available_ram": 27868749824,
+        "rss": 3972882432
+      },
+      {
+        "elapsed": 14.009674037108198,
+        "host_cpu_percent": 8.8,
+        "available_ram": 27969622016,
+        "rss": 3618447360
+      },
+      {
+        "elapsed": 14.510003002127632,
+        "host_cpu_percent": 16.0,
+        "available_ram": 27969548288,
+        "rss": 3626471424
+      },
+      {
+        "elapsed": 15.010366993956268,
+        "host_cpu_percent": 17.9,
+        "available_ram": 27980804096,
+        "rss": 3633848320
+      },
+      {
+        "elapsed": 15.510724378051236,
+        "host_cpu_percent": 16.8,
+        "available_ram": 27980111872,
+        "rss": 3649019904
+      },
+      {
+        "elapsed": 16.011049275053665,
+        "host_cpu_percent": 11.5,
+        "available_ram": 28867837952,
+        "rss": 2746036224
+      },
+      {
+        "elapsed": 16.51134764798917,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28836356096,
+        "rss": 3035942912
+      },
+      {
+        "elapsed": 17.011662933975458,
+        "host_cpu_percent": 14.5,
+        "available_ram": 28836368384,
+        "rss": 3036733440
+      },
+      {
+        "elapsed": 17.51199837611057,
+        "host_cpu_percent": 8.8,
+        "available_ram": 28564430848,
+        "rss": 3309805568
+      },
+      {
+        "elapsed": 18.01233189413324,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28225843200,
+        "rss": 3646443520
+      },
+      {
+        "elapsed": 18.51266284706071,
+        "host_cpu_percent": 8.3,
+        "available_ram": 27969744896,
+        "rss": 3897798656
+      },
+      {
+        "elapsed": 19.012986751971766,
+        "host_cpu_percent": 9.2,
+        "available_ram": 27999313920,
+        "rss": 3623768064
+      },
+      {
+        "elapsed": 19.513328603003174,
+        "host_cpu_percent": 18.4,
+        "available_ram": 28009996288,
+        "rss": 3646185472
+      },
+      {
+        "elapsed": 20.01368278893642,
+        "host_cpu_percent": 17.2,
+        "available_ram": 27982385152,
+        "rss": 3649396736
+      },
+      {
+        "elapsed": 20.514010397018865,
+        "host_cpu_percent": 16.9,
+        "available_ram": 27982749696,
+        "rss": 3649495040
+      },
+      {
+        "elapsed": 21.014325275085866,
+        "host_cpu_percent": 9.7,
+        "available_ram": 28947107840,
+        "rss": 2685759488
+      },
+      {
+        "elapsed": 21.514623718103394,
+        "host_cpu_percent": 8.7,
+        "available_ram": 28946939904,
+        "rss": 2685759488
+      },
+      {
+        "elapsed": 22.01492919307202,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29897383936,
+        "rss": 1755168768
+      }
+    ]
+  },
+  {
+    "name": "segment-4-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-4-candidate.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 15.136184643954039,
+    "samples": [
+      {
+        "elapsed": 0.0005526109598577023,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31150227456,
+        "rss": 1335296
+      },
+      {
+        "elapsed": 0.5008199580479413,
+        "host_cpu_percent": 10.0,
+        "available_ram": 30972071936,
+        "rss": 504987648
+      },
+      {
+        "elapsed": 1.001140499021858,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30978269184,
+        "rss": 554872832
+      },
+      {
+        "elapsed": 1.5014508720487356,
+        "host_cpu_percent": 9.8,
+        "available_ram": 30977814528,
+        "rss": 745795584
+      },
+      {
+        "elapsed": 2.0017706090584397,
+        "host_cpu_percent": 8.6,
+        "available_ram": 30991552512,
+        "rss": 774938624
+      },
+      {
+        "elapsed": 2.502078606048599,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30380421120,
+        "rss": 1172910080
+      },
+      {
+        "elapsed": 3.0024186759255826,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30322352128,
+        "rss": 1457115136
+      },
+      {
+        "elapsed": 3.502747677033767,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30047748096,
+        "rss": 1742286848
+      },
+      {
+        "elapsed": 4.00307735404931,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29771444224,
+        "rss": 2027446272
+      },
+      {
+        "elapsed": 4.503399730892852,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29776388096,
+        "rss": 1775550464
+      },
+      {
+        "elapsed": 5.00372761185281,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29691428864,
+        "rss": 2120753152
+      },
+      {
+        "elapsed": 5.504052450880408,
+        "host_cpu_percent": 9.2,
+        "available_ram": 29592350720,
+        "rss": 2219868160
+      },
+      {
+        "elapsed": 6.004486470948905,
+        "host_cpu_percent": 13.8,
+        "available_ram": 29604118528,
+        "rss": 2181238784
+      },
+      {
+        "elapsed": 6.504794833948836,
+        "host_cpu_percent": 9.0,
+        "available_ram": 29604319232,
+        "rss": 2181394432
+      },
+      {
+        "elapsed": 7.005225416971371,
+        "host_cpu_percent": 17.5,
+        "available_ram": 29525630976,
+        "rss": 2273734656
+      },
+      {
+        "elapsed": 7.505551679059863,
+        "host_cpu_percent": 16.1,
+        "available_ram": 29275344896,
+        "rss": 2570371072
+      },
+      {
+        "elapsed": 8.005879533942789,
+        "host_cpu_percent": 16.5,
+        "available_ram": 29256826880,
+        "rss": 2607603712
+      },
+      {
+        "elapsed": 8.506205955985934,
+        "host_cpu_percent": 11.2,
+        "available_ram": 29479411712,
+        "rss": 2561204224
+      },
+      {
+        "elapsed": 9.006523954914883,
+        "host_cpu_percent": 10.8,
+        "available_ram": 29478944768,
+        "rss": 2561204224
+      },
+      {
+        "elapsed": 9.50684961094521,
+        "host_cpu_percent": 16.6,
+        "available_ram": 29483966464,
+        "rss": 2561204224
+      },
+      {
+        "elapsed": 10.007167414063588,
+        "host_cpu_percent": 15.4,
+        "available_ram": 29450936320,
+        "rss": 2587426816
+      },
+      {
+        "elapsed": 10.507520087063313,
+        "host_cpu_percent": 15.2,
+        "available_ram": 29393723392,
+        "rss": 2608631808
+      },
+      {
+        "elapsed": 11.007848503999412,
+        "host_cpu_percent": 16.0,
+        "available_ram": 29552369664,
+        "rss": 2278477824
+      },
+      {
+        "elapsed": 11.508220128947869,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29467750400,
+        "rss": 2559066112
+      },
+      {
+        "elapsed": 12.008537944871932,
+        "host_cpu_percent": 14.5,
+        "available_ram": 29448445952,
+        "rss": 2583535616
+      },
+      {
+        "elapsed": 12.508865484036505,
+        "host_cpu_percent": 15.3,
+        "available_ram": 29448445952,
+        "rss": 2583539712
+      },
+      {
+        "elapsed": 13.009235408855602,
+        "host_cpu_percent": 15.4,
+        "available_ram": 29403160576,
+        "rss": 2629939200
+      },
+      {
+        "elapsed": 13.509599211858585,
+        "host_cpu_percent": 15.8,
+        "available_ram": 29403160576,
+        "rss": 2609233920
+      },
+      {
+        "elapsed": 14.009931190870702,
+        "host_cpu_percent": 12.0,
+        "available_ram": 29699751936,
+        "rss": 2191732736
+      },
+      {
+        "elapsed": 14.510275015840307,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29954506752,
+        "rss": 1935228928
+      },
+      {
+        "elapsed": 15.010610330849886,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30531739648,
+        "rss": 1364385792
+      }
+    ]
+  },
+  {
+    "name": "segment-5-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-5-candidate.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 15.283779529156163,
+    "samples": [
+      {
+        "elapsed": 0.0004657020326703787,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31353421824,
+        "rss": 1134592
+      },
+      {
+        "elapsed": 0.5007152250036597,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31192236032,
+        "rss": 505237504
+      },
+      {
+        "elapsed": 1.0010069131385535,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31192236032,
+        "rss": 554790912
+      },
+      {
+        "elapsed": 1.501302195014432,
+        "host_cpu_percent": 11.8,
+        "available_ram": 31179399168,
+        "rss": 654827520
+      },
+      {
+        "elapsed": 2.0016092841979116,
+        "host_cpu_percent": 8.7,
+        "available_ram": 31179141120,
+        "rss": 772939776
+      },
+      {
+        "elapsed": 2.501914231106639,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30571581440,
+        "rss": 1153314816
+      },
+      {
+        "elapsed": 3.002242901129648,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30538989568,
+        "rss": 1423691776
+      },
+      {
+        "elapsed": 3.5026097272057086,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30269358080,
+        "rss": 1695408128
+      },
+      {
+        "elapsed": 4.002960270037875,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30008786944,
+        "rss": 1967722496
+      },
+      {
+        "elapsed": 4.503295102156699,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29901012992,
+        "rss": 2073931776
+      },
+      {
+        "elapsed": 5.003629864193499,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29991612416,
+        "rss": 1939025920
+      },
+      {
+        "elapsed": 5.50396739016287,
+        "host_cpu_percent": 8.2,
+        "available_ram": 29802184704,
+        "rss": 2178408448
+      },
+      {
+        "elapsed": 6.004277122206986,
+        "host_cpu_percent": 15.0,
+        "available_ram": 29780504576,
+        "rss": 2181136384
+      },
+      {
+        "elapsed": 6.504599979147315,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29789478912,
+        "rss": 2181136384
+      },
+      {
+        "elapsed": 7.004916332196444,
+        "host_cpu_percent": 16.3,
+        "available_ram": 29773545472,
+        "rss": 2223656960
+      },
+      {
+        "elapsed": 7.505259761121124,
+        "host_cpu_percent": 17.1,
+        "available_ram": 29470400512,
+        "rss": 2553794560
+      },
+      {
+        "elapsed": 8.005594957154244,
+        "host_cpu_percent": 15.7,
+        "available_ram": 29404368896,
+        "rss": 2607599616
+      },
+      {
+        "elapsed": 8.50592572405003,
+        "host_cpu_percent": 13.2,
+        "available_ram": 29481664512,
+        "rss": 2561200128
+      },
+      {
+        "elapsed": 9.00624332902953,
+        "host_cpu_percent": 8.8,
+        "available_ram": 29457481728,
+        "rss": 2584399872
+      },
+      {
+        "elapsed": 9.506581229157746,
+        "host_cpu_percent": 16.5,
+        "available_ram": 29457809408,
+        "rss": 2584399872
+      },
+      {
+        "elapsed": 10.006904105190188,
+        "host_cpu_percent": 15.7,
+        "available_ram": 29457809408,
+        "rss": 2584399872
+      },
+      {
+        "elapsed": 10.507244867039844,
+        "host_cpu_percent": 15.0,
+        "available_ram": 29398839296,
+        "rss": 2594492416
+      },
+      {
+        "elapsed": 11.007569253211841,
+        "host_cpu_percent": 16.7,
+        "available_ram": 29390610432,
+        "rss": 2609090560
+      },
+      {
+        "elapsed": 11.507892797002569,
+        "host_cpu_percent": 10.0,
+        "available_ram": 29511376896,
+        "rss": 2529570816
+      },
+      {
+        "elapsed": 12.008215533103794,
+        "host_cpu_percent": 12.7,
+        "available_ram": 29461450752,
+        "rss": 2577305600
+      },
+      {
+        "elapsed": 12.508545025018975,
+        "host_cpu_percent": 16.3,
+        "available_ram": 29461958656,
+        "rss": 2577305600
+      },
+      {
+        "elapsed": 13.008864009054378,
+        "host_cpu_percent": 14.9,
+        "available_ram": 29431250944,
+        "rss": 2611130368
+      },
+      {
+        "elapsed": 13.509193427162245,
+        "host_cpu_percent": 15.3,
+        "available_ram": 29428367360,
+        "rss": 2609807360
+      },
+      {
+        "elapsed": 14.009533803211525,
+        "host_cpu_percent": 14.8,
+        "available_ram": 29796732928,
+        "rss": 2190880768
+      },
+      {
+        "elapsed": 14.509867284214124,
+        "host_cpu_percent": 9.8,
+        "available_ram": 29628289024,
+        "rss": 2190880768
+      },
+      {
+        "elapsed": 15.010180039098486,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30457737216,
+        "rss": 1363533824
+      }
+    ]
+  },
+  {
+    "name": "segment-5-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-5-baseline.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 22.237513900035992,
+    "samples": [
+      {
+        "elapsed": 0.0004890020936727524,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31396765696,
+        "rss": 1384448
+      },
+      {
+        "elapsed": 0.5007613250054419,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31209885696,
+        "rss": 504561664
+      },
+      {
+        "elapsed": 1.0011289538815618,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31153672192,
+        "rss": 554610688
+      },
+      {
+        "elapsed": 1.501427723094821,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31095398400,
+        "rss": 745754624
+      },
+      {
+        "elapsed": 2.001762280939147,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31064899584,
+        "rss": 776785920
+      },
+      {
+        "elapsed": 2.5021067790221423,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30437261312,
+        "rss": 1176711168
+      },
+      {
+        "elapsed": 3.0024284720420837,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30380150784,
+        "rss": 1459412992
+      },
+      {
+        "elapsed": 3.502764080883935,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30110052352,
+        "rss": 1744142336
+      },
+      {
+        "elapsed": 4.00312888994813,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29830778880,
+        "rss": 2026512384
+      },
+      {
+        "elapsed": 4.5034565820824355,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30121713664,
+        "rss": 1773076480
+      },
+      {
+        "elapsed": 5.003765416098759,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29940514816,
+        "rss": 2120073216
+      },
+      {
+        "elapsed": 5.504120050929487,
+        "host_cpu_percent": 9.3,
+        "available_ram": 29839949824,
+        "rss": 2219626496
+      },
+      {
+        "elapsed": 6.00444094510749,
+        "host_cpu_percent": 14.0,
+        "available_ram": 29778374656,
+        "rss": 2280681472
+      },
+      {
+        "elapsed": 6.50475584808737,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29779976192,
+        "rss": 2283372544
+      },
+      {
+        "elapsed": 7.005122073926032,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29532397568,
+        "rss": 2517274624
+      },
+      {
+        "elapsed": 7.5054133189842105,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29166157824,
+        "rss": 2895110144
+      },
+      {
+        "elapsed": 8.005742355948314,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28811120640,
+        "rss": 3246026752
+      },
+      {
+        "elapsed": 8.506109117064625,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28804083712,
+        "rss": 2960920576
+      },
+      {
+        "elapsed": 9.006413511931896,
+        "host_cpu_percent": 16.3,
+        "available_ram": 28728258560,
+        "rss": 3049271296
+      },
+      {
+        "elapsed": 9.506819790927693,
+        "host_cpu_percent": 19.2,
+        "available_ram": 28250525696,
+        "rss": 3593220096
+      },
+      {
+        "elapsed": 10.007470214972273,
+        "host_cpu_percent": 15.7,
+        "available_ram": 28173455360,
+        "rss": 3646468096
+      },
+      {
+        "elapsed": 10.507791629061103,
+        "host_cpu_percent": 13.6,
+        "available_ram": 28256849920,
+        "rss": 3568881664
+      },
+      {
+        "elapsed": 11.008146333973855,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28837711872,
+        "rss": 3003617280
+      },
+      {
+        "elapsed": 11.508439697092399,
+        "host_cpu_percent": 12.2,
+        "available_ram": 28825075712,
+        "rss": 3026825216
+      },
+      {
+        "elapsed": 12.008854327956215,
+        "host_cpu_percent": 10.8,
+        "available_ram": 28622397440,
+        "rss": 3227619328
+      },
+      {
+        "elapsed": 12.509183218004182,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28283703296,
+        "rss": 3567865856
+      },
+      {
+        "elapsed": 13.009516698075458,
+        "host_cpu_percent": 8.3,
+        "available_ram": 27961774080,
+        "rss": 3885166592
+      },
+      {
+        "elapsed": 13.509847451932728,
+        "host_cpu_percent": 8.7,
+        "available_ram": 27961192448,
+        "rss": 3617689600
+      },
+      {
+        "elapsed": 14.010173782939091,
+        "host_cpu_percent": 8.7,
+        "available_ram": 27968061440,
+        "rss": 3617734656
+      },
+      {
+        "elapsed": 14.510491704102606,
+        "host_cpu_percent": 18.8,
+        "available_ram": 27971547136,
+        "rss": 3626151936
+      },
+      {
+        "elapsed": 15.010819817893207,
+        "host_cpu_percent": 17.7,
+        "available_ram": 27975512064,
+        "rss": 3647184896
+      },
+      {
+        "elapsed": 15.511161084054038,
+        "host_cpu_percent": 16.8,
+        "available_ram": 27984613376,
+        "rss": 3649822720
+      },
+      {
+        "elapsed": 16.011493063997477,
+        "host_cpu_percent": 10.5,
+        "available_ram": 28962164736,
+        "rss": 2714185728
+      },
+      {
+        "elapsed": 16.511821063933894,
+        "host_cpu_percent": 8.8,
+        "available_ram": 28872171520,
+        "rss": 3036073984
+      },
+      {
+        "elapsed": 17.012161473045126,
+        "host_cpu_percent": 14.5,
+        "available_ram": 28872163328,
+        "rss": 3036073984
+      },
+      {
+        "elapsed": 17.512502308934927,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28568100864,
+        "rss": 3345203200
+      },
+      {
+        "elapsed": 18.01285765110515,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28229513216,
+        "rss": 3681476608
+      },
+      {
+        "elapsed": 18.51319652609527,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28015104000,
+        "rss": 3898187776
+      },
+      {
+        "elapsed": 19.01350801391527,
+        "host_cpu_percent": 10.2,
+        "available_ram": 28007698432,
+        "rss": 3624718336
+      },
+      {
+        "elapsed": 19.51388643006794,
+        "host_cpu_percent": 19.0,
+        "available_ram": 27993661440,
+        "rss": 3654836224
+      },
+      {
+        "elapsed": 20.014262401964515,
+        "host_cpu_percent": 16.8,
+        "available_ram": 28025389056,
+        "rss": 3648221184
+      },
+      {
+        "elapsed": 20.51458194688894,
+        "host_cpu_percent": 16.8,
+        "available_ram": 28027592704,
+        "rss": 3648643072
+      },
+      {
+        "elapsed": 21.014919149922207,
+        "host_cpu_percent": 8.7,
+        "available_ram": 28908462080,
+        "rss": 2683039744
+      },
+      {
+        "elapsed": 21.515206900890917,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28966678528,
+        "rss": 2607689728
+      },
+      {
+        "elapsed": 22.015518069034442,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29837131776,
+        "rss": 1754513408
+      }
+    ]
+  },
+  {
+    "name": "segment-6-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-6-baseline.json",
+      "--arrays"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 23.71867413399741,
+    "samples": [
+      {
+        "elapsed": 0.0004963481333106756,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31182757888,
+        "rss": 1126400
+      },
+      {
+        "elapsed": 0.5007523859385401,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31123435520,
+        "rss": 504889344
+      },
+      {
+        "elapsed": 1.0010441020131111,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31124074496,
+        "rss": 554668032
+      },
+      {
+        "elapsed": 1.501338548026979,
+        "host_cpu_percent": 10.3,
+        "available_ram": 31092117504,
+        "rss": 745680896
+      },
+      {
+        "elapsed": 2.001664886949584,
+        "host_cpu_percent": 8.8,
+        "available_ram": 31061716992,
+        "rss": 773984256
+      },
+      {
+        "elapsed": 2.5019785440526903,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30438801408,
+        "rss": 1160515584
+      },
+      {
+        "elapsed": 3.002306296955794,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30416658432,
+        "rss": 1440694272
+      },
+      {
+        "elapsed": 3.5026409290730953,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30129311744,
+        "rss": 1724620800
+      },
+      {
+        "elapsed": 4.002975159091875,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29859209216,
+        "rss": 2005843968
+      },
+      {
+        "elapsed": 4.50329950498417,
+        "host_cpu_percent": 8.7,
+        "available_ram": 29826637824,
+        "rss": 1755365376
+      },
+      {
+        "elapsed": 5.003655056934804,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29502910464,
+        "rss": 2115260416
+      },
+      {
+        "elapsed": 5.503998629981652,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29445701632,
+        "rss": 2184376320
+      },
+      {
+        "elapsed": 6.004315776983276,
+        "host_cpu_percent": 14.6,
+        "available_ram": 29423792128,
+        "rss": 2238844928
+      },
+      {
+        "elapsed": 6.504651481052861,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29423534080,
+        "rss": 2338058240
+      },
+      {
+        "elapsed": 7.004972537048161,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29424779264,
+        "rss": 2464849920
+      },
+      {
+        "elapsed": 7.505280478158966,
+        "host_cpu_percent": 8.8,
+        "available_ram": 29099515904,
+        "rss": 2799005696
+      },
+      {
+        "elapsed": 8.005612473003566,
+        "host_cpu_percent": 8.6,
+        "available_ram": 28731838464,
+        "rss": 3177365504
+      },
+      {
+        "elapsed": 8.506070005940273,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28604727296,
+        "rss": 3309727744
+      },
+      {
+        "elapsed": 9.006400855025277,
+        "host_cpu_percent": 13.0,
+        "available_ram": 28637413376,
+        "rss": 2992771072
+      },
+      {
+        "elapsed": 9.50673362496309,
+        "host_cpu_percent": 18.8,
+        "available_ram": 28201295872,
+        "rss": 3448410112
+      },
+      {
+        "elapsed": 10.007068770937622,
+        "host_cpu_percent": 16.3,
+        "available_ram": 27987308544,
+        "rss": 3659407360
+      },
+      {
+        "elapsed": 10.50742405699566,
+        "host_cpu_percent": 15.9,
+        "available_ram": 27982491648,
+        "rss": 3677630464
+      },
+      {
+        "elapsed": 11.00783358514309,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28676734976,
+        "rss": 3102720000
+      },
+      {
+        "elapsed": 11.508153331000358,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28651814912,
+        "rss": 3125923840
+      },
+      {
+        "elapsed": 12.008500857977197,
+        "host_cpu_percent": 14.3,
+        "available_ram": 28652687360,
+        "rss": 3135868928
+      },
+      {
+        "elapsed": 12.508836230030283,
+        "host_cpu_percent": 8.8,
+        "available_ram": 28305866752,
+        "rss": 3473358848
+      },
+      {
+        "elapsed": 13.009127237135544,
+        "host_cpu_percent": 8.2,
+        "available_ram": 27967160320,
+        "rss": 3810119680
+      },
+      {
+        "elapsed": 13.50944569800049,
+        "host_cpu_percent": 8.5,
+        "available_ram": 27794071552,
+        "rss": 3989278720
+      },
+      {
+        "elapsed": 14.009816972073168,
+        "host_cpu_percent": 8.5,
+        "available_ram": 27838439424,
+        "rss": 3677597696
+      },
+      {
+        "elapsed": 14.510166245978326,
+        "host_cpu_percent": 11.7,
+        "available_ram": 27829526528,
+        "rss": 3680399360
+      },
+      {
+        "elapsed": 15.01050271303393,
+        "host_cpu_percent": 18.5,
+        "available_ram": 27804626944,
+        "rss": 3713400832
+      },
+      {
+        "elapsed": 15.510833108099177,
+        "host_cpu_percent": 16.3,
+        "available_ram": 27840262144,
+        "rss": 3696513024
+      },
+      {
+        "elapsed": 16.011156971100718,
+        "host_cpu_percent": 14.8,
+        "available_ram": 27892228096,
+        "rss": 3659608064
+      },
+      {
+        "elapsed": 16.51148347207345,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28644798464,
+        "rss": 3142094848
+      },
+      {
+        "elapsed": 17.011847240151837,
+        "host_cpu_percent": 9.2,
+        "available_ram": 28631388160,
+        "rss": 3165298688
+      },
+      {
+        "elapsed": 17.512178546050563,
+        "host_cpu_percent": 13.8,
+        "available_ram": 28590141440,
+        "rss": 3204530176
+      },
+      {
+        "elapsed": 18.01250837300904,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28260208640,
+        "rss": 3544289280
+      },
+      {
+        "elapsed": 18.512892364989966,
+        "host_cpu_percent": 8.3,
+        "available_ram": 27921620992,
+        "rss": 3879276544
+      },
+      {
+        "elapsed": 19.01321556698531,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28151222272,
+        "rss": 4023554048
+      },
+      {
+        "elapsed": 19.51353325205855,
+        "host_cpu_percent": 11.1,
+        "available_ram": 28082540544,
+        "rss": 3714813952
+      },
+      {
+        "elapsed": 20.01388266007416,
+        "host_cpu_percent": 18.3,
+        "available_ram": 28048994304,
+        "rss": 3741786112
+      },
+      {
+        "elapsed": 20.514246616046876,
+        "host_cpu_percent": 16.8,
+        "available_ram": 27966328832,
+        "rss": 3728023552
+      },
+      {
+        "elapsed": 21.014591752085835,
+        "host_cpu_percent": 16.0,
+        "available_ram": 27951038464,
+        "rss": 3745198080
+      },
+      {
+        "elapsed": 21.51500129699707,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28713181184,
+        "rss": 2849214464
+      },
+      {
+        "elapsed": 22.01530549209565,
+        "host_cpu_percent": 8.3,
+        "available_ram": 28721979392,
+        "rss": 2849214464
+      },
+      {
+        "elapsed": 22.515637014992535,
+        "host_cpu_percent": 8.8,
+        "available_ram": 28728807424,
+        "rss": 2849214464
+      },
+      {
+        "elapsed": 23.015956726158038,
+        "host_cpu_percent": 8.5,
+        "available_ram": 28977061888,
+        "rss": 2605309952
+      },
+      {
+        "elapsed": 23.516278793103993,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29762781184,
+        "rss": 1829593088
+      }
+    ]
+  },
+  {
+    "name": "segment-6-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "segment",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/instances_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/segment-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/segment-6-candidate.json",
+      "--arrays"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 16.6303619670216,
+    "samples": [
+      {
+        "elapsed": 0.0005753550212830305,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31049138176,
+        "rss": 1134592
+      },
+      {
+        "elapsed": 0.5008368520066142,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31071985664,
+        "rss": 507031552
+      },
+      {
+        "elapsed": 1.0011317438911647,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31080243200,
+        "rss": 555745280
+      },
+      {
+        "elapsed": 1.5014015219639987,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31040774144,
+        "rss": 745631744
+      },
+      {
+        "elapsed": 2.0017192668747157,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31024836608,
+        "rss": 778141696
+      },
+      {
+        "elapsed": 2.502018919913098,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30399086592,
+        "rss": 1182367744
+      },
+      {
+        "elapsed": 3.002341345883906,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30359597056,
+        "rss": 1455190016
+      },
+      {
+        "elapsed": 3.502671642927453,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30071992320,
+        "rss": 1737338880
+      },
+      {
+        "elapsed": 4.002996275899932,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29792141312,
+        "rss": 2016444416
+      },
+      {
+        "elapsed": 4.503310560947284,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29788254208,
+        "rss": 1765654528
+      },
+      {
+        "elapsed": 5.0036297189071774,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29695275008,
+        "rss": 2118541312
+      },
+      {
+        "elapsed": 5.503984653856605,
+        "host_cpu_percent": 8.2,
+        "available_ram": 29637414912,
+        "rss": 2185187328
+      },
+      {
+        "elapsed": 6.004304671892896,
+        "host_cpu_percent": 14.8,
+        "available_ram": 29600985088,
+        "rss": 2238083072
+      },
+      {
+        "elapsed": 6.50461170100607,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29600985088,
+        "rss": 2238083072
+      },
+      {
+        "elapsed": 7.005006051855162,
+        "host_cpu_percent": 13.7,
+        "available_ram": 29598810112,
+        "rss": 2246590464
+      },
+      {
+        "elapsed": 7.505318979965523,
+        "host_cpu_percent": 15.9,
+        "available_ram": 29452562432,
+        "rss": 2505252864
+      },
+      {
+        "elapsed": 8.005655305925757,
+        "host_cpu_percent": 16.2,
+        "available_ram": 29312479232,
+        "rss": 2626383872
+      },
+      {
+        "elapsed": 8.50599675392732,
+        "host_cpu_percent": 14.8,
+        "available_ram": 29406687232,
+        "rss": 2302337024
+      },
+      {
+        "elapsed": 9.006328976014629,
+        "host_cpu_percent": 8.2,
+        "available_ram": 29357604864,
+        "rss": 2595512320
+      },
+      {
+        "elapsed": 9.506623280933127,
+        "host_cpu_percent": 14.6,
+        "available_ram": 29357731840,
+        "rss": 2595512320
+      },
+      {
+        "elapsed": 10.007004454964772,
+        "host_cpu_percent": 15.5,
+        "available_ram": 29354733568,
+        "rss": 2611023872
+      },
+      {
+        "elapsed": 10.507328921929002,
+        "host_cpu_percent": 14.5,
+        "available_ram": 29313961984,
+        "rss": 2651140096
+      },
+      {
+        "elapsed": 11.007672590902075,
+        "host_cpu_percent": 15.6,
+        "available_ram": 29273776128,
+        "rss": 2658533376
+      },
+      {
+        "elapsed": 11.5080084358342,
+        "host_cpu_percent": 13.2,
+        "available_ram": 29319442432,
+        "rss": 2651193344
+      },
+      {
+        "elapsed": 12.00835511693731,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29294858240,
+        "rss": 2674044928
+      },
+      {
+        "elapsed": 12.508670069975778,
+        "host_cpu_percent": 14.5,
+        "available_ram": 29294858240,
+        "rss": 2674044928
+      },
+      {
+        "elapsed": 13.008981277002022,
+        "host_cpu_percent": 16.2,
+        "available_ram": 29357551616,
+        "rss": 2674044928
+      },
+      {
+        "elapsed": 13.50937113398686,
+        "host_cpu_percent": 15.2,
+        "available_ram": 29305294848,
+        "rss": 2676944896
+      },
+      {
+        "elapsed": 14.009704971918836,
+        "host_cpu_percent": 17.2,
+        "available_ram": 29296373760,
+        "rss": 2690469888
+      },
+      {
+        "elapsed": 14.510034955805168,
+        "host_cpu_percent": 11.8,
+        "available_ram": 29464813568,
+        "rss": 2374701056
+      },
+      {
+        "elapsed": 15.010338559979573,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29473558528,
+        "rss": 2374701056
+      },
+      {
+        "elapsed": 15.510645052883774,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29474017280,
+        "rss": 2374701056
+      },
+      {
+        "elapsed": 16.010954272933304,
+        "host_cpu_percent": 8.3,
+        "available_ram": 29894959104,
+        "rss": 1966731264
+      },
+      {
+        "elapsed": 16.511302335886285,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30498357248,
+        "rss": 1364455424
+      }
+    ]
+  },
+  {
+    "name": "pose-0-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-0-baseline.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.30318348808214,
+    "samples": [
+      {
+        "elapsed": 0.000513831153512001,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31225647104,
+        "rss": 1134592
+      },
+      {
+        "elapsed": 0.5008080119732767,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31159558144,
+        "rss": 505606144
+      },
+      {
+        "elapsed": 1.0011254709679633,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31143600128,
+        "rss": 555171840
+      },
+      {
+        "elapsed": 1.501425847178325,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31076872192,
+        "rss": 745725952
+      },
+      {
+        "elapsed": 2.001834830036387,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31047864320,
+        "rss": 775872512
+      },
+      {
+        "elapsed": 2.5021333880722523,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30731444224,
+        "rss": 992473088
+      },
+      {
+        "elapsed": 3.0024545670021325,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30734327808,
+        "rss": 1092366336
+      },
+      {
+        "elapsed": 3.5028157690539956,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30636552192,
+        "rss": 1193197568
+      },
+      {
+        "elapsed": 4.003134291153401,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30529298432,
+        "rss": 1293836288
+      },
+      {
+        "elapsed": 4.503454418154433,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30488334336,
+        "rss": 1335193600
+      },
+      {
+        "elapsed": 5.003813922172412,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30425337856,
+        "rss": 1403547648
+      },
+      {
+        "elapsed": 5.504153462126851,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30169387008,
+        "rss": 1658880000
+      },
+      {
+        "elapsed": 6.004492511972785,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30046150656,
+        "rss": 1685241856
+      },
+      {
+        "elapsed": 6.504879388026893,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30281625600,
+        "rss": 1416384512
+      },
+      {
+        "elapsed": 7.005207441048697,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30201425920,
+        "rss": 1626570752
+      },
+      {
+        "elapsed": 7.505536084994674,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30028001280,
+        "rss": 1661530112
+      },
+      {
+        "elapsed": 8.005912467138842,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30314295296,
+        "rss": 1425223680
+      },
+      {
+        "elapsed": 8.506230933126062,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30224060416,
+        "rss": 1604059136
+      },
+      {
+        "elapsed": 9.006552505074069,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30025818112,
+        "rss": 1801453568
+      },
+      {
+        "elapsed": 9.50689622410573,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30277816320,
+        "rss": 1264701440
+      },
+      {
+        "elapsed": 10.007212413009256,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30706139136,
+        "rss": 845946880
+      }
+    ]
+  },
+  {
+    "name": "pose-0-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-0-candidate.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 8.039534652838483,
+    "samples": [
+      {
+        "elapsed": 0.0005704858340322971,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31127711744,
+        "rss": 1314816
+      },
+      {
+        "elapsed": 0.5008424539119005,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31146123264,
+        "rss": 504889344
+      },
+      {
+        "elapsed": 1.0011409258004278,
+        "host_cpu_percent": 8.7,
+        "available_ram": 31146123264,
+        "rss": 554483712
+      },
+      {
+        "elapsed": 1.501490353839472,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31107403776,
+        "rss": 726081536
+      },
+      {
+        "elapsed": 2.0018084459006786,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31078998016,
+        "rss": 774721536
+      },
+      {
+        "elapsed": 2.5021167770028114,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30762176512,
+        "rss": 990625792
+      },
+      {
+        "elapsed": 3.002479812828824,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30762176512,
+        "rss": 1090519040
+      },
+      {
+        "elapsed": 3.502804626012221,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30663622656,
+        "rss": 1190858752
+      },
+      {
+        "elapsed": 4.003129893913865,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30564352000,
+        "rss": 1291403264
+      },
+      {
+        "elapsed": 4.503500550985336,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30531477504,
+        "rss": 1334763520
+      },
+      {
+        "elapsed": 5.003820830024779,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30478065664,
+        "rss": 1392902144
+      },
+      {
+        "elapsed": 5.504144642967731,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30440927232,
+        "rss": 1359245312
+      },
+      {
+        "elapsed": 6.004507001955062,
+        "host_cpu_percent": 10.8,
+        "available_ram": 30446157824,
+        "rss": 1405100032
+      },
+      {
+        "elapsed": 6.504827319877222,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30539431936,
+        "rss": 1353080832
+      },
+      {
+        "elapsed": 7.005137478001416,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30530781184,
+        "rss": 1417338880
+      },
+      {
+        "elapsed": 7.505500522907823,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30643478528,
+        "rss": 1080152064
+      },
+      {
+        "elapsed": 8.00581026589498,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30916358144,
+        "rss": 876363776
+      }
+    ]
+  },
+  {
+    "name": "pose-1-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-1-candidate.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 8.003019633004442,
+    "samples": [
+      {
+        "elapsed": 0.0004896658938378096,
+        "host_cpu_percent": 100.0,
+        "available_ram": 31291899904,
+        "rss": 1134592
+      },
+      {
+        "elapsed": 0.5007423609495163,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31295553536,
+        "rss": 504860672
+      },
+      {
+        "elapsed": 1.0010403878986835,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31248609280,
+        "rss": 554713088
+      },
+      {
+        "elapsed": 1.501344455871731,
+        "host_cpu_percent": 9.7,
+        "available_ram": 31186161664,
+        "rss": 745697280
+      },
+      {
+        "elapsed": 2.001722232904285,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31155662848,
+        "rss": 777465856
+      },
+      {
+        "elapsed": 2.5020236868876964,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30839115776,
+        "rss": 993165312
+      },
+      {
+        "elapsed": 3.0023473089095205,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30848569344,
+        "rss": 1093066752
+      },
+      {
+        "elapsed": 3.5027129489462823,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30741364736,
+        "rss": 1193603072
+      },
+      {
+        "elapsed": 4.003038477851078,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30634020864,
+        "rss": 1294233600
+      },
+      {
+        "elapsed": 4.503348754020408,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30611730432,
+        "rss": 1335369728
+      },
+      {
+        "elapsed": 5.0037030298262835,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30554460160,
+        "rss": 1395265536
+      },
+      {
+        "elapsed": 5.50402096984908,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30529908736,
+        "rss": 1349787648
+      },
+      {
+        "elapsed": 6.004339119885117,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30529908736,
+        "rss": 1409830912
+      },
+      {
+        "elapsed": 6.504694333998486,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30553067520,
+        "rss": 1360568320
+      },
+      {
+        "elapsed": 7.00501288799569,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30536921088,
+        "rss": 1423286272
+      },
+      {
+        "elapsed": 7.505326943937689,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30746529792,
+        "rss": 986390528
+      }
+    ]
+  },
+  {
+    "name": "pose-1-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-1-baseline.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.366778151830658,
+    "samples": [
+      {
+        "elapsed": 0.0005829317960888147,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31312363520,
+        "rss": 1339392
+      },
+      {
+        "elapsed": 0.5008579699788243,
+        "host_cpu_percent": 10.1,
+        "available_ram": 31137955840,
+        "rss": 505868288
+      },
+      {
+        "elapsed": 1.0011838499922305,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31137964032,
+        "rss": 555446272
+      },
+      {
+        "elapsed": 1.501482266932726,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31137140736,
+        "rss": 745910272
+      },
+      {
+        "elapsed": 2.0018154019489884,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31137140736,
+        "rss": 778067968
+      },
+      {
+        "elapsed": 2.5021197388414294,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30864531456,
+        "rss": 995450880
+      },
+      {
+        "elapsed": 3.0024452169891447,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30864531456,
+        "rss": 1096380416
+      },
+      {
+        "elapsed": 3.5027698900084943,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30765883392,
+        "rss": 1197019136
+      },
+      {
+        "elapsed": 4.003088985802606,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30658539520,
+        "rss": 1297752064
+      },
+      {
+        "elapsed": 4.50341216288507,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30625779712,
+        "rss": 1336152064
+      },
+      {
+        "elapsed": 5.003727290779352,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30572388352,
+        "rss": 1403645952
+      },
+      {
+        "elapsed": 5.504079581005499,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30308360192,
+        "rss": 1665929216
+      },
+      {
+        "elapsed": 6.00442603090778,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30192644096,
+        "rss": 1684856832
+      },
+      {
+        "elapsed": 6.504721921868622,
+        "host_cpu_percent": 9.2,
+        "available_ram": 30478946304,
+        "rss": 1416732672
+      },
+      {
+        "elapsed": 7.005116126965731,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30363881472,
+        "rss": 1621499904
+      },
+      {
+        "elapsed": 7.505408097989857,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30190407680,
+        "rss": 1639641088
+      },
+      {
+        "elapsed": 8.00574137386866,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30449098752,
+        "rss": 1424633856
+      },
+      {
+        "elapsed": 8.506083637941629,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30424117248,
+        "rss": 1576341504
+      },
+      {
+        "elapsed": 9.006416705902666,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30192685056,
+        "rss": 1801691136
+      },
+      {
+        "elapsed": 9.506739949807525,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30492495872,
+        "rss": 1265209344
+      },
+      {
+        "elapsed": 10.007045603822917,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30911840256,
+        "rss": 846467072
+      }
+    ]
+  },
+  {
+    "name": "pose-2-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-2-baseline.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.329832474933937,
+    "samples": [
+      {
+        "elapsed": 0.0004918479826301336,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31341965312,
+        "rss": 1138688
+      },
+      {
+        "elapsed": 0.5007490019779652,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31341629440,
+        "rss": 504975360
+      },
+      {
+        "elapsed": 1.0010831549298018,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31333855232,
+        "rss": 554700800
+      },
+      {
+        "elapsed": 1.5013811369426548,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31267311616,
+        "rss": 745791488
+      },
+      {
+        "elapsed": 2.0017375759780407,
+        "host_cpu_percent": 8.2,
+        "available_ram": 31235747840,
+        "rss": 777547776
+      },
+      {
+        "elapsed": 2.502085963031277,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30919229440,
+        "rss": 993280000
+      },
+      {
+        "elapsed": 3.0024063179735094,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30918938624,
+        "rss": 1093844992
+      },
+      {
+        "elapsed": 3.502716625807807,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30820265984,
+        "rss": 1194668032
+      },
+      {
+        "elapsed": 4.003072276012972,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30712967168,
+        "rss": 1295228928
+      },
+      {
+        "elapsed": 4.503392363898456,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30688813056,
+        "rss": 1334423552
+      },
+      {
+        "elapsed": 5.0037117439787835,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30614704128,
+        "rss": 1402671104
+      },
+      {
+        "elapsed": 5.5040712198242545,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30365380608,
+        "rss": 1658720256
+      },
+      {
+        "elapsed": 6.004388181958348,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30241161216,
+        "rss": 1688756224
+      },
+      {
+        "elapsed": 6.504705480998382,
+        "host_cpu_percent": 9.2,
+        "available_ram": 30532329472,
+        "rss": 1415684096
+      },
+      {
+        "elapsed": 7.005076187895611,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30392393728,
+        "rss": 1636126720
+      },
+      {
+        "elapsed": 7.50539197283797,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30235414528,
+        "rss": 1650401280
+      },
+      {
+        "elapsed": 8.00571678695269,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30377631744,
+        "rss": 1423159296
+      },
+      {
+        "elapsed": 8.506074098870158,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30214594560,
+        "rss": 1591820288
+      },
+      {
+        "elapsed": 9.006399092962965,
+        "host_cpu_percent": 8.5,
+        "available_ram": 29999869952,
+        "rss": 1803149312
+      },
+      {
+        "elapsed": 9.506727864034474,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30291173376,
+        "rss": 1262096384
+      },
+      {
+        "elapsed": 10.00707320892252,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30717140992,
+        "rss": 846864384
+      }
+    ]
+  },
+  {
+    "name": "pose-2-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-2-candidate.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 8.033409886062145,
+    "samples": [
+      {
+        "elapsed": 0.0004403369966894388,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31138799616,
+        "rss": 1069056
+      },
+      {
+        "elapsed": 0.5006888639181852,
+        "host_cpu_percent": 10.0,
+        "available_ram": 30959366144,
+        "rss": 505090048
+      },
+      {
+        "elapsed": 1.0009847460314631,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30959243264,
+        "rss": 555249664
+      },
+      {
+        "elapsed": 1.5013031819835305,
+        "host_cpu_percent": 9.8,
+        "available_ram": 30958653440,
+        "rss": 745807872
+      },
+      {
+        "elapsed": 2.0016528950072825,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30958653440,
+        "rss": 777768960
+      },
+      {
+        "elapsed": 2.5019613259937614,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30735441920,
+        "rss": 995102720
+      },
+      {
+        "elapsed": 3.002281164051965,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30735441920,
+        "rss": 1095909376
+      },
+      {
+        "elapsed": 3.502603868022561,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30628421632,
+        "rss": 1196462080
+      },
+      {
+        "elapsed": 4.002931643044576,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30537412608,
+        "rss": 1296543744
+      },
+      {
+        "elapsed": 4.503253658069298,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30504456192,
+        "rss": 1335812096
+      },
+      {
+        "elapsed": 5.003570257918909,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30443479040,
+        "rss": 1396817920
+      },
+      {
+        "elapsed": 5.503886830992997,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30410526720,
+        "rss": 1359708160
+      },
+      {
+        "elapsed": 6.004201275063679,
+        "host_cpu_percent": 9.2,
+        "available_ram": 30415896576,
+        "rss": 1408655360
+      },
+      {
+        "elapsed": 6.504543310031295,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30415900672,
+        "rss": 1360801792
+      },
+      {
+        "elapsed": 7.004882291890681,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30415900672,
+        "rss": 1421934592
+      },
+      {
+        "elapsed": 7.505190951982513,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30665809920,
+        "rss": 974221312
+      },
+      {
+        "elapsed": 8.005494714947417,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30850596864,
+        "rss": 0
+      }
+    ]
+  },
+  {
+    "name": "pose-3-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-3-candidate.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 7.973812778946012,
+    "samples": [
+      {
+        "elapsed": 0.0004816809669137001,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31214170112,
+        "rss": 1134592
+      },
+      {
+        "elapsed": 0.5007475218735635,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31047106560,
+        "rss": 505049088
+      },
+      {
+        "elapsed": 1.0010417429730296,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31046848512,
+        "rss": 554967040
+      },
+      {
+        "elapsed": 1.501312272856012,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31046340608,
+        "rss": 745787392
+      },
+      {
+        "elapsed": 2.001651105005294,
+        "host_cpu_percent": 8.2,
+        "available_ram": 31046344704,
+        "rss": 777732096
+      },
+      {
+        "elapsed": 2.50195185886696,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30815133696,
+        "rss": 994615296
+      },
+      {
+        "elapsed": 3.0022694759536535,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30815133696,
+        "rss": 1094926336
+      },
+      {
+        "elapsed": 3.502587281865999,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30716485632,
+        "rss": 1195249664
+      },
+      {
+        "elapsed": 4.0029058158397675,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30617214976,
+        "rss": 1295663104
+      },
+      {
+        "elapsed": 4.503224995918572,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30592552960,
+        "rss": 1335652352
+      },
+      {
+        "elapsed": 5.003564337966964,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30547062784,
+        "rss": 1396146176
+      },
+      {
+        "elapsed": 5.503898904891685,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30514253824,
+        "rss": 1349718016
+      },
+      {
+        "elapsed": 6.004215250955895,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30515761152,
+        "rss": 1410252800
+      },
+      {
+        "elapsed": 6.504529299912974,
+        "host_cpu_percent": 9.2,
+        "available_ram": 30515519488,
+        "rss": 1360977920
+      },
+      {
+        "elapsed": 7.004892873810604,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30515519488,
+        "rss": 1423605760
+      },
+      {
+        "elapsed": 7.50520226592198,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30842077184,
+        "rss": 895574016
+      }
+    ]
+  },
+  {
+    "name": "pose-3-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-3-baseline.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.261752618011087,
+    "samples": [
+      {
+        "elapsed": 0.0005807289853692055,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31311822848,
+        "rss": 1314816
+      },
+      {
+        "elapsed": 0.5008481820113957,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31168684032,
+        "rss": 505999360
+      },
+      {
+        "elapsed": 1.0011556688696146,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31169564672,
+        "rss": 555311104
+      },
+      {
+        "elapsed": 1.50147222308442,
+        "host_cpu_percent": 10.1,
+        "available_ram": 31168974848,
+        "rss": 745791488
+      },
+      {
+        "elapsed": 2.0017730118706822,
+        "host_cpu_percent": 8.8,
+        "available_ram": 31163318272,
+        "rss": 777560064
+      },
+      {
+        "elapsed": 2.5021164510399103,
+        "host_cpu_percent": 9.3,
+        "available_ram": 30837317632,
+        "rss": 990015488
+      },
+      {
+        "elapsed": 3.0024720530491322,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30837329920,
+        "rss": 1090424832
+      },
+      {
+        "elapsed": 3.50278561306186,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30738567168,
+        "rss": 1191419904
+      },
+      {
+        "elapsed": 4.00311035499908,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30639267840,
+        "rss": 1292460032
+      },
+      {
+        "elapsed": 4.503480441868305,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30614745088,
+        "rss": 1333981184
+      },
+      {
+        "elapsed": 5.003800184931606,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30545207296,
+        "rss": 1402589184
+      },
+      {
+        "elapsed": 5.504167530918494,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30297784320,
+        "rss": 1656360960
+      },
+      {
+        "elapsed": 6.004478936083615,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30173384704,
+        "rss": 1688756224
+      },
+      {
+        "elapsed": 6.504800426075235,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30411010048,
+        "rss": 1415688192
+      },
+      {
+        "elapsed": 7.005156954983249,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30312337408,
+        "rss": 1638682624
+      },
+      {
+        "elapsed": 7.5055047979112715,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30163542016,
+        "rss": 1675423744
+      },
+      {
+        "elapsed": 8.005835124989972,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30438891520,
+        "rss": 1427349504
+      },
+      {
+        "elapsed": 8.506164595019072,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30340395008,
+        "rss": 1616928768
+      },
+      {
+        "elapsed": 9.006508464924991,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30150524928,
+        "rss": 1649422336
+      },
+      {
+        "elapsed": 9.50684404396452,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30420791296,
+        "rss": 1262194688
+      },
+      {
+        "elapsed": 10.007155433064327,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30839402496,
+        "rss": 844873728
+      }
+    ]
+  },
+  {
+    "name": "pose-4-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-4-baseline.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.353774531977251,
+    "samples": [
+      {
+        "elapsed": 0.000489177880808711,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31259684864,
+        "rss": 1388544
+      },
+      {
+        "elapsed": 0.5007752829696983,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31096381440,
+        "rss": 505126912
+      },
+      {
+        "elapsed": 1.0010704819578677,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31096381440,
+        "rss": 554987520
+      },
+      {
+        "elapsed": 1.5013706658501178,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31095750656,
+        "rss": 745910272
+      },
+      {
+        "elapsed": 2.001690707867965,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31095750656,
+        "rss": 775749632
+      },
+      {
+        "elapsed": 2.5019909099210054,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30864838656,
+        "rss": 992403456
+      },
+      {
+        "elapsed": 3.0023101959377527,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30864846848,
+        "rss": 1091923968
+      },
+      {
+        "elapsed": 3.5026247969362885,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30766034944,
+        "rss": 1192247296
+      },
+      {
+        "elapsed": 4.002981175901368,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30666764288,
+        "rss": 1292677120
+      },
+      {
+        "elapsed": 4.50330524193123,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30625931264,
+        "rss": 1334120448
+      },
+      {
+        "elapsed": 5.003624629927799,
+        "host_cpu_percent": 9.1,
+        "available_ram": 30552272896,
+        "rss": 1402675200
+      },
+      {
+        "elapsed": 5.503992881858721,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30304833536,
+        "rss": 1652981760
+      },
+      {
+        "elapsed": 6.004321618936956,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30180519936,
+        "rss": 1672937472
+      },
+      {
+        "elapsed": 6.504658016841859,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30456791040,
+        "rss": 1415475200
+      },
+      {
+        "elapsed": 7.004973151953891,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30350000128,
+        "rss": 1610547200
+      },
+      {
+        "elapsed": 7.505292295012623,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30168338432,
+        "rss": 1639641088
+      },
+      {
+        "elapsed": 8.005610809894279,
+        "host_cpu_percent": 9.2,
+        "available_ram": 30414426112,
+        "rss": 1422196736
+      },
+      {
+        "elapsed": 8.505968088982627,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30398291968,
+        "rss": 1560133632
+      },
+      {
+        "elapsed": 9.006287067895755,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30158786560,
+        "rss": 1801695232
+      },
+      {
+        "elapsed": 9.506619403837249,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30442770432,
+        "rss": 1278058496
+      },
+      {
+        "elapsed": 10.00697115296498,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30851518464,
+        "rss": 861777920
+      }
+    ]
+  },
+  {
+    "name": "pose-4-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-4-candidate.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 8.028064502868801,
+    "samples": [
+      {
+        "elapsed": 0.0005737149622291327,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31297130496,
+        "rss": 1310720
+      },
+      {
+        "elapsed": 0.500824545044452,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31125938176,
+        "rss": 505954304
+      },
+      {
+        "elapsed": 1.0011472848709673,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31125938176,
+        "rss": 555425792
+      },
+      {
+        "elapsed": 1.5014570739585906,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31125344256,
+        "rss": 745779200
+      },
+      {
+        "elapsed": 2.0017798009794205,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31125168128,
+        "rss": 778039296
+      },
+      {
+        "elapsed": 2.5020780118647963,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30877888512,
+        "rss": 995303424
+      },
+      {
+        "elapsed": 3.002407298889011,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30874112000,
+        "rss": 1095929856
+      },
+      {
+        "elapsed": 3.502732860855758,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30770655232,
+        "rss": 1196892160
+      },
+      {
+        "elapsed": 4.003057384863496,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30671659008,
+        "rss": 1297666048
+      },
+      {
+        "elapsed": 4.503377767978236,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30630699008,
+        "rss": 1336246272
+      },
+      {
+        "elapsed": 5.003696260042489,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30565392384,
+        "rss": 1398190080
+      },
+      {
+        "elapsed": 5.504034848883748,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30540697600,
+        "rss": 1352921088
+      },
+      {
+        "elapsed": 6.004369172966108,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30540451840,
+        "rss": 1417723904
+      },
+      {
+        "elapsed": 6.5046830419451,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30532456448,
+        "rss": 1369501696
+      },
+      {
+        "elapsed": 7.0050377058796585,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30532456448,
+        "rss": 1434255360
+      },
+      {
+        "elapsed": 7.505372982937843,
+        "host_cpu_percent": 9.2,
+        "available_ram": 30788747264,
+        "rss": 955367424
+      },
+      {
+        "elapsed": 8.00568428891711,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31054516224,
+        "rss": 0
+      }
+    ]
+  },
+  {
+    "name": "pose-5-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-5-candidate.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 8.05168542591855,
+    "samples": [
+      {
+        "elapsed": 0.0005135359242558479,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31330705408,
+        "rss": 1327104
+      },
+      {
+        "elapsed": 0.5007592299953103,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31329177600,
+        "rss": 504975360
+      },
+      {
+        "elapsed": 1.0010516170877963,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31291314176,
+        "rss": 554651648
+      },
+      {
+        "elapsed": 1.5013567539863288,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31223078912,
+        "rss": 679129088
+      },
+      {
+        "elapsed": 2.0016938489861786,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31191035904,
+        "rss": 773300224
+      },
+      {
+        "elapsed": 2.502009429037571,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30874386432,
+        "rss": 988409856
+      },
+      {
+        "elapsed": 3.002334563061595,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30874177536,
+        "rss": 1089445888
+      },
+      {
+        "elapsed": 3.5026884630788118,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30775275520,
+        "rss": 1190666240
+      },
+      {
+        "elapsed": 4.003027501981705,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30676164608,
+        "rss": 1291640832
+      },
+      {
+        "elapsed": 4.5033458629623055,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30635200512,
+        "rss": 1332883456
+      },
+      {
+        "elapsed": 5.003683045040816,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30569648128,
+        "rss": 1394024448
+      },
+      {
+        "elapsed": 5.5040166459511966,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30536695808,
+        "rss": 1349091328
+      },
+      {
+        "elapsed": 6.004335694015026,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30536695808,
+        "rss": 1408008192
+      },
+      {
+        "elapsed": 6.504645474022254,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30536708096,
+        "rss": 1363890176
+      },
+      {
+        "elapsed": 7.005006205989048,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30536708096,
+        "rss": 1424457728
+      },
+      {
+        "elapsed": 7.5053221608977765,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30729854976,
+        "rss": 1019117568
+      },
+      {
+        "elapsed": 8.005629193037748,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30938935296,
+        "rss": 851886080
+      }
+    ]
+  },
+  {
+    "name": "pose-5-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-5-baseline.json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.277475419919938,
+    "samples": [
+      {
+        "elapsed": 0.0005249069072306156,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31329730560,
+        "rss": 1314816
+      },
+      {
+        "elapsed": 0.5007902029901743,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31158661120,
+        "rss": 505061376
+      },
+      {
+        "elapsed": 1.0011321038473397,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31158661120,
+        "rss": 554754048
+      },
+      {
+        "elapsed": 1.5014416419435292,
+        "host_cpu_percent": 10.0,
+        "available_ram": 31158366208,
+        "rss": 710176768
+      },
+      {
+        "elapsed": 2.0017547488678247,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31157927936,
+        "rss": 774070272
+      },
+      {
+        "elapsed": 2.5020792218856514,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30877458432,
+        "rss": 989351936
+      },
+      {
+        "elapsed": 3.00240526185371,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30877429760,
+        "rss": 1089417216
+      },
+      {
+        "elapsed": 3.502727748826146,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30778757120,
+        "rss": 1188663296
+      },
+      {
+        "elapsed": 4.003079615999013,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30679715840,
+        "rss": 1288531968
+      },
+      {
+        "elapsed": 4.503401539986953,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30638751744,
+        "rss": 1331281920
+      },
+      {
+        "elapsed": 5.003727312898263,
+        "host_cpu_percent": 10.4,
+        "available_ram": 30581002240,
+        "rss": 1404026880
+      },
+      {
+        "elapsed": 5.504086914006621,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30349869056,
+        "rss": 1634086912
+      },
+      {
+        "elapsed": 6.004422822967172,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30200885248,
+        "rss": 1676275712
+      },
+      {
+        "elapsed": 6.504763391800225,
+        "host_cpu_percent": 9.3,
+        "available_ram": 30476431360,
+        "rss": 1417854976
+      },
+      {
+        "elapsed": 7.005136576946825,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30336495616,
+        "rss": 1645326336
+      },
+      {
+        "elapsed": 7.505474973935634,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30195961856,
+        "rss": 1682436096
+      },
+      {
+        "elapsed": 8.005801180843264,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30473711616,
+        "rss": 1430687744
+      },
+      {
+        "elapsed": 8.506155295995995,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30358773760,
+        "rss": 1628360704
+      },
+      {
+        "elapsed": 9.00647666095756,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30185205760,
+        "rss": 1648689152
+      },
+      {
+        "elapsed": 9.50679195090197,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30459523072,
+        "rss": 1266585600
+      },
+      {
+        "elapsed": 10.007136416854337,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30884225024,
+        "rss": 847839232
+      }
+    ]
+  },
+  {
+    "name": "pose-6-baseline",
+    "command": [
+      "/tmp/ultrafast-nonbbox-base-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-6-baseline.json",
+      "--arrays"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.776094851782545,
+    "samples": [
+      {
+        "elapsed": 0.0004952349700033665,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31303663616,
+        "rss": 1134592
+      },
+      {
+        "elapsed": 0.5007569589652121,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31147995136,
+        "rss": 505921536
+      },
+      {
+        "elapsed": 1.001056000823155,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31147995136,
+        "rss": 555216896
+      },
+      {
+        "elapsed": 1.5013638469390571,
+        "host_cpu_percent": 10.2,
+        "available_ram": 31148183552,
+        "rss": 745734144
+      },
+      {
+        "elapsed": 2.0016920848283917,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31148109824,
+        "rss": 777674752
+      },
+      {
+        "elapsed": 2.5019945858512074,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30908641280,
+        "rss": 993693696
+      },
+      {
+        "elapsed": 3.0023139999248087,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30909751296,
+        "rss": 1093775360
+      },
+      {
+        "elapsed": 3.5026728238444775,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30803427328,
+        "rss": 1193934848
+      },
+      {
+        "elapsed": 4.002993642818183,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30705352704,
+        "rss": 1294348288
+      },
+      {
+        "elapsed": 4.503351701889187,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30664454144,
+        "rss": 1335271424
+      },
+      {
+        "elapsed": 5.003669474972412,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30590791680,
+        "rss": 1403596800
+      },
+      {
+        "elapsed": 5.503998369909823,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30408941568,
+        "rss": 1584525312
+      },
+      {
+        "elapsed": 6.0043140349444,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30218846208,
+        "rss": 1626234880
+      },
+      {
+        "elapsed": 6.504661773797125,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30461521920,
+        "rss": 1414963200
+      },
+      {
+        "elapsed": 7.004989050794393,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30461276160,
+        "rss": 1480712192
+      },
+      {
+        "elapsed": 7.50531413895078,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30213832704,
+        "rss": 1786179584
+      },
+      {
+        "elapsed": 8.005642842967063,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30205550592,
+        "rss": 1691668480
+      },
+      {
+        "elapsed": 8.50595945888199,
+        "host_cpu_percent": 11.0,
+        "available_ram": 30454112256,
+        "rss": 1432743936
+      },
+      {
+        "elapsed": 9.0063320947811,
+        "host_cpu_percent": 16.2,
+        "available_ram": 30388277248,
+        "rss": 1631186944
+      },
+      {
+        "elapsed": 9.506748306797817,
+        "host_cpu_percent": 15.5,
+        "available_ram": 30300569600,
+        "rss": 1650679808
+      },
+      {
+        "elapsed": 10.007096157874912,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30669545472,
+        "rss": 1265135616
+      },
+      {
+        "elapsed": 10.507388124940917,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31091363840,
+        "rss": 847433728
+      }
+    ]
+  },
+  {
+    "name": "pose-6-candidate",
+    "command": [
+      "/tmp/ultrafast-nonbbox-opt-20260909/.venv/bin/python",
+      "/tmp/ultralytics-pr26101/ultralytics_metric.py",
+      "--task",
+      "pose",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--pred",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-reference/predictions.json",
+      "--output",
+      "/tmp/ultralytics-pr26101/results/nonbbox-paired-d/pose-6-candidate.json",
+      "--arrays"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 8.352388798026368,
+    "samples": [
+      {
+        "elapsed": 0.0005660459864884615,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31514914816,
+        "rss": 1200128
+      },
+      {
+        "elapsed": 0.5008329749107361,
+        "host_cpu_percent": 10.8,
+        "available_ram": 31319781376,
+        "rss": 504438784
+      },
+      {
+        "elapsed": 1.0011426240671426,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31263272960,
+        "rss": 554184704
+      },
+      {
+        "elapsed": 1.50143748591654,
+        "host_cpu_percent": 9.8,
+        "available_ram": 31211773952,
+        "rss": 678612992
+      },
+      {
+        "elapsed": 2.0017445280682296,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31179415552,
+        "rss": 773865472
+      },
+      {
+        "elapsed": 2.502050924114883,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30862921728,
+        "rss": 988880896
+      },
+      {
+        "elapsed": 3.0024250529240817,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30862630912,
+        "rss": 1089921024
+      },
+      {
+        "elapsed": 3.502747918944806,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30763958272,
+        "rss": 1190948864
+      },
+      {
+        "elapsed": 4.0030614379793406,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30673244160,
+        "rss": 1291284480
+      },
+      {
+        "elapsed": 4.503412476973608,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30631981056,
+        "rss": 1334607872
+      },
+      {
+        "elapsed": 5.003731484059244,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30591168512,
+        "rss": 1369960448
+      },
+      {
+        "elapsed": 5.504053873941302,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30542409728,
+        "rss": 1366491136
+      },
+      {
+        "elapsed": 6.004434722010046,
+        "host_cpu_percent": 9.0,
+        "available_ram": 30542409728,
+        "rss": 1375506432
+      },
+      {
+        "elapsed": 6.504742336925119,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30542954496,
+        "rss": 1295708160
+      },
+      {
+        "elapsed": 7.005068903090432,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30542954496,
+        "rss": 1377710080
+      },
+      {
+        "elapsed": 7.505393336061388,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30542958592,
+        "rss": 1223380992
+      },
+      {
+        "elapsed": 8.005735768005252,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30954639360,
+        "rss": 820793344
+      }
+    ]
+  }
+]

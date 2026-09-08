@@ -41,6 +41,8 @@ def main() -> None:
     ap.add_argument("--dt", type=Path, required=True)
     ap.add_argument("--iou-type", default="segm")
     ap.add_argument("--repeat", type=int, default=3)
+    ap.add_argument("--file-inputs", action="store_true",
+                    help="Keep native file snapshots instead of materializing annotation dictionaries")
     args = ap.parse_args()
 
     t = time.perf_counter()
@@ -48,9 +50,12 @@ def main() -> None:
     t_load_gt = time.perf_counter() - t
 
     t = time.perf_counter()
-    with open(args.dt) as f:
-        dets = json.load(f)
-    dt = gt.loadRes(dets)
+    if args.file_inputs:
+        dt = gt.loadRes(str(args.dt))
+    else:
+        with open(args.dt) as f:
+            dets = json.load(f)
+        dt = gt.loadRes(dets)
     t_load_dt = time.perf_counter() - t
 
     ev = ufc.COCOeval(gt, dt, args.iou_type, print_function=lambda *_: None)
@@ -60,7 +65,12 @@ def main() -> None:
     p.maxDets = sorted(p.maxDets)
 
     t = time.perf_counter()
-    gts, dts, img_sizes = ev._collect()
+    if args.file_inputs:
+        gts = gt._compact if gt._compact is not None else gt._eval_annotations(p.imgIds, p.catIds)
+        dts = dt._compact if dt._compact is not None else dt._eval_annotations(p.imgIds, p.catIds)
+        img_sizes = ev._image_sizes()
+    else:
+        gts, dts, img_sizes = ev._collect()
     t_prepare = time.perf_counter() - t
 
     sigmas = getattr(p, "kpt_oks_sigmas", np.zeros(0))
@@ -83,7 +93,9 @@ def main() -> None:
     _, t_build, t_run, tm = best
 
     print(f"iouType             : {args.iou_type}")
-    print(f"gt / dt annotations : {len(gts)} / {len(dts)}")
+    print(f"file snapshots      : {args.file_inputs}")
+    counts = [x.annotation_count if isinstance(x, _ufcoco.CompactBbox) else len(x) for x in (gts, dts)]
+    print(f"gt / dt annotations : {counts[0]} / {counts[1]}")
     print()
     print("python side (wall)")
     print(f"  COCO(gt) load          {t_load_gt:8.3f}s")

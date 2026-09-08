@@ -217,13 +217,16 @@ class COCOeval:
             from ._lvis import collect
             dts = collect(self, gts)
 
+        return gts, dts, self._image_sizes()
+
+    def _image_sizes(self) -> dict:
         img_sizes: dict = {}
-        if p.iouType in ("segm", "boundary"):
+        if self.params.iouType in ("segm", "boundary"):
             for src in (self.cocoGt, self.cocoDt):
                 for img_id, img in src.imgs.items():
                     if img_id not in img_sizes:
                         img_sizes[int(img_id)] = (int(img["height"]), int(img["width"]))
-        return gts, dts, img_sizes
+        return img_sizes
 
     def _prepare(self) -> None:
         """Populate ``_gts`` / ``_dts``, keyed by ``(imgId, catId)``.
@@ -466,7 +469,7 @@ class COCOeval:
         p.maxDets = sorted(p.maxDets)
         self.params = p
 
-        if (type(self) is COCOeval and not self.lvis_style and p.iouType == "bbox"
+        if (type(self) is COCOeval and not self.lvis_style
                 and type(self.cocoGt) is COCO and type(self.cocoDt) is COCO
                 and (self.cocoGt._compact is not None or self.cocoDt._compact is not None)):
             categories = p.catIds if p.useCats else []
@@ -474,7 +477,7 @@ class COCOeval:
                    self.cocoGt._eval_annotations(p.imgIds, categories))
             dts = (self.cocoDt._compact if self.cocoDt._compact is not None else
                    self.cocoDt._eval_annotations(p.imgIds, categories))
-            img_sizes = {}
+            img_sizes = self._image_sizes()
         else:
             gts, dts, img_sizes = self._collect()
         # A fresh run must not serve stale per-image views.
