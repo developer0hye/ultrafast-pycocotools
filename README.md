@@ -26,7 +26,7 @@ python -m pip install ultrafast-pycocotools
 
 Prebuilt wheels cover CPython 3.8–3.14 on Linux x86-64/ARM64 (glibc 2.17+), Windows
 x86-64, and macOS Intel/Apple Silicon. Compatible wheels require no Rust compiler.
-Apple Silicon wheels require Python 3.9+. NumPy is installed automatically.
+Apple Silicon wheels include Python 3.8. NumPy is installed automatically.
 Other platforms build from source.
 
 The [release workflow and maintainer guide](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/publishing.md)
