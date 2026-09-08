@@ -317,7 +317,7 @@ class COCO:
                 field to exist directly in each annotation dictionary.
         """
         res = COCO(verbose=self.verbose)
-        res._derive_segmentation = derive_segmentation
+        res._derive_segmentation = True  # Only the box-result branch enables implicit polygons.
         res.dataset["info"] = copy.deepcopy(self.dataset.get("info", {}))
         res.dataset["images"] = [img for img in self.dataset["images"]]
 
@@ -348,6 +348,7 @@ class COCO:
             for idx, ann in enumerate(anns):
                 ann["id"] = idx + 1
         elif "bbox" in anns[0] and anns[0]["bbox"] != []:
+            res._derive_segmentation = derive_segmentation
             res.dataset["categories"] = copy.deepcopy(self.dataset["categories"])
             for idx, ann in enumerate(anns):
                 bb = ann["bbox"]

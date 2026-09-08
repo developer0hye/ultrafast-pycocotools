@@ -71,3 +71,12 @@ def test_materialized_results_match_reference_annotation_fields():
     ref.createIndex()
     actual = ufc.COCO(data, verbose=False).loadRes(copy.deepcopy(preds), derive_segmentation=True)
     assert actual.anns == ref.loadRes(copy.deepcopy(preds)).anns
+
+
+def test_keypoint_results_do_not_gain_implicit_segmentation():
+    gt = ufc.COCO({'images':[{'id':1,'height':32,'width':32}],
+                   'categories':[{'id':1}], 'annotations':[]}, verbose=False)
+    dt = gt.loadRes([{'image_id':1,'category_id':1,'keypoints':[2,3,2,10,12,2],'score':.9}])
+    assert 'bbox' in dt.anns[1]  # Derived keypoint bounds are not a box prediction.
+    with pytest.raises(KeyError, match='segmentation'):
+        dt.annToMask(dt.anns[1])
