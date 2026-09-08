@@ -1,0 +1,13 @@
+{
+  "source_revision": "7d7f07def11da91f8b2710ce352c62a78fd5a7ad",
+  "files": {
+    "lvis_gt_100.json": {
+      "url": "https://raw.githubusercontent.com/lvis-dataset/lvis-api/7d7f07def11da91f8b2710ce352c62a78fd5a7ad/data/lvis_val_100.json",
+      "sha256": "f32e54e92c8d1f4fe8f788dc3fa31f3e7dc232962141035f5deabb163d2852a3"
+    },
+    "lvis_dt_100.json": {
+      "url": "https://raw.githubusercontent.com/lvis-dataset/lvis-api/7d7f07def11da91f8b2710ce352c62a78fd5a7ad/data/lvis_results_100.json",
+      "sha256": "160308634f9026ec1ac7df52fb5a65a1bf08d74b0835b1645b2cd47aff4816e4"
+    }
+  }
+}

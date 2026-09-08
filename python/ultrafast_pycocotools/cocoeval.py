@@ -130,6 +130,7 @@ class COCOeval:
         iouType: str = "segm",
         *,
         store_eval_imgs: bool = False,
+        lvis_style: bool = False,
         kpt_oks_sigmas: Any = None,
         use_area: bool = True,
         boundary_dilation_ratio: float = 0.02,
@@ -164,6 +165,9 @@ class COCOeval:
         self._dts: Any = {}
         self._ious: dict | None = None
         self.params = Params(iouType=iouType)
+        self.lvis_style = bool(lvis_style)
+        if self.lvis_style:
+            self.params.maxDets = [300]
         self._paramsEval: Params | None = None
         self.stats: Any = []
 
@@ -194,12 +198,17 @@ class COCOeval:
         """
         p = self.params
         cat_filter = p.catIds if p.useCats else []
-        gts = self.cocoGt.loadAnns(
-            self.cocoGt.getAnnIds(imgIds=p.imgIds, catIds=cat_filter)
-        )
-        dts = self.cocoDt.loadAnns(
-            self.cocoDt.getAnnIds(imgIds=p.imgIds, catIds=cat_filter)
-        )
+        def collect(handle):
+            if type(handle) is COCO:
+                return handle._eval_annotations(p.imgIds, cat_filter)
+            return handle.loadAnns(handle.getAnnIds(imgIds=p.imgIds, catIds=cat_filter))
+
+        gts = collect(self.cocoGt)
+        dts = [] if self.lvis_style else collect(self.cocoDt)
+
+        if self.lvis_style:
+            from ._lvis import collect
+            dts = collect(self, gts)
 
         img_sizes: dict = {}
         if p.iouType in ("segm", "boundary"):
@@ -225,9 +234,13 @@ class COCOeval:
         gts, dts, _ = self._collect()
         self._gts = defaultdict(list)
         self._dts = defaultdict(list)
-        for gt in gts:
+        for source_gt in gts:
+            gt = dict(source_gt) if self.lvis_style else source_gt
             gt.setdefault("ignore", 0)
-            gt["ignore"] = bool(gt.get("iscrowd", 0))
+            if self.lvis_style:
+                gt["iscrowd"] = 0
+            else:
+                gt["ignore"] = bool(gt.get("iscrowd", 0))
             if self.params.iouType.startswith("keypoints"):
                 gt["ignore"] = (gt.get("num_keypoints", 0) == 0) or gt["ignore"]
             self._gts[gt["image_id"], gt["category_id"]].append(gt)
@@ -380,6 +393,8 @@ class COCOeval:
                     dtm[tind, dind] = gt[m]["id"]
                     gtm[tind, m] = d["id"]
         a = np.array([d["area"] < aRng[0] or d["area"] > aRng[1] for d in dt]).reshape((1, len(dt)))
+        if self.lvis_style and (imgId, catId) in set(self._lvis_not_exhaustive):
+            a[:] = True
         dtIg = np.logical_or(dtIg, np.logical_and(dtm == 0, np.repeat(a, T, 0)))
         return {
             "image_id": imgId,
@@ -465,9 +480,15 @@ class COCOeval:
             bool(self.use_area),
             float(self.boundary_dilation_ratio),
         )
+        if self.lvis_style:
+            self._engine.configure_lvis([bool(gt.get("ignore", 0)) for gt in gts],
+                                        self._lvis_not_exhaustive)
         self._raw = self._engine.run(self.store_eval_imgs)
         if self.store_eval_imgs:
             self.evalImgs = self._raw["evalImgs"]
+            for item in self.evalImgs:
+                if item is not None:
+                    item["aRng"] = list(p.areaRng[item["aRng"]])
         self._paramsEval = copy.deepcopy(self.params)
         self.print_function(f"DONE (t={time.time() - tic:0.2f}s).")
 
@@ -527,6 +548,11 @@ class COCOeval:
     def summarize(self) -> None:
         """Compute and print the 12 (detection) or 10 (keypoint) summary
         metrics, in pycocotools' order and format."""
+
+        if self.lvis_style:
+            from ._lvis import summarize
+            summarize(self)
+            return
 
         def _summarizeDets():
             md = self.params.maxDets
@@ -590,7 +616,10 @@ class COCOeval:
     @property
     def stats_as_dict(self) -> dict[str, float]:
         """The summary metrics keyed by name instead of by position."""
-        if self.params.iouType in _DET_TYPES:
+        if self.lvis_style:
+            from ._lvis import names
+            labels = names(self.params.maxDets[0])
+        elif self.params.iouType in _DET_TYPES:
             labels = [
                 "AP", "AP_50", "AP_75", "AP_small", "AP_medium", "AP_large",
                 f"AR_{self.params.maxDets[0]}",
@@ -603,7 +632,18 @@ class COCOeval:
                 "AP", "AP_50", "AP_75", "AP_medium", "AP_large",
                 "AR", "AR_50", "AR_75", "AR_medium", "AR_large",
             ]
-        return {k: float(v) for k, v in zip(labels, self.stats)}
+        values = {k: float(v) for k, v in zip(labels, self.stats)}
+        aliases = {'AP_all': 'AP', 'AP50': 'AP_50', 'AP75': 'AP_75',
+                   'APs': 'AP_small', 'APm': 'AP_medium', 'APl': 'AP_large'}
+        for canonical, legacy in aliases.items():
+            if canonical in values:
+                values.setdefault(legacy, values[canonical])
+            elif legacy in values:
+                values[canonical] = values[legacy]
+        for key in list(values):
+            if key.startswith('AR_') and key[3:].isdigit():
+                values[f'AR@{key[3:]}'] = values[key]
+        return values
 
     def per_category_stats(self, area: str = "all", max_dets: int | None = None) -> dict:
         """AP / AP50 / AP75 / AR per category.

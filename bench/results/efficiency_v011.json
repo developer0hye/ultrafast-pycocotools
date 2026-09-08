@@ -1,0 +1,408 @@
+{
+  "date": "2026-09-08",
+  "environment": {
+    "cpu": "AMD EPYC 9554",
+    "cpu_affinity": [
+      0,
+      1
+    ],
+    "python": "3.12.3",
+    "numpy": "2.4.4",
+    "rayon_threads": 2,
+    "omp_threads": 2,
+    "openblas_threads": 1,
+    "host": "shared"
+  },
+  "method": {
+    "result_loading": "Package defaults for both versions; no performance options",
+    "time": "GT indexing + result loading (including detection dict copies) + evaluate + accumulate + summarize; excludes JSON parsing, inference, serialization",
+    "memory": "Whole-process peak RSS, including parsed inputs and array serialization",
+    "repetition": "Fresh process per measurement; alternating version order; median of 3 COCO runs, 1 Objects365 run"
+  },
+  "cases": {
+    "coco": {
+      "versions": {
+        "0.1.0": {
+          "measurements": [
+            {
+              "backend": "ultrafast",
+              "images": 5000,
+              "detections": 431145,
+              "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+              "pred_sha256": "c525b1678fc8d1b71ea2ef7f8068d7aec56d139cd61c21eb26f731de4a047f59",
+              "input_json_parse_seconds": 0.9761457871645689,
+              "runs": [
+                {
+                  "gt_seconds": 0.17824230762198567,
+                  "load_res_seconds": 1.8566102981567383,
+                  "evaluate_seconds": 0.5074852732941508,
+                  "accumulate_seconds": 7.413001731038094e-05,
+                  "summarize_seconds": 0.0020076720975339413,
+                  "total_scoring_seconds": 2.544419681187719
+                }
+              ],
+              "stats": [
+                0.5069484658135361,
+                0.673320131017044,
+                0.5512620504670513,
+                0.330515872003354,
+                0.5604537680841476,
+                0.6680562864385514,
+                0.37210815548284415,
+                0.6145818878960251,
+                0.6597944487500417,
+                0.47971037211459217,
+                0.7206374084868608,
+                0.8016607280954492
+              ],
+              "array_sha256": {
+                "precision": "283f2229ec4e75e57f97cce4ecef8419bef9a1a26175a499e24e7dbbe9101c83",
+                "recall": "3a0032f1a46291af36d1baec0d491965ad2f554ba15216437f3aeb5fa2ae5b8c",
+                "scores": "8fa1542ca9965e42323eeb31047bfe169bf0ca534ca6c6611dafb0ff6a0cb406",
+                "stats": "a29ce67aff55707cc46e739d2e1e78a39f8da13b7a1e9294bbb720501f23b551"
+              },
+              "peak_rss_MiB": 714.73828125,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.0",
+              "result_loading": "package default"
+            },
+            {
+              "backend": "ultrafast",
+              "images": 5000,
+              "detections": 431145,
+              "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+              "pred_sha256": "c525b1678fc8d1b71ea2ef7f8068d7aec56d139cd61c21eb26f731de4a047f59",
+              "input_json_parse_seconds": 0.9774136608466506,
+              "runs": [
+                {
+                  "gt_seconds": 0.18313133204355836,
+                  "load_res_seconds": 1.8363019931130111,
+                  "evaluate_seconds": 0.46162864612415433,
+                  "accumulate_seconds": 5.698530003428459e-05,
+                  "summarize_seconds": 0.001583439763635397,
+                  "total_scoring_seconds": 2.4827023963443935
+                }
+              ],
+              "stats": [
+                0.5069484658135361,
+                0.673320131017044,
+                0.5512620504670513,
+                0.330515872003354,
+                0.5604537680841476,
+                0.6680562864385514,
+                0.37210815548284415,
+                0.6145818878960251,
+                0.6597944487500417,
+                0.47971037211459217,
+                0.7206374084868608,
+                0.8016607280954492
+              ],
+              "array_sha256": {
+                "precision": "283f2229ec4e75e57f97cce4ecef8419bef9a1a26175a499e24e7dbbe9101c83",
+                "recall": "3a0032f1a46291af36d1baec0d491965ad2f554ba15216437f3aeb5fa2ae5b8c",
+                "scores": "8fa1542ca9965e42323eeb31047bfe169bf0ca534ca6c6611dafb0ff6a0cb406",
+                "stats": "a29ce67aff55707cc46e739d2e1e78a39f8da13b7a1e9294bbb720501f23b551"
+              },
+              "peak_rss_MiB": 712.73828125,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.0",
+              "result_loading": "package default"
+            },
+            {
+              "backend": "ultrafast",
+              "images": 5000,
+              "detections": 431145,
+              "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+              "pred_sha256": "c525b1678fc8d1b71ea2ef7f8068d7aec56d139cd61c21eb26f731de4a047f59",
+              "input_json_parse_seconds": 1.0456251590512693,
+              "runs": [
+                {
+                  "gt_seconds": 0.18394439993426204,
+                  "load_res_seconds": 2.142415248323232,
+                  "evaluate_seconds": 0.4608114450238645,
+                  "accumulate_seconds": 5.515199154615402e-05,
+                  "summarize_seconds": 0.0015207971446216106,
+                  "total_scoring_seconds": 2.7887470424175262
+                }
+              ],
+              "stats": [
+                0.5069484658135361,
+                0.673320131017044,
+                0.5512620504670513,
+                0.330515872003354,
+                0.5604537680841476,
+                0.6680562864385514,
+                0.37210815548284415,
+                0.6145818878960251,
+                0.6597944487500417,
+                0.47971037211459217,
+                0.7206374084868608,
+                0.8016607280954492
+              ],
+              "array_sha256": {
+                "precision": "283f2229ec4e75e57f97cce4ecef8419bef9a1a26175a499e24e7dbbe9101c83",
+                "recall": "3a0032f1a46291af36d1baec0d491965ad2f554ba15216437f3aeb5fa2ae5b8c",
+                "scores": "8fa1542ca9965e42323eeb31047bfe169bf0ca534ca6c6611dafb0ff6a0cb406",
+                "stats": "a29ce67aff55707cc46e739d2e1e78a39f8da13b7a1e9294bbb720501f23b551"
+              },
+              "peak_rss_MiB": 711.4453125,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.0",
+              "result_loading": "package default"
+            }
+          ],
+          "median_seconds": 2.544419681187719,
+          "median_peak_rss_MiB": 712.73828125
+        },
+        "0.1.1": {
+          "measurements": [
+            {
+              "backend": "ultrafast",
+              "images": 5000,
+              "detections": 431145,
+              "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+              "pred_sha256": "c525b1678fc8d1b71ea2ef7f8068d7aec56d139cd61c21eb26f731de4a047f59",
+              "input_json_parse_seconds": 1.0351442908868194,
+              "runs": [
+                {
+                  "gt_seconds": 0.1844252380542457,
+                  "load_res_seconds": 0.9135245718061924,
+                  "evaluate_seconds": 0.41036989307031035,
+                  "accumulate_seconds": 4.985416308045387e-05,
+                  "summarize_seconds": 0.001624980941414833,
+                  "total_scoring_seconds": 1.5099945380352437
+                }
+              ],
+              "stats": [
+                0.5069484658135361,
+                0.673320131017044,
+                0.5512620504670513,
+                0.330515872003354,
+                0.5604537680841476,
+                0.6680562864385514,
+                0.37210815548284415,
+                0.6145818878960251,
+                0.6597944487500417,
+                0.47971037211459217,
+                0.7206374084868608,
+                0.8016607280954492
+              ],
+              "array_sha256": {
+                "precision": "283f2229ec4e75e57f97cce4ecef8419bef9a1a26175a499e24e7dbbe9101c83",
+                "recall": "3a0032f1a46291af36d1baec0d491965ad2f554ba15216437f3aeb5fa2ae5b8c",
+                "scores": "8fa1542ca9965e42323eeb31047bfe169bf0ca534ca6c6611dafb0ff6a0cb406",
+                "stats": "a29ce67aff55707cc46e739d2e1e78a39f8da13b7a1e9294bbb720501f23b551"
+              },
+              "peak_rss_MiB": 599.7421875,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.1",
+              "result_loading": "package default"
+            },
+            {
+              "backend": "ultrafast",
+              "images": 5000,
+              "detections": 431145,
+              "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+              "pred_sha256": "c525b1678fc8d1b71ea2ef7f8068d7aec56d139cd61c21eb26f731de4a047f59",
+              "input_json_parse_seconds": 0.9705864787101746,
+              "runs": [
+                {
+                  "gt_seconds": 0.18222491536289454,
+                  "load_res_seconds": 0.9288680809549987,
+                  "evaluate_seconds": 0.4114947710186243,
+                  "accumulate_seconds": 5.5622775107622147e-05,
+                  "summarize_seconds": 0.001525083091109991,
+                  "total_scoring_seconds": 1.5241684732027352
+                }
+              ],
+              "stats": [
+                0.5069484658135361,
+                0.673320131017044,
+                0.5512620504670513,
+                0.330515872003354,
+                0.5604537680841476,
+                0.6680562864385514,
+                0.37210815548284415,
+                0.6145818878960251,
+                0.6597944487500417,
+                0.47971037211459217,
+                0.7206374084868608,
+                0.8016607280954492
+              ],
+              "array_sha256": {
+                "precision": "283f2229ec4e75e57f97cce4ecef8419bef9a1a26175a499e24e7dbbe9101c83",
+                "recall": "3a0032f1a46291af36d1baec0d491965ad2f554ba15216437f3aeb5fa2ae5b8c",
+                "scores": "8fa1542ca9965e42323eeb31047bfe169bf0ca534ca6c6611dafb0ff6a0cb406",
+                "stats": "a29ce67aff55707cc46e739d2e1e78a39f8da13b7a1e9294bbb720501f23b551"
+              },
+              "peak_rss_MiB": 599.75,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.1",
+              "result_loading": "package default"
+            },
+            {
+              "backend": "ultrafast",
+              "images": 5000,
+              "detections": 431145,
+              "gt_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+              "pred_sha256": "c525b1678fc8d1b71ea2ef7f8068d7aec56d139cd61c21eb26f731de4a047f59",
+              "input_json_parse_seconds": 1.011524171102792,
+              "runs": [
+                {
+                  "gt_seconds": 0.18196887290105224,
+                  "load_res_seconds": 0.9934262507595122,
+                  "evaluate_seconds": 0.47855766909196973,
+                  "accumulate_seconds": 7.326900959014893e-05,
+                  "summarize_seconds": 0.0019296049140393734,
+                  "total_scoring_seconds": 1.6559556666761637
+                }
+              ],
+              "stats": [
+                0.5069484658135361,
+                0.673320131017044,
+                0.5512620504670513,
+                0.330515872003354,
+                0.5604537680841476,
+                0.6680562864385514,
+                0.37210815548284415,
+                0.6145818878960251,
+                0.6597944487500417,
+                0.47971037211459217,
+                0.7206374084868608,
+                0.8016607280954492
+              ],
+              "array_sha256": {
+                "precision": "283f2229ec4e75e57f97cce4ecef8419bef9a1a26175a499e24e7dbbe9101c83",
+                "recall": "3a0032f1a46291af36d1baec0d491965ad2f554ba15216437f3aeb5fa2ae5b8c",
+                "scores": "8fa1542ca9965e42323eeb31047bfe169bf0ca534ca6c6611dafb0ff6a0cb406",
+                "stats": "a29ce67aff55707cc46e739d2e1e78a39f8da13b7a1e9294bbb720501f23b551"
+              },
+              "peak_rss_MiB": 602.73828125,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.1",
+              "result_loading": "package default"
+            }
+          ],
+          "median_seconds": 1.5241684732027352,
+          "median_peak_rss_MiB": 599.75
+        }
+      },
+      "reference_package": "pycocotools 2.0.11",
+      "byte_identical": true,
+      "time_reduction_percent": 40.09759928868091,
+      "memory_reduction_percent": 15.852702769358928
+    },
+    "objects365": {
+      "versions": {
+        "0.1.0": {
+          "measurements": [
+            {
+              "backend": "ultrafast",
+              "images": 80000,
+              "detections": 1090984,
+              "gt_sha256": "b5b6a043f3b36c1865240a3e23fc4cbbf627052d72b6a4428a993bf2549d4424",
+              "pred_sha256": "d1a1db2ffc1afd15ee02b82672a83747b0518e7770491cdfdbb0098283df4542",
+              "input_json_parse_seconds": 5.06026170309633,
+              "runs": [
+                {
+                  "gt_seconds": 2.305746898986399,
+                  "load_res_seconds": 5.021487212274224,
+                  "evaluate_seconds": 4.9107576739043,
+                  "accumulate_seconds": 0.00010924320667982101,
+                  "summarize_seconds": 0.009146362077444792,
+                  "total_scoring_seconds": 12.247247390449047
+                }
+              ],
+              "stats": [
+                0.06030084048502876,
+                0.26168735827995165,
+                0.003828009378613344,
+                0.06726780903958639,
+                0.06534415548295817,
+                0.04750469803411289,
+                0.09028229398920475,
+                0.1594475864758379,
+                0.16624303931713869,
+                0.1676666324801709,
+                0.16533728516480317,
+                0.16647753225552828
+              ],
+              "array_sha256": {
+                "precision": "48e9a3aba29810ca43570b55b7cbf810993eecad9c15996738fb06622fa4131b",
+                "recall": "dd2c143922a45cc7daead948fa3a39e6e6f01d66c1f1fda344e54d0f28269101",
+                "scores": "b9cb9ff753ba98fb3d965f48590f8ad6e07a8203d72aeded1082ae1c5685be1f",
+                "stats": "dd79c9cdae4b7fcbea703567e888781fd22be61eed8f143d54f370523bb7de8c"
+              },
+              "peak_rss_MiB": 2432.77734375,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.0",
+              "result_loading": "package default"
+            }
+          ],
+          "median_seconds": 12.247247390449047,
+          "median_peak_rss_MiB": 2432.77734375
+        },
+        "0.1.1": {
+          "measurements": [
+            {
+              "backend": "ultrafast",
+              "images": 80000,
+              "detections": 1090984,
+              "gt_sha256": "b5b6a043f3b36c1865240a3e23fc4cbbf627052d72b6a4428a993bf2549d4424",
+              "pred_sha256": "d1a1db2ffc1afd15ee02b82672a83747b0518e7770491cdfdbb0098283df4542",
+              "input_json_parse_seconds": 4.94881831202656,
+              "runs": [
+                {
+                  "gt_seconds": 2.2241530031897128,
+                  "load_res_seconds": 1.9555966472253203,
+                  "evaluate_seconds": 4.239397699013352,
+                  "accumulate_seconds": 9.409105405211449e-05,
+                  "summarize_seconds": 0.009646658785641193,
+                  "total_scoring_seconds": 8.428888099268079
+                }
+              ],
+              "stats": [
+                0.06030084048502876,
+                0.26168735827995165,
+                0.003828009378613344,
+                0.06726780903958639,
+                0.06534415548295817,
+                0.04750469803411289,
+                0.09028229398920475,
+                0.1594475864758379,
+                0.16624303931713869,
+                0.1676666324801709,
+                0.16533728516480317,
+                0.16647753225552828
+              ],
+              "array_sha256": {
+                "precision": "48e9a3aba29810ca43570b55b7cbf810993eecad9c15996738fb06622fa4131b",
+                "recall": "dd2c143922a45cc7daead948fa3a39e6e6f01d66c1f1fda344e54d0f28269101",
+                "scores": "b9cb9ff753ba98fb3d965f48590f8ad6e07a8203d72aeded1082ae1c5685be1f",
+                "stats": "dd79c9cdae4b7fcbea703567e888781fd22be61eed8f143d54f370523bb7de8c"
+              },
+              "peak_rss_MiB": 2165.46875,
+              "rayon_threads": "2",
+              "omp_threads": "2",
+              "package_version": "0.1.1",
+              "result_loading": "package default"
+            }
+          ],
+          "median_seconds": 8.428888099268079,
+          "median_peak_rss_MiB": 2165.46875
+        }
+      },
+      "reference_package": "pycocotools 2.0.11",
+      "byte_identical": true,
+      "time_reduction_percent": 31.177285552006538,
+      "memory_reduction_percent": 10.987795263579592
+    }
+  }
+}

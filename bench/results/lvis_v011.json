@@ -1,0 +1,215 @@
+{
+  "date": "2026-09-08",
+  "fixture": "lvis_fixture_sources.json",
+  "images": 100,
+  "ground_truths": 977,
+  "predictions": 29980,
+  "environment": {
+    "cpu": "AMD EPYC 9554",
+    "cpu_affinity": [
+      4,
+      5
+    ],
+    "python": "3.12.3",
+    "numpy": "2.4.4",
+    "rayon_threads": 2,
+    "omp_threads": 2,
+    "openblas_threads": 1,
+    "host": "shared"
+  },
+  "versions": {
+    "lvis": "0.5.3",
+    "faster-coco-eval": "1.8.0",
+    "ultrafast-pycocotools": "0.1.1"
+  },
+  "method": "One fresh process per backend/mode; total includes JSON parsing, result loading and scoring, excludes imports and output serialization; RSS is whole-process peak including serialization. Earlier same-session reference/backend runs reused.",
+  "cases": {
+    "bbox": {
+      "reference": {
+        "backend": "lvis",
+        "iou_type": "bbox",
+        "load_seconds": 0.1716818860732019,
+        "scoring_seconds": 1.0521281561814249,
+        "total_seconds": 1.2238100422546268,
+        "peak_rss_MiB": 244.3828125,
+        "stats": {
+          "AP": 0.3676645003471998,
+          "AP50": 0.6261971837787129,
+          "AP75": 0.38426804576944634,
+          "APs": 0.30144006848393434,
+          "APm": 0.4383116520502349,
+          "APl": 0.4469856870063499,
+          "APr": 0.0,
+          "APc": 0.27434664910590434,
+          "APf": 0.38758399743893596,
+          "AR@300": 0.4298204126791178,
+          "ARs@300": 0.3451549077565635,
+          "ARm@300": 0.48783590386221964,
+          "ARl@300": 0.5153266620657926
+        },
+        "gt_sha256": "f32e54e92c8d1f4fe8f788dc3fa31f3e7dc232962141035f5deabb163d2852a3",
+        "pred_sha256": "160308634f9026ec1ac7df52fb5a65a1bf08d74b0835b1645b2cd47aff4816e4",
+        "array_sha256": {
+          "precision": "768a150c9909a762e826f6c9a8a639aff3ff656b0e9323fa8a029beb84b29f8a",
+          "recall": "bca66e40b6bff4504f5ac63b549ea91c0d2cd497b42115378cc2f98467a5176b",
+          "stats": "e4fb8c45559b4e5227ec5a1676f97bd7ce0fe6b0484a9cb3e4c8c3cfabde8af5"
+        }
+      },
+      "ultrafast": {
+        "backend": "ultrafast",
+        "iou_type": "bbox",
+        "load_seconds": 0.10006708139553666,
+        "scoring_seconds": 0.13760128477588296,
+        "total_seconds": 0.23766836617141962,
+        "peak_rss_MiB": 240.12890625,
+        "stats": {
+          "AP": 0.3676645003471998,
+          "AP50": 0.6261971837787129,
+          "AP75": 0.38426804576944634,
+          "APs": 0.30144006848393434,
+          "APm": 0.4383116520502349,
+          "APl": 0.4469856870063499,
+          "APr": 0.0,
+          "APc": 0.27434664910590434,
+          "APf": 0.38758399743893596,
+          "AR@300": 0.4298204126791178,
+          "ARs@300": 0.3451549077565635,
+          "ARm@300": 0.48783590386221964,
+          "ARl@300": 0.5153266620657926
+        },
+        "gt_sha256": "f32e54e92c8d1f4fe8f788dc3fa31f3e7dc232962141035f5deabb163d2852a3",
+        "pred_sha256": "160308634f9026ec1ac7df52fb5a65a1bf08d74b0835b1645b2cd47aff4816e4",
+        "array_sha256": {
+          "precision": "768a150c9909a762e826f6c9a8a639aff3ff656b0e9323fa8a029beb84b29f8a",
+          "recall": "bca66e40b6bff4504f5ac63b549ea91c0d2cd497b42115378cc2f98467a5176b",
+          "stats": "e4fb8c45559b4e5227ec5a1676f97bd7ce0fe6b0484a9cb3e4c8c3cfabde8af5"
+        }
+      },
+      "byte_identical": {
+        "precision": true,
+        "recall": true,
+        "stats": true
+      },
+      "faster_coco_eval": {
+        "backend": "faster-coco-eval",
+        "iou_type": "bbox",
+        "load_seconds": 0.13341248407959938,
+        "scoring_seconds": 0.33059228491038084,
+        "total_seconds": 0.4640047689899802,
+        "peak_rss_MiB": 352.4296875,
+        "stats": {
+          "AP": 0.3676645003471998,
+          "AP50": 0.6261971837787129,
+          "AP75": 0.38426804576944634,
+          "APs": 0.3014400684839344,
+          "APm": 0.4383116520502349,
+          "APl": 0.44698568700634994,
+          "APr": 0.0,
+          "APc": 0.2743466491059044,
+          "APf": 0.387583997438936,
+          "AR@300": 0.4298204126791178,
+          "ARs@300": 0.3451549077565635,
+          "ARm@300": 0.48783590386221964,
+          "ARl@300": 0.5153266620657926
+        },
+        "gt_sha256": "f32e54e92c8d1f4fe8f788dc3fa31f3e7dc232962141035f5deabb163d2852a3",
+        "pred_sha256": "160308634f9026ec1ac7df52fb5a65a1bf08d74b0835b1645b2cd47aff4816e4",
+        "array_sha256": {
+          "precision": "f1fec1a1ef56b43882cd1fbbd8bda6ef2717e68bf7208cedbd4bdaab7e62f293",
+          "recall": "bca66e40b6bff4504f5ac63b549ea91c0d2cd497b42115378cc2f98467a5176b",
+          "stats": "872faa23216321071db2c6bb6693324732510ce4cb35ba02f96d10dc1fe81206"
+        }
+      },
+      "faster_comparison": {
+        "precision": {
+          "byte_identical": false,
+          "max_abs_diff": 2.220446049250313e-16,
+          "within_atol_1e_12_rtol_0": true
+        },
+        "recall": {
+          "byte_identical": true,
+          "max_abs_diff": 0.0,
+          "within_atol_1e_12_rtol_0": true
+        },
+        "stats": {
+          "byte_identical": false,
+          "max_abs_diff": 5.551115123125783e-17,
+          "within_atol_1e_12_rtol_0": true
+        }
+      }
+    },
+    "segm": {
+      "reference": {
+        "backend": "lvis",
+        "iou_type": "segm",
+        "load_seconds": 0.1424895660020411,
+        "scoring_seconds": 1.4948694040067494,
+        "total_seconds": 1.6373589700087905,
+        "peak_rss_MiB": 254.609375,
+        "stats": {
+          "AP": 0.13226820317217997,
+          "AP50": 0.3732299603625657,
+          "AP75": 0.06865229043657606,
+          "APs": 0.08971298683783213,
+          "APm": 0.14375430566055278,
+          "APl": 0.20436361050460328,
+          "APr": 0.0,
+          "APc": 0.12745502993850719,
+          "APf": 0.1340082245569747,
+          "AR@300": 0.1644185766616786,
+          "ARs@300": 0.10853784615919733,
+          "ARm@300": 0.17632554141764667,
+          "ARl@300": 0.24889579020013802
+        },
+        "gt_sha256": "f32e54e92c8d1f4fe8f788dc3fa31f3e7dc232962141035f5deabb163d2852a3",
+        "pred_sha256": "160308634f9026ec1ac7df52fb5a65a1bf08d74b0835b1645b2cd47aff4816e4",
+        "array_sha256": {
+          "precision": "b3c5e1022d98a498a37d8be3b8d4be43885878d5f7727566167beb113231b32b",
+          "recall": "a7699d8d63ce7558a51b98ec701caa09cf4fde38de8582bd82fd4da4de67b801",
+          "stats": "06999db893c86647fc3290fef43ba0fd7cd7bff11c81f131ac7859a3993efc78"
+        }
+      },
+      "ultrafast": {
+        "backend": "ultrafast",
+        "iou_type": "segm",
+        "load_seconds": 0.10808927100151777,
+        "scoring_seconds": 0.16733237588778138,
+        "total_seconds": 0.27542164688929915,
+        "peak_rss_MiB": 243.74609375,
+        "stats": {
+          "AP": 0.13226820317217997,
+          "AP50": 0.3732299603625657,
+          "AP75": 0.06865229043657606,
+          "APs": 0.08971298683783213,
+          "APm": 0.14375430566055278,
+          "APl": 0.20436361050460328,
+          "APr": 0.0,
+          "APc": 0.12745502993850719,
+          "APf": 0.1340082245569747,
+          "AR@300": 0.1644185766616786,
+          "ARs@300": 0.10853784615919733,
+          "ARm@300": 0.17632554141764667,
+          "ARl@300": 0.24889579020013802
+        },
+        "gt_sha256": "f32e54e92c8d1f4fe8f788dc3fa31f3e7dc232962141035f5deabb163d2852a3",
+        "pred_sha256": "160308634f9026ec1ac7df52fb5a65a1bf08d74b0835b1645b2cd47aff4816e4",
+        "array_sha256": {
+          "precision": "b3c5e1022d98a498a37d8be3b8d4be43885878d5f7727566167beb113231b32b",
+          "recall": "a7699d8d63ce7558a51b98ec701caa09cf4fde38de8582bd82fd4da4de67b801",
+          "stats": "06999db893c86647fc3290fef43ba0fd7cd7bff11c81f131ac7859a3993efc78"
+        }
+      },
+      "byte_identical": {
+        "precision": true,
+        "recall": true,
+        "stats": true
+      },
+      "faster_coco_eval": {
+        "status": "failed",
+        "exception": "IndexError: unordered_map::at",
+        "location": "maskUtils.calculateRleForAllAnnotations in faster_coco_eval/core/cocoeval.py:207",
+        "timing": null
+      }
+    }
+  }
+}

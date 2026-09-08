@@ -89,6 +89,10 @@ def main():
                                if resource else None,
               'rayon_threads': os.environ.get('RAYON_NUM_THREADS'),
               'omp_threads': os.environ.get('OMP_NUM_THREADS')}
+    from importlib.metadata import version
+    distribution = {'ultrafast': 'ultrafast-pycocotools'}.get(a.backend, a.backend)
+    result['package_version'] = version(distribution)
+    result['result_loading'] = 'package default'
     (a.out / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps({'backend': a.backend, 'images': len(image_ids),
                       'detections': len(predictions), 'AP': result['stats'][0], 'runs': runs}))

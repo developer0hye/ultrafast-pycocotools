@@ -63,10 +63,11 @@ def load_json(path: str | os.PathLike) -> Any:
 
 
 class COCO:
-    def __init__(self, annotation_file: str | os.PathLike | None = None, *, verbose: bool = True):
+    def __init__(self, annotation_file: str | os.PathLike | dict | None = None, *, verbose: bool = True):
         """
         Args:
-            annotation_file: path to a COCO-format JSON file. ``None`` builds
+            annotation_file: COCO-format JSON path or an in-memory dictionary
+                (borrowed without copying). ``None`` builds
                 an empty handle, which is how :meth:`loadRes` starts.
             verbose: print the progress lines pycocotools prints. Extension;
                 pycocotools has no way to silence them.
@@ -81,7 +82,7 @@ class COCO:
         if annotation_file is not None:
             self._log("loading annotations into memory...")
             tic = time.time()
-            dataset = load_json(annotation_file)
+            dataset = annotation_file if isinstance(annotation_file, dict) else load_json(annotation_file)
             assert isinstance(dataset, dict), (
                 f"annotation file format {type(dataset)} not supported"
             )
@@ -98,10 +99,13 @@ class COCO:
         anns, cats, imgs = {}, {}, {}
         imgToAnns, catToImgs = defaultdict(list), defaultdict(list)
 
+        index_categories = "categories" in self.dataset
         if "annotations" in self.dataset:
             for ann in self.dataset["annotations"]:
                 imgToAnns[ann["image_id"]].append(ann)
                 anns[ann["id"]] = ann
+                if index_categories:
+                    catToImgs[ann["category_id"]].append(ann["image_id"])
 
         if "images" in self.dataset:
             for img in self.dataset["images"]:
@@ -111,16 +115,22 @@ class COCO:
             for cat in self.dataset["categories"]:
                 cats[cat["id"]] = cat
 
-        if "annotations" in self.dataset and "categories" in self.dataset:
-            for ann in self.dataset["annotations"]:
-                catToImgs[ann["category_id"]].append(ann["image_id"])
-
         self._log("index created!")
         self.anns = anns
         self.imgToAnns = imgToAnns
         self.catToImgs = catToImgs
         self.imgs = imgs
         self.cats = cats
+
+    def _eval_annotations(self, image_ids, category_ids):
+        """Avoid intermediate annotation/id lists while preserving getAnnIds/loadAnns order."""
+        source = (itertools.chain.from_iterable(self.imgToAnns.get(i, ()) for i in image_ids)
+                  if image_ids else iter(self.dataset['annotations']))
+        categories = set(category_ids)
+        # Resolve through anns even for duplicate IDs, exactly as loadAnns does.
+        if categories:
+            return [self.anns[ann['id']] for ann in source if ann['category_id'] in categories]
+        return [self.anns[ann['id']] for ann in source]
 
     def info(self) -> None:
         for key, value in self.dataset["info"].items():
@@ -211,7 +221,8 @@ class COCO:
         """Draw annotations on the current matplotlib axes."""
         if len(anns) == 0:
             return 0
-        if "segmentation" in anns[0] or "keypoints" in anns[0]:
+        if ("segmentation" in anns[0] or "keypoints" in anns[0]
+                or ("bbox" in anns[0] and not getattr(self, "_derive_segmentation", True))):
             datasetType = "instances"
         elif "caption" in anns[0]:
             datasetType = "captions"
@@ -233,20 +244,22 @@ class COCO:
         polygons, color = [], []
         for ann in anns:
             c = (np.random.random((1, 3)) * 0.6 + 0.4).tolist()[0]
-            if "segmentation" in ann:
-                if isinstance(ann["segmentation"], list):
-                    for seg in ann["segmentation"]:
+            if ("segmentation" in ann
+                    or ("bbox" in ann and not getattr(self, "_derive_segmentation", True))):
+                segm = self._annotation_segmentation(ann)
+                if isinstance(segm, list):
+                    for seg in segm:
                         poly = np.array(seg).reshape((int(len(seg) / 2), 2))
                         polygons.append(Polygon(poly))
                         color.append(c)
                 else:
                     t = self.imgs[ann["image_id"]]
-                    if isinstance(ann["segmentation"]["counts"], list):
+                    if isinstance(segm["counts"], list):
                         rle = maskUtils.frPyObjects(
-                            [ann["segmentation"]], t["height"], t["width"]
+                            [segm], t["height"], t["width"]
                         )
                     else:
-                        rle = [ann["segmentation"]]
+                        rle = [segm]
                     m = maskUtils.decode(rle)
                     img = np.ones((m.shape[0], m.shape[1], 3))
                     if ann.get("iscrowd") == 1:
@@ -287,7 +300,7 @@ class COCO:
         )
         return None
 
-    def loadRes(self, resFile, *, derive_segmentation: bool = True) -> "COCO":
+    def loadRes(self, resFile, *, derive_segmentation: bool = False) -> "COCO":
         """Build a result handle from detections.
 
         Accepts a path, a list of dicts, or an ``Nx7`` numpy array. The derived
@@ -296,16 +309,15 @@ class COCO:
         detection falls in and therefore changes AP_small/medium/large.
 
         Args:
-            derive_segmentation: for box-only results, also store the
-                equivalent four-corner polygon under ``segmentation``, as
-                pycocotools does. It costs 376 bytes per detection — 440 MB on
-                Objects365 — and is read by nothing here: the evaluator
-                rasterises the box directly when the field is absent, so
-                ``iouType="segm"`` gives identical results either way. Set
-                False on large detection sets unless your own code reads
-                ``ann["segmentation"]`` off a box-only result.
+            derive_segmentation: materialize a four-corner ``segmentation``
+                polygon for box-only results. The default False avoids its
+                allocation and retention, reducing both load time and memory.
+                Evaluation, annToRLE, annToMask and showAnns derive it only when
+                needed. Use True only if application code requires the derived
+                field to exist directly in each annotation dictionary.
         """
         res = COCO(verbose=self.verbose)
+        res._derive_segmentation = derive_segmentation
         res.dataset["info"] = copy.deepcopy(self.dataset.get("info", {}))
         res.dataset["images"] = [img for img in self.dataset["images"]]
 
@@ -413,6 +425,12 @@ class COCO:
             })
         return ann
 
+    def _annotation_segmentation(self, ann: dict):
+        if "segmentation" not in ann and not getattr(self, "_derive_segmentation", True):
+            x, y, width, height = ann["bbox"]
+            return [[x, y, x, y + height, x + width, y + height, x + width, y]]
+        return ann["segmentation"]
+
     def annToRLE(self, ann: dict):
         """Segmentation of one annotation as a single RLE.
 
@@ -421,7 +439,7 @@ class COCO:
         """
         t = self.imgs[ann["image_id"]]
         h, w = t["height"], t["width"]
-        segm = ann["segmentation"]
+        segm = self._annotation_segmentation(ann)
         if isinstance(segm, list):
             rles = maskUtils.frPyObjects(segm, h, w)
             return maskUtils.merge(rles)

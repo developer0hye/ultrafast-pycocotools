@@ -29,7 +29,9 @@ def test_stats_as_dict_matches_positional(evaluated):
     assert d["AP"] == float(evaluated.stats[0])
     assert d["AP_50"] == float(evaluated.stats[1])
     assert d["AP_large"] == float(evaluated.stats[5])
-    assert len(d) == len(evaluated.stats)
+    assert d["AP_all"] == d["AP"]
+    assert d["AP50"] == d["AP_50"]
+    assert d["AR@100"] == d["AR_100"]
 
 
 def test_per_category_stats_average_to_overall_ap(evaluated):

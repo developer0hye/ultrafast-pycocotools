@@ -362,18 +362,18 @@ GT 867 MB + DT 828 MB + Rust engine 197 MB). `coco.anns[id]`를 dict로 유지�
 대가이고, detectron2·mmdetection·torchvision이 전부 그 dict를 직접 읽고 수정하기 때문에
 Rust view로 바꿀 수는 없다.
 
-그중 되돌릴 수 있는 낭비가 하나 있다. pycocotools의 `loadRes`는 box detection마다
-`segmentation`에 네 꼭짓점 polygon을 만들어 넣는다 — detection당 376 B, O365에서
-**320 MB**다. `iouType="bbox"`면 아무도 안 읽고, `iouType="segm"`이어도 우리 engine은
-box를 직접 rasterise하므로 결과가 같다:
+0.1.1부터 `loadRes`는 bbox에서 파생되는 polygon을 기본적으로 저장하지 않는다.
+불필요한 객체 생성과 보관을 함께 줄여 속도와 메모리를 동시에 개선한다.
+`annToRLE`, `annToMask`, `showAnns`는 필요한 순간에만 bbox polygon을 계산한다.
 
 ```python
-dt = gt.loadRes("detections.json", derive_segmentation=False)   # -320 MB, loadRes -2.1s
+dt = gt.loadRes("detections.json")  # 속도·메모리 개선이 기본 적용
 ```
 
-수치가 안 바뀐다는 건 테스트가 지킨다(`test_derive_segmentation_off_changes_nothing`,
-bbox·segm 양쪽에서 pycocotools와 바이트 비교). 기본값은 호환을 위해 `True`다 — 직접
-`ann["segmentation"]`을 읽는 코드가 있다면 그대로 두면 된다.
+`test_default_result_loading_preserves_bbox_and_segmentation_metrics`에서
+bbox·segm 양쪽을 pycocotools와 바이트 비교한다. 직접 `ann["segmentation"]` 필드가
+필요한 기존 코드는 `derive_segmentation=True`로 polygon을 명시적으로 저장할 수 있다.
+[0.1.1 기본 동작의 실측 결과](efficiency.md)를 참고한다. 위 메모리 분해 수치는 이전 버전의 기록이다.
 
 annotation 파일 로딩도 Rust로 한다(`json.load`와 **비트까지 동일한** 결과를 낸다 —
 `tests/test_json_loader.py`가 실제 COCO 파일로 확인한다). O365 val 269 MB 기준

@@ -217,7 +217,6 @@ struct Keys<'py> {
     iscrowd: &'py Bound<'py, PyString>,
     num_keypoints: &'py Bound<'py, PyString>,
     keypoints: &'py Bound<'py, PyString>,
-    lvis_mark: &'py Bound<'py, PyString>,
     segmentation: &'py Bound<'py, PyString>,
     counts: &'py Bound<'py, PyString>,
 }
@@ -234,7 +233,6 @@ impl<'py> Keys<'py> {
             iscrowd: intern!(py, "iscrowd"),
             num_keypoints: intern!(py, "num_keypoints"),
             keypoints: intern!(py, "keypoints"),
-            lvis_mark: intern!(py, "lvis_mark"),
             segmentation: intern!(py, "segmentation"),
             counts: intern!(py, "counts"),
         }
@@ -486,8 +484,8 @@ fn read_annotations(
         } else {
             inst.ignore.push(false);
         }
-        inst.lvis_mark
-            .push(get_i64(d, keys.lvis_mark)?.unwrap_or(0) != 0);
+        // Federated ignore flags are enabled only by configure_lvis, never by COCO input metadata.
+        inst.lvis_mark.push(false);
 
         match &mut inst.geom {
             GeomStore::Bboxes(v) => v.push(bbox),
@@ -605,6 +603,16 @@ impl Evaluator {
             inner: CoreEvaluator::new(params, gt, dt),
             extract,
         })
+    }
+
+    fn configure_lvis(
+        &mut self,
+        gt_ignore: Vec<bool>,
+        non_exhaustive: Vec<(i64, i64)>,
+    ) -> PyResult<()> {
+        self.inner
+            .configure_lvis(gt_ignore, non_exhaustive)
+            .map_err(PyValueError::new_err)
     }
 
     /// Run evaluation and accumulation, returning the arrays pycocotools

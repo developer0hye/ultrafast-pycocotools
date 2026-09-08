@@ -13,7 +13,7 @@ Benchmarks cover public pretrained detector outputs on COCO and a separate
 synthetic scalability workload on the public Objects365 dataset. Both compare
 complete evaluation arrays against pycocotools.
 
-**Status:** 0.1.0, alpha. The installation instructions below build from source.
+**Status:** 0.1.1, alpha. The installation instructions below build from source.
 Validate your application's
 parameters and subclass behavior before replacing its reference evaluator.
 
@@ -74,6 +74,31 @@ print("AP:", evaluator.stats[0])
 `evaluator.run()` is a convenience method for the last three calls. Standard
 COCO evaluation modes are `"bbox"`, `"segm"`, and `"keypoints"`.
 
+### Faster loading and lower memory by default
+
+Version 0.1.1 avoids allocating and retaining redundant polygons for box-only
+predictions. Ordinary `gt.loadRes(predictions)` gets both improvements; no
+performance flag is needed. Bbox/segmentation metrics and public mask/plot
+helpers remain covered by reference comparisons. Direct annotation dictionaries
+omit the derived `segmentation` field unless `derive_segmentation=True` is requested.
+[Measurements against 0.1.0](docs/efficiency.md).
+
+### LVIS and metric names
+
+```python
+gt = COCO("lvis_val.json")
+dt = gt.loadRes("predictions.json")
+evaluator = COCOeval(gt, dt, "bbox", lvis_style=True)  # also supports "segm"
+evaluator.run()
+print(evaluator.stats_as_dict["APr"])
+```
+
+LVIS uses its federated annotation protocol, global 300-detection image limit,
+and rare/common/frequent category metrics. Dictionary names follow the official
+LVIS API (`AP`, `AP50`, `APr`, `AR@300`, etc.); framework aliases such as `AP_all`
+and `AP_50` are also available. Standard COCO `stats` positions are unchanged.
+[LVIS verification and integration guide](docs/lvis.md).
+
 ### Use with an existing framework
 
 Prefer direct imports when you own the evaluation code. If a framework imports
@@ -92,7 +117,7 @@ from pycocotools.cocoeval import COCOeval
 This changes the import mapping for the entire Python process. Use separate
 processes when comparing the reference package and the replacement.
 
-## Scaling with input size
+## Scaling with input size (0.1.0 measurements)
 
 ![Evaluation time and peak memory versus GT plus prediction count](docs/assets/scaling.png)
 
@@ -103,7 +128,7 @@ passes a separate numerical tolerance check; its arrays are not byte-identical.
 [SVG](docs/assets/scaling.svg) · [PDF](docs/assets/scaling.pdf) ·
 [Raw measurements](bench/results/scaling.json).
 
-## Public benchmarks
+## Public benchmarks (0.1.0 measurements)
 
 The same saved inputs are scored by pycocotools 2.0.11, faster-coco-eval 1.8.0
 and ultrafast-pycocotools 0.1.0. Ultrafast matches the reference arrays **byte for
@@ -151,6 +176,9 @@ Some implementation details intentionally differ:
 - IoU and annotation lookup structures are built lazily when accessed.
 - Ground-truth annotation dictionaries are not rewritten in place.
 - `COCO(path, verbose=False)` suppresses loader progress output.
+- Box-only results omit redundant derived polygons by default; use
+  `derive_segmentation=True` when reading that field directly.
+- `COCO(annotation_dict)` borrows the dictionary without a deep copy.
 
 The evaluator follows pycocotools' treatment of `iscrowd`, including its handling
 of the annotation `ignore` field. Applications that rely on mutation side
@@ -183,7 +211,8 @@ The required `CI` status blocks `main` updates when any test job fails.
 Install the test dependencies and run the reference-comparison suite:
 
 ```bash
-python -m pip install -e ".[test]"
+python -m pip install -e ".[test,lvis-test]"
+python bench/fetch_lvis_fixture.py
 python -m pytest -q
 cargo test -p ufcoco-core
 ```
@@ -203,4 +232,7 @@ only the rounded summary.
 [BSD-2-Clause](LICENSE). COCO evaluation algorithms and API compatibility are
 based on [pycocotools](https://github.com/cocodataset/cocoapi), by Piotr Dollár
 and Tsung-Yi Lin, under BSD-2-Clause. Implementation design and numerical
-compatibility decisions are described in [DESIGN.md](DESIGN.md).
+compatibility decisions are described in [DESIGN.md](DESIGN.md). LVIS protocol
+verification uses the official [LVIS API](https://github.com/lvis-dataset/lvis-api)
+and its public example annotations/predictions; source revisions and hashes
+are recorded in the repository.

@@ -301,6 +301,31 @@ impl Evaluator {
         }
     }
 
+    /// Apply LVIS ignore semantics without cloning Python annotation dictionaries.
+    pub fn configure_lvis(
+        &mut self,
+        gt_ignore: Vec<bool>,
+        non_exhaustive: Vec<(i64, i64)>,
+    ) -> Result<(), String> {
+        if gt_ignore.len() != self.gt.len() {
+            return Err("LVIS ignore flags do not match ground-truth length".into());
+        }
+        self.gt.ignore = gt_ignore;
+        self.gt.iscrowd.fill(false);
+        let pairs: std::collections::HashSet<(i64, i64)> = non_exhaustive.into_iter().collect();
+        for i in 0..self.dt.len() {
+            let pair = self
+                .params
+                .img_ids
+                .get(self.dt.img_slot[i] as usize)
+                .zip(self.params.cat_ids.get(self.dt.cat_slot[i] as usize));
+            self.dt.lvis_mark[i] = pair
+                .map(|(&image, &category)| pairs.contains(&(image, category)))
+                .unwrap_or(false);
+        }
+        Ok(())
+    }
+
     /// Per-phase timings accumulated so far. See [`Timings`].
     pub fn timings(&self) -> &Timings {
         &self.timings
@@ -676,8 +701,7 @@ impl Evaluator {
                     }
                     for (m, &max_det) in p.max_dets.iter().enumerate() {
                         self.accumulate_slice(
-                            &matches, &order, max_det, a, m, t_n, r_n, a_n, m_n, &mut buf,
-                            &mut out,
+                            &matches, &order, max_det, a, m, t_n, r_n, a_n, m_n, &mut buf, &mut out,
                         );
                     }
                     Timings::add(&self.timings.accumulate_ns, t);
@@ -793,11 +817,7 @@ impl Evaluator {
     /// two pointers per comparison into per-image vectors scattered across the
     /// heap. It also makes `scores_sorted` unnecessary: the score is already
     /// there, in the right order.
-    fn build_order(
-        matches: &[Option<ImgMatch>],
-        max_det: usize,
-        order: &mut Vec<(f64, u32, u32)>,
-    ) {
+    fn build_order(matches: &[Option<ImgMatch>], max_det: usize, order: &mut Vec<(f64, u32, u32)>) {
         order.clear();
         for (i, mm) in matches.iter().enumerate() {
             let Some(mm) = mm else { continue };
@@ -837,8 +857,12 @@ impl Evaluator {
         // `d` is the detection's rank inside its own image, so keeping
         // `d < max_det` is exactly pycocotools' per-image `[0:maxDet]` cut.
         buf.flat.clear();
-        buf.flat
-            .extend(order.iter().copied().filter(|&(_, _, d)| (d as usize) < max_det));
+        buf.flat.extend(
+            order
+                .iter()
+                .copied()
+                .filter(|&(_, _, d)| (d as usize) < max_det),
+        );
         let nd = buf.flat.len();
         buf.pr.clear();
         buf.pr.resize(nd, 0.0);

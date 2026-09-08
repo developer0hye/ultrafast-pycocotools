@@ -232,7 +232,11 @@ def test_load_res_derived_fields(pair):
         assert r["area"] == o["area"], "area decides the small/medium/large bucket"
         assert r["iscrowd"] == o["iscrowd"]
         assert r["bbox"] == o["bbox"]
-        assert r["segmentation"] == o["segmentation"]
+        # Box polygons are derived on demand by default; public masks stay identical.
+        if "segmentation" in o:
+            assert r["segmentation"] == o["segmentation"]
+        else:
+            np.testing.assert_array_equal(ref_dt.annToMask(r), our_dt.annToMask(o))
     assert [i["id"] for i in ref_dt.dataset["images"]] == [
         i["id"] for i in our_dt.dataset["images"]
     ]
