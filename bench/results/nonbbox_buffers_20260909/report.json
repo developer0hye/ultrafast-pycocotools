@@ -4176,8 +4176,8 @@
             "eval_total": 1.1370377909915987,
             "eval_cpu": 2.0584489999999995,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.6952068739919923,
             "stats": [
               0.3436595380932048,
@@ -4215,8 +4215,8 @@
             "eval_total": 1.1371158749388997,
             "eval_cpu": 2.061747,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.526845958956983,
             "stats": [
               0.3436595380932048,
@@ -4254,8 +4254,8 @@
             "eval_total": 1.133665082976222,
             "eval_cpu": 2.0529349999999997,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.5196307919977698,
             "stats": [
               0.3436595380932048,
@@ -4293,8 +4293,8 @@
             "eval_total": 1.1306060409988277,
             "eval_cpu": 2.049638,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.5187218329811003,
             "stats": [
               0.3436595380932048,
@@ -4332,8 +4332,8 @@
             "eval_total": 1.1571232499845792,
             "eval_cpu": 2.0539110000000003,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.5465649999678135,
             "stats": [
               0.3436595380932048,
@@ -4371,8 +4371,8 @@
             "eval_total": 1.1309986239939462,
             "eval_cpu": 2.050167,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.5208134159911424,
             "stats": [
               0.3436595380932048,
@@ -4417,8 +4417,8 @@
             "eval_total": 1.1528756669722497,
             "eval_cpu": 2.069244,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.555426124978112,
             "stats": [
               0.3436595380932048,
@@ -4456,8 +4456,8 @@
             "eval_total": 1.1446006660116836,
             "eval_cpu": 2.062388,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.551290292001795,
             "stats": [
               0.3436595380932048,
@@ -4495,8 +4495,8 @@
             "eval_total": 1.1463654169929214,
             "eval_cpu": 2.0642069999999997,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.5454802499443758,
             "stats": [
               0.3436595380932048,
@@ -4534,8 +4534,8 @@
             "eval_total": 1.145530667010462,
             "eval_cpu": 2.062752,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.55072020899388,
             "stats": [
               0.3436595380932048,
@@ -4573,8 +4573,8 @@
             "eval_total": 1.1443284590204712,
             "eval_cpu": 2.0640259999999997,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.5524500840401743,
             "stats": [
               0.3436595380932048,
@@ -4612,8 +4612,8 @@
             "eval_total": 1.1446145829977468,
             "eval_cpu": 2.061774,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.551057500008028,
             "stats": [
               0.3436595380932048,
@@ -4660,8 +4660,8 @@
             "eval_total": 1.2395598739967681,
             "eval_cpu": 2.2688170000000003,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.764706207002746,
             "stats": [
               0.3436595380932048,
@@ -4699,8 +4699,8 @@
             "eval_total": 1.2706230839539785,
             "eval_cpu": 2.395388,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.6485057509562466,
             "stats": [
               0.3436595380932048,
@@ -4738,8 +4738,8 @@
             "eval_total": 1.2546535830188077,
             "eval_cpu": 2.375461,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.6346065420366358,
             "stats": [
               0.3436595380932048,
@@ -4777,8 +4777,8 @@
             "eval_total": 1.2242073339875787,
             "eval_cpu": 2.306958,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.5987591670127586,
             "stats": [
               0.3436595380932048,
@@ -4816,8 +4816,8 @@
             "eval_total": 1.2565639999811538,
             "eval_cpu": 2.363658,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.6298090409836732,
             "stats": [
               0.3436595380932048,
@@ -4855,8 +4855,8 @@
             "eval_total": 1.2813958749757148,
             "eval_cpu": 2.3807000000000005,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.6670001239981502,
             "stats": [
               0.3436595380932048,
@@ -4901,8 +4901,8 @@
             "eval_total": 1.2138714169850573,
             "eval_cpu": 2.318229,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.5905595419753809,
             "stats": [
               0.3436595380932048,
@@ -4940,8 +4940,8 @@
             "eval_total": 1.2097281669848599,
             "eval_cpu": 2.3030770000000005,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.588081499969121,
             "stats": [
               0.3436595380932048,
@@ -4979,8 +4979,8 @@
             "eval_total": 1.249659166962374,
             "eval_cpu": 2.357656,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.6349945839610882,
             "stats": [
               0.3436595380932048,
@@ -5018,8 +5018,8 @@
             "eval_total": 1.2634441679692827,
             "eval_cpu": 2.3554559999999998,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.6508720429555979,
             "stats": [
               0.3436595380932048,
@@ -5057,8 +5057,8 @@
             "eval_total": 1.2393642079841811,
             "eval_cpu": 2.352363,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.6298407499853056,
             "stats": [
               0.3436595380932048,
@@ -5096,8 +5096,8 @@
             "eval_total": 1.2693842490261886,
             "eval_cpu": 2.402136,
             "threads": "2",
-            "cpu_load_before": NaN,
-            "cpu_load_after": NaN,
+            "cpu_load_before": null,
+            "cpu_load_after": null,
             "wall_total": 1.6486756239901297,
             "stats": [
               0.3436595380932048,
@@ -5775,5 +5775,6 @@
         "scores": 7756800
       }
     }
-  }
+  },
+  "missing_telemetry_encoding": "Unavailable per-call CPU-load values are null. Separate sampled host CPU/RAM telemetry is retained; original raw-file hashes are unchanged."
 }

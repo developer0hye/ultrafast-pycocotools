@@ -1,0 +1,2000 @@
+[
+  {
+    "name": "segm-0-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-baseline/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/segm-0-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.003983958013122901,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5401067520
+      },
+      {
+        "seconds": 0.5053176660148893,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5173051392
+      },
+      {
+        "seconds": 1.0064889159984887,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5227724800
+      },
+      {
+        "seconds": 1.5099962910171598,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5201100800
+      },
+      {
+        "seconds": 2.0186514160013758,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5147934720
+      },
+      {
+        "seconds": 2.5229080409917515,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5097095168
+      },
+      {
+        "seconds": 3.033040415990399,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5102518272
+      },
+      {
+        "seconds": 3.542464750004001,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5067866112
+      },
+      {
+        "seconds": 4.045981791015947,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5052219392
+      },
+      {
+        "seconds": 4.5469300000113435,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5052841984
+      },
+      {
+        "seconds": 5.047438166016946,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5125111808
+      },
+      {
+        "seconds": 5.557898083003238,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5027414016
+      },
+      {
+        "seconds": 6.060745458002202,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5006114816
+      },
+      {
+        "seconds": 6.566599915997358,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4975427584
+      },
+      {
+        "seconds": 7.075777916004881,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5074354176
+      },
+      {
+        "seconds": 7.58508420799626,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4976967680
+      },
+      {
+        "seconds": 8.086322207993362,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5008490496
+      },
+      {
+        "seconds": 8.588596957997652,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4909629440
+      },
+      {
+        "seconds": 9.092134000005899,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4864917504
+      },
+      {
+        "seconds": 9.596556791017065,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4824465408
+      },
+      {
+        "seconds": 10.097453791007865,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4745625600
+      },
+      {
+        "seconds": 10.600137166009517,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4716118016
+      },
+      {
+        "seconds": 11.100755124993157,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4728651776
+      },
+      {
+        "seconds": 11.61342633300228,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4701700096
+      },
+      {
+        "seconds": 12.12359870801447,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4783390720
+      },
+      {
+        "seconds": 12.627547540992964,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4702224384
+      },
+      {
+        "seconds": 13.134698665991891,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5134548992
+      },
+      {
+        "seconds": 13.637128291011322,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5913264128
+      }
+    ]
+  },
+  {
+    "name": "segm-0-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/segm-0-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0027787089929915965,
+        "host_cpu_percent": 100.0,
+        "available_ram": 6105939968
+      },
+      {
+        "seconds": 0.504411625006469,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5728878592
+      },
+      {
+        "seconds": 1.0145456249883864,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5583273984
+      },
+      {
+        "seconds": 1.51602483401075,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5476253696
+      },
+      {
+        "seconds": 2.0186182920006104,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5436293120
+      },
+      {
+        "seconds": 2.5201780000061262,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5511970816
+      },
+      {
+        "seconds": 3.025820459006354,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5412929536
+      },
+      {
+        "seconds": 3.5327572920068633,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5317869568
+      },
+      {
+        "seconds": 4.0419232090062,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5265063936
+      },
+      {
+        "seconds": 4.54894920901279,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5266604032
+      },
+      {
+        "seconds": 5.053513166989433,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5298405376
+      },
+      {
+        "seconds": 5.558095709013287,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5300207616
+      },
+      {
+        "seconds": 6.068230250006309,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5254545408
+      }
+    ]
+  },
+  {
+    "name": "segm-1-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/segm-1-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.003270791989052668,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5952045056
+      },
+      {
+        "seconds": 0.5118925419810694,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5629558784
+      },
+      {
+        "seconds": 1.0192934579972643,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5551947776
+      },
+      {
+        "seconds": 1.5206320419965778,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5528076288
+      },
+      {
+        "seconds": 2.0307780419825576,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5423972352
+      },
+      {
+        "seconds": 2.5313577920023818,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5525372928
+      },
+      {
+        "seconds": 3.038968541979557,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5371101184
+      },
+      {
+        "seconds": 3.5403330419794656,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5319213056
+      },
+      {
+        "seconds": 4.045876082993345,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5238145024
+      },
+      {
+        "seconds": 4.554744875000324,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4765958144
+      },
+      {
+        "seconds": 5.06441762499162,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4700028928
+      },
+      {
+        "seconds": 5.5687981249939185,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4638244864
+      },
+      {
+        "seconds": 6.0748551249853335,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4552015872
+      },
+      {
+        "seconds": 6.578838457993697,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4930535424
+      }
+    ]
+  },
+  {
+    "name": "segm-1-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-baseline/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/segm-1-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0033936669933609664,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5057953792
+      },
+      {
+        "seconds": 0.5048487500171177,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4758913024
+      },
+      {
+        "seconds": 1.014603084011469,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4705402880
+      },
+      {
+        "seconds": 1.5215613339969423,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4684218368
+      },
+      {
+        "seconds": 2.0312550840026233,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4522164224
+      },
+      {
+        "seconds": 2.536616041994421,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4456448000
+      },
+      {
+        "seconds": 3.040845250012353,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4362436608
+      },
+      {
+        "seconds": 3.5509806250047404,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4314038272
+      },
+      {
+        "seconds": 4.061152792011853,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4214718464
+      },
+      {
+        "seconds": 4.571293792017968,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4186259456
+      },
+      {
+        "seconds": 5.080021208996186,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4131307520
+      },
+      {
+        "seconds": 5.580663542001275,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4096851968
+      },
+      {
+        "seconds": 6.081520834006369,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4020535296
+      },
+      {
+        "seconds": 6.589385333994869,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4120739840
+      },
+      {
+        "seconds": 7.0908640419947915,
+        "host_cpu_percent": 96.5,
+        "available_ram": 4087005184
+      },
+      {
+        "seconds": 7.591997667012038,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4050321408
+      },
+      {
+        "seconds": 8.093843959009973,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4007657472
+      },
+      {
+        "seconds": 8.601412624993827,
+        "host_cpu_percent": 98.8,
+        "available_ram": 4017356800
+      },
+      {
+        "seconds": 9.103379375010263,
+        "host_cpu_percent": 94.3,
+        "available_ram": 3970613248
+      },
+      {
+        "seconds": 9.613536791992374,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3879813120
+      },
+      {
+        "seconds": 10.121684250014368,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3860807680
+      },
+      {
+        "seconds": 10.625307084002998,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3813556224
+      },
+      {
+        "seconds": 11.12838691700017,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3696492544
+      },
+      {
+        "seconds": 11.631066458998248,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3651436544
+      },
+      {
+        "seconds": 12.140266166999936,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3685089280
+      },
+      {
+        "seconds": 12.650431667017983,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3739779072
+      },
+      {
+        "seconds": 13.150763584009837,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3598598144
+      },
+      {
+        "seconds": 13.66082762501901,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4098621440
+      },
+      {
+        "seconds": 14.16575358400587,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4804149248
+      },
+      {
+        "seconds": 14.675393625017023,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4688068608
+      }
+    ]
+  },
+  {
+    "name": "segm-2-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-baseline/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/segm-2-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.002429832995403558,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5807308800
+      },
+      {
+        "seconds": 0.5126188749854919,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5483888640
+      },
+      {
+        "seconds": 1.0224306659947615,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4960436224
+      },
+      {
+        "seconds": 1.526022957987152,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4924407808
+      },
+      {
+        "seconds": 2.0355044580064714,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4819353600
+      },
+      {
+        "seconds": 2.5384677079855464,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4832149504
+      },
+      {
+        "seconds": 3.0412487910070922,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4634591232
+      },
+      {
+        "seconds": 3.5478529579995666,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4496277504
+      },
+      {
+        "seconds": 4.049521082983119,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4561125376
+      },
+      {
+        "seconds": 4.5541279159951955,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4569333760
+      },
+      {
+        "seconds": 5.06189916600124,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4642373632
+      },
+      {
+        "seconds": 5.56583025000873,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4550492160
+      },
+      {
+        "seconds": 6.07034708300489,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4447797248
+      },
+      {
+        "seconds": 6.580418041005032,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4467851264
+      },
+      {
+        "seconds": 7.086813083005836,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4507369472
+      },
+      {
+        "seconds": 7.5911803749913815,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4515774464
+      },
+      {
+        "seconds": 8.0978234159993,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4507893760
+      },
+      {
+        "seconds": 8.606652540998766,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4698537984
+      },
+      {
+        "seconds": 9.109625082986895,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4721393664
+      },
+      {
+        "seconds": 9.61979812500067,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4701159424
+      },
+      {
+        "seconds": 10.129976750002243,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4596088832
+      },
+      {
+        "seconds": 10.630726999981562,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4636278784
+      },
+      {
+        "seconds": 11.139005707984325,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4235870208
+      },
+      {
+        "seconds": 11.646407749998616,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4190240768
+      },
+      {
+        "seconds": 12.147481457999675,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4142661632
+      },
+      {
+        "seconds": 12.651087624981301,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4176871424
+      },
+      {
+        "seconds": 13.151818957994692,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4076978176
+      },
+      {
+        "seconds": 13.662167500006035,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3822075904
+      },
+      {
+        "seconds": 14.172325124993222,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3803234304
+      },
+      {
+        "seconds": 14.682710374996532,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3937812480
+      },
+      {
+        "seconds": 15.192915040999651,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4705189888
+      }
+    ]
+  },
+  {
+    "name": "segm-2-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/segm-2-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0038239170098677278,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5721604096
+      },
+      {
+        "seconds": 0.5094491670024581,
+        "host_cpu_percent": 98.8,
+        "available_ram": 5343887360
+      },
+      {
+        "seconds": 1.0163292080105748,
+        "host_cpu_percent": 98.5,
+        "available_ram": 5059330048
+      },
+      {
+        "seconds": 1.523429249995388,
+        "host_cpu_percent": 92.9,
+        "available_ram": 4900552704
+      },
+      {
+        "seconds": 2.0272022919962183,
+        "host_cpu_percent": 99.0,
+        "available_ram": 4817240064
+      },
+      {
+        "seconds": 2.5274187919858377,
+        "host_cpu_percent": 98.8,
+        "available_ram": 4889231360
+      },
+      {
+        "seconds": 3.036884041997837,
+        "host_cpu_percent": 83.1,
+        "available_ram": 4810113024
+      },
+      {
+        "seconds": 3.537477999983821,
+        "host_cpu_percent": 99.0,
+        "available_ram": 4733779968
+      },
+      {
+        "seconds": 4.041288999986136,
+        "host_cpu_percent": 91.5,
+        "available_ram": 4546084864
+      },
+      {
+        "seconds": 4.549577333003981,
+        "host_cpu_percent": 93.6,
+        "available_ram": 4343693312
+      },
+      {
+        "seconds": 5.049908541986952,
+        "host_cpu_percent": 95.3,
+        "available_ram": 4229414912
+      },
+      {
+        "seconds": 5.557410832989262,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4183736320
+      },
+      {
+        "seconds": 6.0602265000052284,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4149837824
+      },
+      {
+        "seconds": 6.568797707994236,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4140302336
+      },
+      {
+        "seconds": 7.0785238329845015,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4190240768
+      },
+      {
+        "seconds": 7.582518417009851,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4097802240
+      }
+    ]
+  },
+  {
+    "name": "segm-3-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/segm-3-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.003534708986990154,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5030526976
+      },
+      {
+        "seconds": 0.5109930420003366,
+        "host_cpu_percent": 0.0,
+        "available_ram": 4657807360
+      },
+      {
+        "seconds": 1.0124877920025028,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4732813312
+      },
+      {
+        "seconds": 1.5174166669894475,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4437147648
+      },
+      {
+        "seconds": 2.0245344169961754,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4437524480
+      },
+      {
+        "seconds": 2.5332108750008047,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4248010752
+      },
+      {
+        "seconds": 3.0404782500118017,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4059185152
+      },
+      {
+        "seconds": 3.5541442919929978,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4095328256
+      },
+      {
+        "seconds": 4.055467625003075,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4039852032
+      },
+      {
+        "seconds": 4.565173042006791,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3953000448
+      },
+      {
+        "seconds": 5.073334709013579,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3959439360
+      },
+      {
+        "seconds": 5.583493374986574,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3990683648
+      },
+      {
+        "seconds": 6.087087916996097,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4070424576
+      },
+      {
+        "seconds": 6.591187749989331,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4153229312
+      },
+      {
+        "seconds": 7.09238145899144,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4338548736
+      },
+      {
+        "seconds": 7.5947992090077605,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4314349568
+      }
+    ]
+  },
+  {
+    "name": "segm-3-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-baseline/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/segm-3-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.004188416001852602,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5515329536
+      },
+      {
+        "seconds": 0.5120405000052415,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4958633984
+      },
+      {
+        "seconds": 1.022198541002581,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4965924864
+      },
+      {
+        "seconds": 1.5323163330031093,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4910759936
+      },
+      {
+        "seconds": 2.040031041018665,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4833853440
+      },
+      {
+        "seconds": 2.5412601660063956,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4802904064
+      },
+      {
+        "seconds": 3.047688000020571,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4713234432
+      },
+      {
+        "seconds": 3.5547282910265494,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4756570112
+      },
+      {
+        "seconds": 4.064627790998202,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4681924608
+      },
+      {
+        "seconds": 4.571329375001369,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4644552704
+      },
+      {
+        "seconds": 5.08148400002392,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4651761664
+      },
+      {
+        "seconds": 5.58832741601509,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4716642304
+      },
+      {
+        "seconds": 6.098457583022537,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4617355264
+      },
+      {
+        "seconds": 6.599891458026832,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4524343296
+      },
+      {
+        "seconds": 7.101571708015399,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4482138112
+      },
+      {
+        "seconds": 7.6067524579993915,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4645175296
+      },
+      {
+        "seconds": 8.111677083012182,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4587307008
+      },
+      {
+        "seconds": 8.622248458006652,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4541759488
+      },
+      {
+        "seconds": 9.126676750020124,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4528521216
+      },
+      {
+        "seconds": 9.635737416014308,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4531306496
+      },
+      {
+        "seconds": 10.138866916007828,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4516085760
+      },
+      {
+        "seconds": 10.64482204100932,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4524228608
+      },
+      {
+        "seconds": 11.154630208009621,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4509368320
+      },
+      {
+        "seconds": 11.662194916018052,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4517560320
+      },
+      {
+        "seconds": 12.166557208023733,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4849549312
+      }
+    ]
+  },
+  {
+    "name": "segm-4-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-baseline/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/segm-4-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.006479166011558846,
+        "host_cpu_percent": 0.0,
+        "available_ram": 6185680896
+      },
+      {
+        "seconds": 0.5187614580208901,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5698289664
+      },
+      {
+        "seconds": 1.0260090000228956,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5645516800
+      },
+      {
+        "seconds": 1.5290251660044305,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5450285056
+      },
+      {
+        "seconds": 2.038918875012314,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5204279296
+      },
+      {
+        "seconds": 2.5397863750113174,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5074518016
+      },
+      {
+        "seconds": 3.041158500011079,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4916838400
+      },
+      {
+        "seconds": 3.5512403330067173,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4754997248
+      },
+      {
+        "seconds": 4.060023166006431,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4630970368
+      },
+      {
+        "seconds": 4.564185499999439,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4588322816
+      },
+      {
+        "seconds": 5.069909291021759,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4659986432
+      },
+      {
+        "seconds": 5.579661666008178,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4618289152
+      },
+      {
+        "seconds": 6.084779708005954,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4568367104
+      },
+      {
+        "seconds": 6.588664000009885,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4569595904
+      },
+      {
+        "seconds": 7.089378041011514,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4439392256
+      },
+      {
+        "seconds": 7.601905165996868,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4394352640
+      },
+      {
+        "seconds": 8.104004207998514,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4395565056
+      },
+      {
+        "seconds": 8.608872958022403,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4374593536
+      },
+      {
+        "seconds": 9.117424083000515,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4684087296
+      }
+    ]
+  },
+  {
+    "name": "segm-4-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/segm-4-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.004723749996628612,
+        "host_cpu_percent": 100.0,
+        "available_ram": 6004326400
+      },
+      {
+        "seconds": 0.5108552089950535,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5523898368
+      },
+      {
+        "seconds": 1.0137368340219837,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5472403456
+      },
+      {
+        "seconds": 1.517407084000297,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5460787200
+      },
+      {
+        "seconds": 2.0190165840031113,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5405720576
+      },
+      {
+        "seconds": 2.5211335839994717,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5348540416
+      },
+      {
+        "seconds": 3.023017333995085,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5291098112
+      },
+      {
+        "seconds": 3.5238199589948636,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5173673984
+      },
+      {
+        "seconds": 4.031496834009886,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5080612864
+      },
+      {
+        "seconds": 4.532450166996568,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5042880512
+      },
+      {
+        "seconds": 5.035290792002343,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4968038400
+      }
+    ]
+  },
+  {
+    "name": "segm-5-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/segm-5-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0031185830011963844,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5586714624
+      },
+      {
+        "seconds": 0.5085782080132049,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5297717248
+      },
+      {
+        "seconds": 1.0196135000151116,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5243846656
+      },
+      {
+        "seconds": 1.5222522080002818,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5219303424
+      },
+      {
+        "seconds": 2.0246228750038426,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5154783232
+      },
+      {
+        "seconds": 2.5251213329902384,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5040914432
+      },
+      {
+        "seconds": 3.034932167007355,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4991107072
+      },
+      {
+        "seconds": 3.5358857919927686,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4943675392
+      },
+      {
+        "seconds": 4.037413874990307,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4930486272
+      },
+      {
+        "seconds": 4.540471832995536,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5167202304
+      }
+    ]
+  },
+  {
+    "name": "segm-5-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-baseline/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/segm-5-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0031722089916002005,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5453873152
+      },
+      {
+        "seconds": 0.5145430839911569,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4855922688
+      },
+      {
+        "seconds": 1.024272166978335,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4830822400
+      },
+      {
+        "seconds": 1.5341229169862345,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4747313152
+      },
+      {
+        "seconds": 2.04388754197862,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4595580928
+      },
+      {
+        "seconds": 2.550152541982243,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4458479616
+      },
+      {
+        "seconds": 3.0602920839737635,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4336549888
+      },
+      {
+        "seconds": 3.567679624975426,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4221796352
+      },
+      {
+        "seconds": 4.069880499999272,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4224253952
+      },
+      {
+        "seconds": 4.572692708985414,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4146020352
+      },
+      {
+        "seconds": 5.082331833982607,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4156751872
+      },
+      {
+        "seconds": 5.582997499994235,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4078567424
+      },
+      {
+        "seconds": 6.0865512089803815,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3898310656
+      },
+      {
+        "seconds": 6.595666874985909,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3876470784
+      },
+      {
+        "seconds": 7.1021239169931505,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3794436096
+      },
+      {
+        "seconds": 7.6027189169835765,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3780673536
+      },
+      {
+        "seconds": 8.109600916999625,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3780542464
+      },
+      {
+        "seconds": 8.615206208982272,
+        "host_cpu_percent": 100.0,
+        "available_ram": 3824926720
+      },
+      {
+        "seconds": 9.122632958984468,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5063065600
+      }
+    ]
+  },
+  {
+    "name": "keypoints-0-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-baseline/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/person_keypoints_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/pose-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/keypoints-0-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.004454249981790781,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5798756352
+      },
+      {
+        "seconds": 0.5101795829832554,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5480693760
+      },
+      {
+        "seconds": 1.0199654169846326,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5325045760
+      },
+      {
+        "seconds": 1.524668041995028,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4898488320
+      },
+      {
+        "seconds": 2.029970499977935,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4765122560
+      },
+      {
+        "seconds": 2.5388503749854863,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4700340224
+      }
+    ]
+  },
+  {
+    "name": "keypoints-0-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/person_keypoints_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/pose-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/keypoints-0-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.004360374994575977,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5366759424
+      },
+      {
+        "seconds": 0.5060089589969721,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5150932992
+      },
+      {
+        "seconds": 1.0119783749978524,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5104287744
+      },
+      {
+        "seconds": 1.51320287497947,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5060493312
+      }
+    ]
+  },
+  {
+    "name": "keypoints-1-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/person_keypoints_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/pose-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/keypoints-1-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.006492624990642071,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5331107840
+      },
+      {
+        "seconds": 0.5128652079729363,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5112561664
+      },
+      {
+        "seconds": 1.02300491699134,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4972478464
+      },
+      {
+        "seconds": 1.5325982079957612,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4865982464
+      }
+    ]
+  },
+  {
+    "name": "keypoints-1-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-baseline/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/person_keypoints_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/pose-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/keypoints-1-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.003803583007538691,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5037080576
+      },
+      {
+        "seconds": 0.5052068330114707,
+        "host_cpu_percent": 0.0,
+        "available_ram": 4767727616
+      },
+      {
+        "seconds": 1.0068994169996586,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4607950848
+      },
+      {
+        "seconds": 1.5124147500027902,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4416684032
+      },
+      {
+        "seconds": 2.014742750005098,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4279353344
+      },
+      {
+        "seconds": 2.523651625000639,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4232970240
+      }
+    ]
+  },
+  {
+    "name": "keypoints-2-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-baseline/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/person_keypoints_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/pose-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/keypoints-2-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.003028042003279552,
+        "host_cpu_percent": 0.0,
+        "available_ram": 4881383424
+      },
+      {
+        "seconds": 0.5096463750232942,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4663771136
+      },
+      {
+        "seconds": 1.0147858330165036,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4485775360
+      },
+      {
+        "seconds": 1.5167525830038358,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4305682432
+      },
+      {
+        "seconds": 2.0169804170145653,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4263215104
+      },
+      {
+        "seconds": 2.5267512919963337,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4225908736
+      }
+    ]
+  },
+  {
+    "name": "keypoints-2-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/person_keypoints_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/pose-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/keypoints-2-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00314024998806417,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4795121664
+      },
+      {
+        "seconds": 0.5133542080002371,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4546248704
+      },
+      {
+        "seconds": 1.0173326669901144,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4459118592
+      },
+      {
+        "seconds": 1.5221629169827793,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4402724864
+      }
+    ]
+  },
+  {
+    "name": "keypoints-3-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/person_keypoints_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/pose-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/keypoints-3-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.006121457990957424,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4683726848
+      },
+      {
+        "seconds": 0.5096097079804167,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4455530496
+      },
+      {
+        "seconds": 1.0157302499865182,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4349493248
+      },
+      {
+        "seconds": 1.5246796249994077,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4304420864
+      }
+    ]
+  },
+  {
+    "name": "keypoints-3-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-baseline/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/person_keypoints_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/pose-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/keypoints-3-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.005257041979348287,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4595236864
+      },
+      {
+        "seconds": 0.5079655000008643,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4595236864
+      },
+      {
+        "seconds": 1.0118769590044394,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4362633216
+      },
+      {
+        "seconds": 1.5218928749964107,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4301012992
+      },
+      {
+        "seconds": 2.025322125002276,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4267556864
+      },
+      {
+        "seconds": 2.533852749998914,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4211507200
+      },
+      {
+        "seconds": 3.0390643749851733,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4140974080
+      }
+    ]
+  },
+  {
+    "name": "keypoints-4-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-baseline/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/person_keypoints_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/pose-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/keypoints-4-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.005146499985130504,
+        "host_cpu_percent": 0.0,
+        "available_ram": 4557488128
+      },
+      {
+        "seconds": 0.5087535409838893,
+        "host_cpu_percent": 0.0,
+        "available_ram": 4402216960
+      },
+      {
+        "seconds": 1.018385915987892,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4306255872
+      },
+      {
+        "seconds": 1.52755470800912,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4243652608
+      },
+      {
+        "seconds": 2.031862457981333,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4155588608
+      },
+      {
+        "seconds": 2.5337392909859773,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4106108928
+      },
+      {
+        "seconds": 3.0415541660040617,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4006477824
+      }
+    ]
+  },
+  {
+    "name": "keypoints-4-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/person_keypoints_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/pose-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/keypoints-4-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0063535000081174076,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4383080448
+      },
+      {
+        "seconds": 0.5116361660184339,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4221370368
+      },
+      {
+        "seconds": 1.0217917910194956,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4198236160
+      },
+      {
+        "seconds": 1.5222665830224287,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4199022592
+      }
+    ]
+  },
+  {
+    "name": "keypoints-5-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/person_keypoints_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/pose-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/keypoints-5-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0043134580191690475,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4348968960
+      },
+      {
+        "seconds": 0.5130653750093188,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4220485632
+      },
+      {
+        "seconds": 1.0198968750191852,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4256940032
+      },
+      {
+        "seconds": 1.525390625,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4257955840
+      }
+    ]
+  },
+  {
+    "name": "keypoints-5-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-baseline/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/person_keypoints_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/pose-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-final/keypoints-5-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.003215958015061915,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4433936384
+      },
+      {
+        "seconds": 0.5107441250002012,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4510859264
+      },
+      {
+        "seconds": 1.012532958004158,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4468850688
+      },
+      {
+        "seconds": 1.5136682500015013,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4453646336
+      },
+      {
+        "seconds": 2.022226416011108,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4345921536
+      },
+      {
+        "seconds": 2.523414583003614,
+        "host_cpu_percent": 100.0,
+        "available_ram": 4810113024
+      }
+    ]
+  }
+]

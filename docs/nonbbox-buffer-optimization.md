@@ -42,6 +42,39 @@ including both cached calls. The M2 direct evaluator's full arrays also match
 the first optimization exactly. The complete Python suite passes 279 tests;
 one optional RF-DETR collection is skipped locally.
 
+## Whole validation and subsequent compatibility correction
+
+The [whole-validation records](../bench/results/nonbbox_buffers_20260909/whole_validation.json)
+compare public v0.1.7 source `b52e8527cb772393880289ee4eb0fb30f29a7d15` with
+the buffer implementation at `506c8213985bafcbd46b88120aa28ec1354c7213`.
+Each task has two alternating fresh-process pairs on the RTX 3070 server,
+using the original 5,000-image inputs, models and frozen Ultralytics source.
+Settings remain FP32, 640 pixels, batch 16, workers 2, confidence 0.001,
+NMS IoU 0.7 and 300 model detections; COCO evaluation keeps the default cap of
+100 for bbox/mask and 20 for keypoints.
+
+| Task | Whole validation, before → after | Nested evaluator, before → after | Peak main-process RSS, before → after |
+| --- | ---: | ---: | ---: |
+| Segmentation | 139.523 → 135.514 s | 6.863 → 2.920 s | 4434.4 → 3417.1 MiB |
+| Pose | 32.284 → 31.897 s | 1.665 → 0.959 s | 2747.1 → 2416.2 MiB |
+
+Every prediction file hash and every returned metric/fitness matches the prior
+published result. These medians use only two samples per version/task; retain
+that limitation rather than treating the small whole-validation time differences
+as a precise general speedup. The six-pair replay experiments provide the larger
+timing sample. All eight full-process records and host telemetry are saved.
+
+A subsequent review found that duplicate `segmentation`, `keypoints` or
+`num_keypoints` JSON fields reached a stricter geometry parser instead of keeping
+Python JSON's last value. Commit `41d0cad777263329880c3a9c75b129d897546dde`
+makes these inputs use ordinary JSON loading, matching duplicate scalar-field
+handling. Three new regression cases fail before the correction and pass after
+it. The complete corrected suite passes **282 tests** (one optional RF-DETR
+collection skipped). D-FINE backend and pretrained accuracy checks pass **11
+tests** with both the buffer version and the corrected native version. The
+whole-validation table above specifically measures the earlier buffer commit;
+the final corrected version has a separate replay measurement.
+
 ## Allocation accounting and conditional limits
 
 A separate build enables the existing `alloc-stats` allocator counters. Its
@@ -76,6 +109,52 @@ the normal-build M2 peak remains 1052.4 MB. A compressed or different geometry
 representation could change the subtotals and trade computation for memory.
 No hardware throughput or global time optimum is claimed.
 
+## Final corrected source: comparison with public v0.1.7
+
+The [final corrected report](../bench/results/nonbbox_buffers_20260909/final_corrected.json)
+compares `b52e8527cb772393880289ee4eb0fb30f29a7d15` with
+`41d0cad777263329880c3a9c75b129d897546dde`, including the duplicate-field
+compatibility correction. Each host/task has six alternating fresh-process
+pairs. Both versions use the same compiler and dependencies within each host.
+This is the cumulative change, including PR #3, rather than the buffer-only
+comparison at the top of this report.
+
+| Scope | Median time, before → after | Median peak RSS, before → after |
+| --- | ---: | ---: |
+| M2, load files + segmentation evaluation | 4.720 → 2.500 s | 2728.6 → 1053.6 MB |
+| M2, load files + keypoint evaluation | 1.265 → 0.775 s | 708.1 → 329.8 MB |
+| 3070 server, Ultralytics cold bbox+mask replay | 5.863 → 3.524 s | 3787.2 → 2482.6 MiB |
+| 3070 server, Ultralytics cold bbox+keypoint replay | 1.828 → 0.949 s | 1717.5 → 1360.6 MiB |
+
+The server CPU is an Intel i5-10400 (6 cores / 12 threads), with 31.24 GiB RAM.
+These replay evaluations run on the CPU; the GPU identifies the machine used
+for the separate whole-validator experiment. Every metric and all complete
+arrays match. The server's two baseline/candidate diagnostic NPZ files for
+each task are also byte-identical to the public v0.1.7 archive, including all
+three calls and both evaluation types. The report links those existing public
+files and records their hashes. Four additional M2 diagnostics compare all
+precision, recall and score arrays exactly.
+
+During this work the shared managed Python installation changed build identity
+while retaining version 3.12.13. Its cause was not established. The final M2
+study therefore uses a private copied runtime, verifies all 1,898 functional
+file hashes, and records the executable, shared-library, Python source and
+native-extension hashes in every measured process. All 24 timed processes use
+the same runtime hashes and Python build (Clang 21.1.4); macOS dyld confirms
+that the loaded core library belongs to the private copy. Source and native
+hashes remain constant within each variant. Provenance reads occur after timing
+and peak-RSS capture.
+
+The M2 host remains busy: sampled host CPU utilization has median 62.2% and
+maximum 100%, with at least 4.07 GiB available RAM. Server samples have median
+8.7% CPU and at least 25.75 GiB available RAM. These are within-run comparisons
+under recorded contention, not isolated hardware throughput estimates. An
+earlier unpinned M2 run with median 100% CPU remains in the report explicitly
+marked superseded; it is not used for the final table. Earlier stage/buffer
+studies remain separate and their absolute times must not be combined with
+this final round. Missing legacy CPU readings are JSON `null` in published
+reports; hashes of the original raw files remain unchanged.
+
 ## Experiments not selected
 
 The evidence includes failed or intermediate attempts, rather than only the
@@ -102,13 +181,16 @@ or omitting empty categories is not an acceptable memory shortcut.
 - [x] Preserve every metric and compare complete arrays, including cached GT reuse.
 - [x] Count retained RLE payload, native live/peak allocations and remaining `maxDets` payload.
 - [x] Retain rejected/intermediate experiments and avoid claiming a global optimum.
-- [ ] Finish follow-up live-head CI and merge.
-- [ ] Complete separate whole-validator checks; do not infer whole-validation gains from replay.
+- [x] Validate the final correction with 282 Python tests and 11 D-FINE checks.
+- [x] Repeat final paired measurements with a frozen M2 runtime and complete array checks.
+- Follow-up exact-head CI and merge status: [PR #4](https://github.com/developer0hye/ultrafast-pycocotools/pull/4).
+- [x] Complete eight separate whole-validator checks; do not infer whole-validation gains from replay.
 - [ ] Publish a versioned release before changing the upstream dependency floor.
 
-[Raw report](../bench/results/nonbbox_buffers_20260909/report.json) contains
+[Buffer experiment report](../bench/results/nonbbox_buffers_20260909/report.json) contains
 all timed records, exact source/native/input hashes, arrays comparisons and
 allocation accounting. The same directory includes telemetry, frozen scripts,
 experimental patches and verification logs. Large NPZ files remain local under
-`bench/out/nonbbox-memory` and are hash-identified in the report; they are not
-yet published release assets.
+`bench/out/nonbbox-memory` and are hash-identified in the reports. Final server
+arrays are byte-identical to files in the linked public archive; the other
+experimental NPZ files are not published release assets.
