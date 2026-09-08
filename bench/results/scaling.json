@@ -1,0 +1,690 @@
+{
+  "schema_version": 1,
+  "workload": "Objects365 v2 validation; seeded synthetic predictions",
+  "subset_seed": 20260908,
+  "selection": "Seeded shuffle of sorted image IDs; nested prefixes; preserve source annotation and prediction order; keep all categories",
+  "threads": 2,
+  "cpu_affinity": [
+    0,
+    1
+  ],
+  "runs_per_backend_per_size": 1,
+  "points": [
+    {
+      "images": 1000,
+      "annotations": 15690,
+      "detections": 13718,
+      "categories": 365,
+      "measurement_source": "new measurement",
+      "byte_identical": {
+        "precision": true,
+        "recall": true,
+        "scores": true,
+        "stats": true
+      },
+      "reference": {
+        "backend": "pycocotools",
+        "images": 1000,
+        "detections": 13718,
+        "gt_sha256": "568427bdb9a952d45e6d68d8269f83b6ee1dd5ed74867b394170318ef0ec5bdf",
+        "pred_sha256": "ab7dd46a2e6f1562c70355394fb871d92ded5dab9999d6d8fb33c19645cafc6b",
+        "input_json_parse_seconds": 0.0605432721786201,
+        "runs": [
+          {
+            "gt_seconds": 0.004108055029064417,
+            "load_res_seconds": 0.021907679736614227,
+            "evaluate_seconds": 4.073474749922752,
+            "accumulate_seconds": 1.1025480246171355,
+            "summarize_seconds": 0.012447498738765717,
+            "total_scoring_seconds": 5.214486008044332
+          }
+        ],
+        "stats": [
+          0.08370993106199497,
+          0.33055756855628715,
+          0.011982256331480525,
+          0.11789074081093222,
+          0.10383518661967159,
+          0.08991002517677396,
+          0.09908901849801215,
+          0.16089252796849976,
+          0.16579786191933352,
+          0.16470954354238596,
+          0.16768879094667577,
+          0.16654363865946245
+        ],
+        "array_sha256": {
+          "precision": "743f1f0da01e465d4ab63c09881aad502d758c3aee353cb184ba1a6f52946493",
+          "recall": "79133ceda1b9db736f105ebcb6c1db4e601886d9b749f215e9f3872c2889dfe9",
+          "scores": "334522a03f38dbe8fe04e3fa657cdb737d7c3b8bb9f41a6088c093663682d6b0",
+          "stats": "a9304947da729b0c59989a2eeb10162e9751b8f5ba09a3971ab34250aa76df0d"
+        },
+        "peak_rss_MiB": 424.8203125,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "ultrafast": {
+        "backend": "ultrafast",
+        "images": 1000,
+        "detections": 13718,
+        "gt_sha256": "568427bdb9a952d45e6d68d8269f83b6ee1dd5ed74867b394170318ef0ec5bdf",
+        "pred_sha256": "ab7dd46a2e6f1562c70355394fb871d92ded5dab9999d6d8fb33c19645cafc6b",
+        "input_json_parse_seconds": 0.05743713676929474,
+        "runs": [
+          {
+            "gt_seconds": 0.005414720159024,
+            "load_res_seconds": 0.025495546869933605,
+            "evaluate_seconds": 0.1251138411462307,
+            "accumulate_seconds": 5.597388371825218e-05,
+            "summarize_seconds": 0.013250611256808043,
+            "total_scoring_seconds": 0.1693306933157146
+          }
+        ],
+        "stats": [
+          0.08370993106199497,
+          0.33055756855628715,
+          0.011982256331480525,
+          0.11789074081093222,
+          0.10383518661967159,
+          0.08991002517677396,
+          0.09908901849801215,
+          0.16089252796849976,
+          0.16579786191933352,
+          0.16470954354238596,
+          0.16768879094667577,
+          0.16654363865946245
+        ],
+        "array_sha256": {
+          "precision": "743f1f0da01e465d4ab63c09881aad502d758c3aee353cb184ba1a6f52946493",
+          "recall": "79133ceda1b9db736f105ebcb6c1db4e601886d9b749f215e9f3872c2889dfe9",
+          "scores": "334522a03f38dbe8fe04e3fa657cdb737d7c3b8bb9f41a6088c093663682d6b0",
+          "stats": "a9304947da729b0c59989a2eeb10162e9751b8f5ba09a3971ab34250aa76df0d"
+        },
+        "peak_rss_MiB": 243.94921875,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      }
+    },
+    {
+      "images": 5000,
+      "annotations": 77222,
+      "detections": 67850,
+      "categories": 365,
+      "measurement_source": "new measurement",
+      "byte_identical": {
+        "precision": true,
+        "recall": true,
+        "scores": true,
+        "stats": true
+      },
+      "reference": {
+        "backend": "pycocotools",
+        "images": 5000,
+        "detections": 67850,
+        "gt_sha256": "fc906c56a99fd60249d1d3718f68fcb3b2b4b9efda8f671bd7b45644183317e8",
+        "pred_sha256": "a9a32e8e119b88a3bb5a9ab02d39e01454bebfab0ffaf766ff9f648d5a1f3381",
+        "input_json_parse_seconds": 0.34028251003473997,
+        "runs": [
+          {
+            "gt_seconds": 0.08323298394680023,
+            "load_res_seconds": 0.28457309817895293,
+            "evaluate_seconds": 22.708156141918153,
+            "accumulate_seconds": 3.312085679732263,
+            "summarize_seconds": 0.011431139893829823,
+            "total_scoring_seconds": 26.39947904367
+          }
+        ],
+        "stats": [
+          0.06825404360498442,
+          0.2818855701409513,
+          0.0064674672505795,
+          0.09232754340941277,
+          0.08099586138984907,
+          0.0642679065756127,
+          0.09648941696160733,
+          0.16232998420981115,
+          0.16725579019569048,
+          0.17032445381235783,
+          0.16442289335086607,
+          0.1680400276004084
+        ],
+        "array_sha256": {
+          "precision": "4a86a4ea0d38f443201ab251d743d8725717e6bd1780e36006bebb93fd96c717",
+          "recall": "9456cb517dd8d7dbdbd52673873bedcdf89e15856fe812eb93b64d19a33d7f4e",
+          "scores": "9ee27c4d63236cfd8fcd182498759b0e0b2f27a76f31e2daa63c8d799022e404",
+          "stats": "fdd5083cef9caf4b1d30a8f4ec34ef9deeeab68390e2404bf4889443892146c3"
+        },
+        "peak_rss_MiB": 1558.01171875,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "ultrafast": {
+        "backend": "ultrafast",
+        "images": 5000,
+        "detections": 67850,
+        "gt_sha256": "fc906c56a99fd60249d1d3718f68fcb3b2b4b9efda8f671bd7b45644183317e8",
+        "pred_sha256": "a9a32e8e119b88a3bb5a9ab02d39e01454bebfab0ffaf766ff9f648d5a1f3381",
+        "input_json_parse_seconds": 0.29501293413341045,
+        "runs": [
+          {
+            "gt_seconds": 0.06596231926232576,
+            "load_res_seconds": 0.3104707160964608,
+            "evaluate_seconds": 0.34903482208028436,
+            "accumulate_seconds": 5.665374919772148e-05,
+            "summarize_seconds": 0.011748604010790586,
+            "total_scoring_seconds": 0.7372731151990592
+          }
+        ],
+        "stats": [
+          0.06825404360498442,
+          0.2818855701409513,
+          0.0064674672505795,
+          0.09232754340941277,
+          0.08099586138984907,
+          0.0642679065756127,
+          0.09648941696160733,
+          0.16232998420981115,
+          0.16725579019569048,
+          0.17032445381235783,
+          0.16442289335086607,
+          0.1680400276004084
+        ],
+        "array_sha256": {
+          "precision": "4a86a4ea0d38f443201ab251d743d8725717e6bd1780e36006bebb93fd96c717",
+          "recall": "9456cb517dd8d7dbdbd52673873bedcdf89e15856fe812eb93b64d19a33d7f4e",
+          "scores": "9ee27c4d63236cfd8fcd182498759b0e0b2f27a76f31e2daa63c8d799022e404",
+          "stats": "fdd5083cef9caf4b1d30a8f4ec34ef9deeeab68390e2404bf4889443892146c3"
+        },
+        "peak_rss_MiB": 324.90234375,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      }
+    },
+    {
+      "images": 10000,
+      "annotations": 154418,
+      "detections": 136040,
+      "categories": 365,
+      "measurement_source": "new measurement",
+      "byte_identical": {
+        "precision": true,
+        "recall": true,
+        "scores": true,
+        "stats": true
+      },
+      "reference": {
+        "backend": "pycocotools",
+        "images": 10000,
+        "detections": 136040,
+        "gt_sha256": "244f6a3070db81ba2a535eb6a8a0265070bef81824177df7b83db6186f6293b0",
+        "pred_sha256": "207b4f0259be860ffefd237ffd7b8e6619d087b6c34997372a95de44d8cd44c1",
+        "input_json_parse_seconds": 0.607176385819912,
+        "runs": [
+          {
+            "gt_seconds": 0.1408825940452516,
+            "load_res_seconds": 0.5647167908027768,
+            "evaluate_seconds": 51.14450358366594,
+            "accumulate_seconds": 6.1510697160847485,
+            "summarize_seconds": 0.012387039605528116,
+            "total_scoring_seconds": 58.01355972420424
+          }
+        ],
+        "stats": [
+          0.06541581353483883,
+          0.2763428010620088,
+          0.004909085885154312,
+          0.08049715614428415,
+          0.07498065461921609,
+          0.05835470846999849,
+          0.09399084924256633,
+          0.1611724131787071,
+          0.16690440465310066,
+          0.16936245272308997,
+          0.16652769453582203,
+          0.16691128491113363
+        ],
+        "array_sha256": {
+          "precision": "5b6aa0bb9f7cfbba4a45297b720ae2d779ae2f52c4412933cdb7704c624f6db4",
+          "recall": "00493bbde3b8ea3466eae6dc10122ecbd6ed2285bdf8bffd26d1b15781bcdbc8",
+          "scores": "c048a2df981ad602b62aeae4ab32478472ab4419bf20f3c391785c83e88ac42d",
+          "stats": "b96fa1c6c2d46e4422e56d74be8c98d37e26022aaafd4edfef12e006bfc12b90"
+        },
+        "peak_rss_MiB": 2996.984375,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "ultrafast": {
+        "backend": "ultrafast",
+        "images": 10000,
+        "detections": 136040,
+        "gt_sha256": "244f6a3070db81ba2a535eb6a8a0265070bef81824177df7b83db6186f6293b0",
+        "pred_sha256": "207b4f0259be860ffefd237ffd7b8e6619d087b6c34997372a95de44d8cd44c1",
+        "input_json_parse_seconds": 0.650882092770189,
+        "runs": [
+          {
+            "gt_seconds": 0.15768337808549404,
+            "load_res_seconds": 0.5828779619187117,
+            "evaluate_seconds": 0.6133952350355685,
+            "accumulate_seconds": 5.448097363114357e-05,
+            "summarize_seconds": 0.010355460923165083,
+            "total_scoring_seconds": 1.3643665169365704
+          }
+        ],
+        "stats": [
+          0.06541581353483883,
+          0.2763428010620088,
+          0.004909085885154312,
+          0.08049715614428415,
+          0.07498065461921609,
+          0.05835470846999849,
+          0.09399084924256633,
+          0.1611724131787071,
+          0.16690440465310066,
+          0.16936245272308997,
+          0.16652769453582203,
+          0.16691128491113363
+        ],
+        "array_sha256": {
+          "precision": "5b6aa0bb9f7cfbba4a45297b720ae2d779ae2f52c4412933cdb7704c624f6db4",
+          "recall": "00493bbde3b8ea3466eae6dc10122ecbd6ed2285bdf8bffd26d1b15781bcdbc8",
+          "scores": "c048a2df981ad602b62aeae4ab32478472ab4419bf20f3c391785c83e88ac42d",
+          "stats": "b96fa1c6c2d46e4422e56d74be8c98d37e26022aaafd4edfef12e006bfc12b90"
+        },
+        "peak_rss_MiB": 472.265625,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      }
+    },
+    {
+      "images": 20000,
+      "annotations": 310333,
+      "detections": 273157,
+      "categories": 365,
+      "measurement_source": "new measurement",
+      "byte_identical": {
+        "precision": true,
+        "recall": true,
+        "scores": true,
+        "stats": true
+      },
+      "reference": {
+        "backend": "pycocotools",
+        "images": 20000,
+        "detections": 273157,
+        "gt_sha256": "b45bfe8b82864f8a867f31be89fecec8ff0aa417e8d1f38902b11558ae99f61d",
+        "pred_sha256": "a38349fe8aed267db522878e07354fa05673ff48f16712b6de86c693760ade34",
+        "input_json_parse_seconds": 1.250596133992076,
+        "runs": [
+          {
+            "gt_seconds": 0.307287422940135,
+            "load_res_seconds": 1.5248531172983348,
+            "evaluate_seconds": 106.69768439093605,
+            "accumulate_seconds": 11.66173499636352,
+            "summarize_seconds": 0.010081171989440918,
+            "total_scoring_seconds": 120.20164109952748
+          }
+        ],
+        "stats": [
+          0.06275177393724504,
+          0.27009253073640954,
+          0.0042169077706366445,
+          0.07444417446971427,
+          0.07091192000764124,
+          0.052846535695869,
+          0.09220497607780169,
+          0.15985187743161608,
+          0.16601166577343218,
+          0.16757309810135534,
+          0.16680619677381936,
+          0.16603429844312104
+        ],
+        "array_sha256": {
+          "precision": "e2e2a4a5889cb6457d3b94903620e4d7aa7aa38cbc1a6b5d00bec74a8d23c835",
+          "recall": "b415fe1aa9d1dc239cfdeaeeaa8b15b9b5e042f107965b8643f58423bf59e2d1",
+          "scores": "00cef671bfc50e6495f8cee9a58d927367eb3f390f491344688b2c575340eafd",
+          "stats": "31fc4c456147995a705ae5b54eddd83cebda0ebb1c58b362dc10fdcaefdabbed"
+        },
+        "peak_rss_MiB": 5877.015625,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "ultrafast": {
+        "backend": "ultrafast",
+        "images": 20000,
+        "detections": 273157,
+        "gt_sha256": "b45bfe8b82864f8a867f31be89fecec8ff0aa417e8d1f38902b11558ae99f61d",
+        "pred_sha256": "a38349fe8aed267db522878e07354fa05673ff48f16712b6de86c693760ade34",
+        "input_json_parse_seconds": 1.2488925480283797,
+        "runs": [
+          {
+            "gt_seconds": 0.32955956971272826,
+            "load_res_seconds": 1.4942282736301422,
+            "evaluate_seconds": 1.179519021883607,
+            "accumulate_seconds": 6.244424730539322e-05,
+            "summarize_seconds": 0.01049319701269269,
+            "total_scoring_seconds": 3.0138625064864755
+          }
+        ],
+        "stats": [
+          0.06275177393724504,
+          0.27009253073640954,
+          0.0042169077706366445,
+          0.07444417446971427,
+          0.07091192000764124,
+          0.052846535695869,
+          0.09220497607780169,
+          0.15985187743161608,
+          0.16601166577343218,
+          0.16757309810135534,
+          0.16680619677381936,
+          0.16603429844312104
+        ],
+        "array_sha256": {
+          "precision": "e2e2a4a5889cb6457d3b94903620e4d7aa7aa38cbc1a6b5d00bec74a8d23c835",
+          "recall": "b415fe1aa9d1dc239cfdeaeeaa8b15b9b5e042f107965b8643f58423bf59e2d1",
+          "scores": "00cef671bfc50e6495f8cee9a58d927367eb3f390f491344688b2c575340eafd",
+          "stats": "31fc4c456147995a705ae5b54eddd83cebda0ebb1c58b362dc10fdcaefdabbed"
+        },
+        "peak_rss_MiB": 749.26953125,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      }
+    },
+    {
+      "images": 40000,
+      "annotations": 621752,
+      "detections": 546763,
+      "categories": 365,
+      "measurement_source": "new measurement",
+      "byte_identical": {
+        "precision": true,
+        "recall": true,
+        "scores": true,
+        "stats": true
+      },
+      "reference": {
+        "backend": "pycocotools",
+        "images": 40000,
+        "detections": 546763,
+        "gt_sha256": "f051eec87a3a82424ac480f3f8a283f9dc930725e779887f3fe0e37c0370025f",
+        "pred_sha256": "eca9b059a6d86ef35d4f5a59c048401c4cfd130ee74d21d399dc8fd2f14326fd",
+        "input_json_parse_seconds": 2.472561308182776,
+        "runs": [
+          {
+            "gt_seconds": 0.6725872647948563,
+            "load_res_seconds": 3.028019125107676,
+            "evaluate_seconds": 205.2896038889885,
+            "accumulate_seconds": 30.777057603932917,
+            "summarize_seconds": 0.010782293975353241,
+            "total_scoring_seconds": 239.7780501767993
+          }
+        ],
+        "stats": [
+          0.06100216337822057,
+          0.26432581315569686,
+          0.003825296311618257,
+          0.07003787052960653,
+          0.06706603136014687,
+          0.04965133204132493,
+          0.09145102975587331,
+          0.15983940636258087,
+          0.16626592748208593,
+          0.16863815336063756,
+          0.16556733813152627,
+          0.16662647913180886
+        ],
+        "array_sha256": {
+          "precision": "7b519141a4a6c9c3a346b236e613443e5c469fbd27f4db1b628c44dba6d7f84c",
+          "recall": "74d6c4812a56e2fb3a5cb07a61e51892a2d15daee745cc00e6592fb517224f6e",
+          "scores": "e8726cfba721b03cd74772f93032d40fbc6ecbf96358e4ee082b599a7e70101c",
+          "stats": "f7db98c0fbd62062e93fcdea134f5fff0be1cf55c80e26882277a51de44c63ca"
+        },
+        "peak_rss_MiB": 11644.046875,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "ultrafast": {
+        "backend": "ultrafast",
+        "images": 40000,
+        "detections": 546763,
+        "gt_sha256": "f051eec87a3a82424ac480f3f8a283f9dc930725e779887f3fe0e37c0370025f",
+        "pred_sha256": "eca9b059a6d86ef35d4f5a59c048401c4cfd130ee74d21d399dc8fd2f14326fd",
+        "input_json_parse_seconds": 2.612416175659746,
+        "runs": [
+          {
+            "gt_seconds": 0.6333212391473353,
+            "load_res_seconds": 3.0024953046813607,
+            "evaluate_seconds": 2.2876274031586945,
+            "accumulate_seconds": 7.487228140234947e-05,
+            "summarize_seconds": 0.007157369051128626,
+            "total_scoring_seconds": 5.9306761883199215
+          }
+        ],
+        "stats": [
+          0.06100216337822057,
+          0.26432581315569686,
+          0.003825296311618257,
+          0.07003787052960653,
+          0.06706603136014687,
+          0.04965133204132493,
+          0.09145102975587331,
+          0.15983940636258087,
+          0.16626592748208593,
+          0.16863815336063756,
+          0.16556733813152627,
+          0.16662647913180886
+        ],
+        "array_sha256": {
+          "precision": "7b519141a4a6c9c3a346b236e613443e5c469fbd27f4db1b628c44dba6d7f84c",
+          "recall": "74d6c4812a56e2fb3a5cb07a61e51892a2d15daee745cc00e6592fb517224f6e",
+          "scores": "e8726cfba721b03cd74772f93032d40fbc6ecbf96358e4ee082b599a7e70101c",
+          "stats": "f7db98c0fbd62062e93fcdea134f5fff0be1cf55c80e26882277a51de44c63ca"
+        },
+        "peak_rss_MiB": 1320.90234375,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      }
+    },
+    {
+      "images": 80000,
+      "annotations": 1240587,
+      "detections": 1090984,
+      "categories": 365,
+      "measurement_source": "previously published full-dataset measurement; same input hashes",
+      "byte_identical": {
+        "precision": true,
+        "recall": true,
+        "scores": true,
+        "stats": true
+      },
+      "reference": {
+        "backend": "pycocotools",
+        "images": 80000,
+        "detections": 1090984,
+        "gt_sha256": "b5b6a043f3b36c1865240a3e23fc4cbbf627052d72b6a4428a993bf2549d4424",
+        "pred_sha256": "d1a1db2ffc1afd15ee02b82672a83747b0518e7770491cdfdbb0098283df4542",
+        "input_json_parse_seconds": 4.974350808188319,
+        "runs": [
+          {
+            "gt_seconds": 2.3062694068066776,
+            "load_res_seconds": 5.0597215802408755,
+            "evaluate_seconds": 464.5464604268782,
+            "accumulate_seconds": 48.33213178999722,
+            "summarize_seconds": 0.010910635814070702,
+            "total_scoring_seconds": 520.255493839737
+          }
+        ],
+        "stats": [
+          0.06030084048502876,
+          0.26168735827995165,
+          0.003828009378613344,
+          0.06726780903958639,
+          0.06534415548295817,
+          0.04750469803411289,
+          0.09028229398920475,
+          0.1594475864758379,
+          0.16624303931713869,
+          0.1676666324801709,
+          0.16533728516480317,
+          0.16647753225552828
+        ],
+        "array_sha256": {
+          "precision": "48e9a3aba29810ca43570b55b7cbf810993eecad9c15996738fb06622fa4131b",
+          "recall": "dd2c143922a45cc7daead948fa3a39e6e6f01d66c1f1fda344e54d0f28269101",
+          "scores": "b9cb9ff753ba98fb3d965f48590f8ad6e07a8203d72aeded1082ae1c5685be1f",
+          "stats": "dd79c9cdae4b7fcbea703567e888781fd22be61eed8f143d54f370523bb7de8c"
+        },
+        "peak_rss_MiB": 23160.53515625,
+        "rayon_threads": null,
+        "omp_threads": "2"
+      },
+      "ultrafast": {
+        "backend": "ultrafast",
+        "images": 80000,
+        "detections": 1090984,
+        "gt_sha256": "b5b6a043f3b36c1865240a3e23fc4cbbf627052d72b6a4428a993bf2549d4424",
+        "pred_sha256": "d1a1db2ffc1afd15ee02b82672a83747b0518e7770491cdfdbb0098283df4542",
+        "input_json_parse_seconds": 5.073729444760829,
+        "runs": [
+          {
+            "gt_seconds": 2.330571088939905,
+            "load_res_seconds": 5.083379739895463,
+            "evaluate_seconds": 5.008067246060818,
+            "accumulate_seconds": 9.920820593833923e-05,
+            "summarize_seconds": 0.007502391934394836,
+            "total_scoring_seconds": 12.42961967503652
+          }
+        ],
+        "stats": [
+          0.06030084048502876,
+          0.26168735827995165,
+          0.003828009378613344,
+          0.06726780903958639,
+          0.06534415548295817,
+          0.04750469803411289,
+          0.09028229398920475,
+          0.1594475864758379,
+          0.16624303931713869,
+          0.1676666324801709,
+          0.16533728516480317,
+          0.16647753225552828
+        ],
+        "array_sha256": {
+          "precision": "48e9a3aba29810ca43570b55b7cbf810993eecad9c15996738fb06622fa4131b",
+          "recall": "dd2c143922a45cc7daead948fa3a39e6e6f01d66c1f1fda344e54d0f28269101",
+          "scores": "b9cb9ff753ba98fb3d965f48590f8ad6e07a8203d72aeded1082ae1c5685be1f",
+          "stats": "dd79c9cdae4b7fcbea703567e888781fd22be61eed8f143d54f370523bb7de8c"
+        },
+        "peak_rss_MiB": 2429.609375,
+        "rayon_threads": "2",
+        "omp_threads": "2"
+      },
+      "workload": "synthetic predictions on public annotations; not detector accuracy",
+      "speedup": 41.856107221414916
+    }
+  ],
+  "endpoint_provenance": {
+    "library_source_sha256": "83c9e7dd0d544a2233091a2255ccc988611a426020b96ce4f307ee39a2629fe0",
+    "library_source_files": {
+      "python/ultrafast_pycocotools/coco.py": "bce1b9e1578550e35804e34ea02b87abe74d51922e9ed62a51a96a98e46fe228",
+      "python/ultrafast_pycocotools/__init__.py": "adc33d00bb12d14d87a1a4b48b74a87dc4bcf365277345aed5b403a8d799364d",
+      "python/ultrafast_pycocotools/cocoeval.py": "6e16d3e6b66574ae74262979671061defdd1f2e75434a15e9b364ce5aa5b527a",
+      "python/ultrafast_pycocotools/mask.py": "f8f25b4e61591d7cabaca8831bfe60bf9b160bd5866ab19d8f237b781ac34d20",
+      "rust/ufcoco-core/src/group.rs": "ac114a7aed9747e911ad6993c93af8c215ca8b4998ffaafc4a2d06d984c1d8fa",
+      "rust/ufcoco-core/src/lib.rs": "d7238558b480f50163f54ac6a7009023fb5acd9296096e0fb9d0e3e83ea6cad8",
+      "rust/ufcoco-core/src/rle.rs": "ff5b7569bcf3ab9291f7c5394dc650f19e6768ef4ab569309cfc6f3ba894996d",
+      "rust/ufcoco-core/src/eval.rs": "38ac44511b1987d893aefa727a65f40514aa94a427db4f78150fc031b72941bb",
+      "rust/ufcoco-py/src/mask.rs": "544e67afd1764055744873bccc8f4dfbfea0dadfcde8d47ae2d4b12190480ac6",
+      "rust/ufcoco-py/src/lib.rs": "292b715e38a96d69a3df2668c4918cc3ebb427bfaa1e092064290ec998ebd4b2",
+      "rust/ufcoco-py/src/alloc.rs": "6f5ba4e6eec97ba92659d2f6c22da6c8c7f29e46f63cf8a1800963f6318fb0dd",
+      "rust/ufcoco-py/src/json.rs": "501c5666de64b3dbcadbfafe7d61dc13f6d3f38834774e62ddf4be2f6ce08e27"
+    },
+    "source_revision": "254a5d2ad2548b62d3f83057fe052dd4097e159f",
+    "python": "3.12.3",
+    "pycocotools": "2.0.11",
+    "numpy": "2.4.4",
+    "ultrafast_pycocotools": "0.1.0",
+    "threads": {
+      "OMP_NUM_THREADS": 2,
+      "OPENBLAS_NUM_THREADS": 1,
+      "RAYON_NUM_THREADS": 2
+    },
+    "cpu_affinity": {
+      "objects365": [
+        0,
+        1
+      ],
+      "coco_yolo11m": [
+        2,
+        3
+      ]
+    },
+    "timing_method": "One process per backend; one run per case; fixed two-core affinity per dataset. Dataset cases may run concurrently on disjoint CPU affinities on a shared host. No GPU inference.",
+    "objects365": {
+      "kind": "public-dataset synthetic prediction scalability test, not detector accuracy",
+      "annotation_file": "zhiyuan_objv2_val.json",
+      "images": 80000,
+      "annotations": 1240587,
+      "categories": 365,
+      "generator": "bench/make_dets.py",
+      "seed": 1234,
+      "recall": 0.75,
+      "wrong_class": 0.12,
+      "fp_ratio": 2.0,
+      "score_decimals": 3
+    },
+    "coco": {
+      "kind": "public pretrained detector predictions",
+      "model": "YOLO11m",
+      "weights_source": "https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11m.pt",
+      "images": 5000,
+      "generator": "bench/predict_coco.py",
+      "iou_type": "bbox"
+    },
+    "hardware": {
+      "cpu": "AMD EPYC 9554 64-Core Processor",
+      "sockets": 2,
+      "physical_cores_per_socket": 64,
+      "host_logical_cpus": 256,
+      "benchmark_cpu_budget": 2,
+      "os": "Linux",
+      "architecture": "x86_64"
+    },
+    "evaluation": {
+      "iou_type": "bbox",
+      "iou_thresholds": "0.50:0.05:0.95",
+      "recall_thresholds": "0.00:0.01:1.00",
+      "max_dets": [
+        1,
+        10,
+        100
+      ],
+      "area_ranges": [
+        [
+          0,
+          10000000000.0
+        ],
+        [
+          0,
+          1024
+        ],
+        [
+          1024,
+          9216
+        ],
+        [
+          9216,
+          10000000000.0
+        ]
+      ],
+      "use_cats": true,
+      "image_selection": "all annotation images"
+    }
+  },
+  "python": "3.12.3",
+  "versions": {
+    "numpy": "2.4.4",
+    "pycocotools": "2.0.11",
+    "ultrafast-pycocotools": "0.1.0"
+  }
+}

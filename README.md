@@ -90,6 +90,16 @@ from pycocotools.cocoeval import COCOeval
 This changes the import mapping for the entire Python process. Use separate
 processes when comparing the reference package and the replacement.
 
+## Scaling with input size
+
+![Evaluation time and peak memory versus GT plus prediction count](docs/assets/scaling.png)
+
+Measured on nested Objects365 subsets with identical inputs for both scorers.
+Every point passes byte-level parity for all evaluation arrays.
+[Method, counts and reproduction](docs/scaling.md) ·
+[SVG](docs/assets/scaling.svg) · [PDF](docs/assets/scaling.pdf) ·
+[Raw measurements](bench/results/scaling.json).
+
 ## Public benchmarks
 
 Both cases produced **byte-identical precision, recall, scores and summary
