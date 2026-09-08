@@ -13,7 +13,7 @@ Benchmarks cover public pretrained detector outputs on COCO and a separate
 synthetic scalability workload on the public Objects365 dataset. Both compare
 complete evaluation arrays against pycocotools.
 
-**Status:** 0.1.6, alpha. Validate your application's
+**Status:** alpha. Validate your application's
 parameters and subclass behavior before replacing its reference evaluator.
 
 ## Installation
@@ -66,6 +66,11 @@ It generates data, runs both scorers, and verifies input hashes and every
 evaluation-array byte. No images, model weights, or GPU are needed.
 See [the reproduction guide](docs/reproducibility.md) for Objects365 and public
 detector predictions, expected hashes, resource requirements, and output files.
+
+[Apple M2 desktop](docs/benchmark-apple-m2.md) and
+[i5-10400 / RTX 3070 server measurements](docs/benchmark-rtx3070.md) use the same
+5,000-image synthetic inputs, with repeated runs and CPU/memory telemetry.
+The server report includes both machines and their different background loads.
 
 ## Quick start
 
@@ -177,7 +182,20 @@ aggregate and per-class metric tensors.
 
 ![RF-DETR metric replay speed and memory](docs/assets/rfdetr-metric.svg)
 
+## D-FINE-seg integration
+
+A [tested D-FINE-seg integration patch](docs/dfine-seg.md) adds an optional
+ultrafast backend to its TorchMetrics bbox and instance-segmentation mAP paths.
+It includes full-array parity, Validator lifecycle and pretrained-model checks.
+With the **0.1.7 mask-encoder optimization**, actual COCO500 bbox +
+segmentation validation is **17.8% faster on M2** and **23.4% faster on the
+i5-10400 server** than faster-coco-eval. All outputs are unchanged.
+[Source-build results and instructions](docs/mask-encoding-optimization.md).
+The [published-0.1.6 baseline](docs/benchmark-dfine-seg.md) retains the original
+measurements, including its mask-encoding regression.
+
 ## YOLO26n benchmark (0.1.2)
+
 
 **19.1× faster · 53.4% lower peak RSS than pycocotools**, using identical
 YOLO26n predictions on all 5,000 COCO val2017 images.
