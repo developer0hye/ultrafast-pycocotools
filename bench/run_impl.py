@@ -121,7 +121,8 @@ def cpu_load_percent() -> float:
         return float("nan")
 
 
-def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool = False) -> dict:
+def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool = False,
+        lvis_protocol: str | None = None, arrays_out: Path | None = None) -> dict:
     timings: dict[str, float] = {}
 
     if impl == "pycocotools":
@@ -152,7 +153,12 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool 
 
     t = time.perf_counter()
     c = time.process_time()
-    ev = COCOeval(gt, dt, iou_type)
+    options = {}
+    if lvis_protocol is not None:
+        if impl != "ufcoco":
+            raise ValueError("Explicit LVIS protocols in this runner require --impl ufcoco")
+        options = dict(lvis_style=True, lvis_protocol=lvis_protocol)
+    ev = COCOeval(gt, dt, iou_type, **options)
     ev.evaluate()
     timings["evaluate"] = time.perf_counter() - t
     cpu_eval = time.process_time() - c
@@ -181,6 +187,8 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool 
     }
     # Capture the peak before provenance I/O, which is outside the benchmark.
     peak = peak_rss_mb()
+    if arrays_out is not None:
+        np.savez_compressed(arrays_out, **{k: ev.eval[k] for k in ("precision", "recall", "scores")})
     runtime_paths = [Path(sys.executable).resolve()]
     library = sysconfig.get_config_var('LDLIBRARY')
     if library:
@@ -196,9 +204,14 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool 
         source_paths.extend([Path(_ufcoco.__file__),
                              Path(sys.modules[COCO.__module__].__file__),
                              Path(sys.modules[COCOeval.__module__].__file__)])
+        if lvis_protocol is not None:
+            from ultrafast_pycocotools import _lvis
+            source_paths.append(Path(_lvis.__file__))
     return {
         "impl": impl,
         "file_inputs": file_inputs,
+        "lvis_protocol": lvis_protocol,
+        "diagnostic_only": arrays_out is not None,
         "iou_type": iou_type,
         "timings": timings,
         "eval_total": timings["evaluate"] + timings["accumulate"] + timings["summarize"],
@@ -232,6 +245,8 @@ def main() -> None:
     ap.add_argument("--json-out", type=Path)
     ap.add_argument("--file-inputs", action="store_true",
                     help="Pass the prediction filename directly to loadRes")
+    ap.add_argument("--lvis-protocol", choices=["official", "coco"])
+    ap.add_argument("--arrays-out", type=Path, help="Save full arrays after timing and peak-RSS capture")
     args = ap.parse_args()
 
     # Must happen before the extension is imported: rayon reads this when it
@@ -242,7 +257,8 @@ def main() -> None:
 
     global LOAD_BEFORE
     LOAD_BEFORE = cpu_load_percent()
-    res = run(args.impl, args.gt, args.dt, args.iou_type, args.file_inputs)
+    res = run(args.impl, args.gt, args.dt, args.iou_type, args.file_inputs,
+              args.lvis_protocol, args.arrays_out)
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)
         args.json_out.write_text(json.dumps(res, indent=2))
