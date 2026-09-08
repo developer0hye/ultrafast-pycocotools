@@ -66,6 +66,14 @@ struct Record {
     score: Option<f64>,
     #[serde(default)]
     iscrowd: Option<Crowd>,
+    // Presence tracking makes duplicate geometry fields take the ordinary JSON
+    // loader's last-value path, just like duplicate scalar fields already do.
+    #[serde(default, rename = "segmentation")]
+    _segmentation: Option<serde::de::IgnoredAny>,
+    #[serde(default, rename = "keypoints")]
+    _keypoints: Option<serde::de::IgnoredAny>,
+    #[serde(default, rename = "num_keypoints")]
+    _num_keypoints: Option<serde::de::IgnoredAny>,
 }
 
 fn field_present<'de, D: serde::Deserializer<'de>>(d: D) -> Result<bool, D::Error> {
