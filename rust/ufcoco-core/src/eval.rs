@@ -319,12 +319,15 @@ impl Evaluator {
         &mut self,
         gt_ignore: Vec<bool>,
         non_exhaustive: Vec<(i64, i64)>,
+        preserve_crowds: bool,
     ) -> Result<(), String> {
         if gt_ignore.len() != self.gt.len() {
             return Err("LVIS ignore flags do not match ground-truth length".into());
         }
         self.gt.ignore = gt_ignore;
-        self.gt.iscrowd.fill(false);
+        if !preserve_crowds {
+            self.gt.iscrowd.fill(false);
+        }
         let pairs: std::collections::HashSet<(i64, i64)> = non_exhaustive.into_iter().collect();
         for i in 0..self.dt.len() {
             let pair = self

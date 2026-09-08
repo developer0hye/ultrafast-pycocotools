@@ -131,6 +131,7 @@ class COCOeval:
         *,
         store_eval_imgs: bool = False,
         lvis_style: bool = False,
+        lvis_protocol: str = "official",
         kpt_oks_sigmas: Any = None,
         use_area: bool = True,
         boundary_dilation_ratio: float = 0.02,
@@ -144,6 +145,9 @@ class COCOeval:
             store_eval_imgs: also build the per-image ``evalImgs`` records.
                 Off by default because materialising them is what makes
                 pycocotools' memory profile bad, and almost nothing reads them.
+            lvis_protocol: ``"official"`` uses LVIS's global per-image cap and
+                ignore flags. ``"coco"`` preserves faster-coco-eval's per-category
+                caps and COCO crowd semantics with federated category filtering.
             kpt_oks_sigmas: override the 17 COCO keypoint sigmas.
             use_area: use the ground truth ``area`` for OKS. Set False for
                 CrowdPose-style data with no usable area, which falls back to
@@ -166,7 +170,10 @@ class COCOeval:
         self._ious: dict | None = None
         self.params = Params(iouType=iouType)
         self.lvis_style = bool(lvis_style)
-        if self.lvis_style:
+        if lvis_protocol not in ("official", "coco"):
+            raise ValueError('lvis_protocol must be official or coco')
+        self.lvis_protocol = lvis_protocol
+        if self.lvis_style and self.lvis_protocol == "official":
             self.params.maxDets = [300]
         self._paramsEval: Params | None = None
         self.stats: Any = []
@@ -237,7 +244,7 @@ class COCOeval:
         for source_gt in gts:
             gt = dict(source_gt) if self.lvis_style else source_gt
             gt.setdefault("ignore", 0)
-            if self.lvis_style:
+            if self.lvis_style and self.lvis_protocol == "official":
                 gt["iscrowd"] = 0
             else:
                 gt["ignore"] = bool(gt.get("iscrowd", 0))
@@ -491,8 +498,10 @@ class COCOeval:
             float(self.boundary_dilation_ratio),
         )
         if self.lvis_style:
-            self._engine.configure_lvis([bool(gt.get("ignore", 0)) for gt in gts],
-                                        self._lvis_not_exhaustive)
+            coco_protocol = self.lvis_protocol == "coco"
+            self._engine.configure_lvis(
+                [bool(gt.get("iscrowd" if coco_protocol else "ignore", 0)) for gt in gts],
+                self._lvis_not_exhaustive, coco_protocol)
         # Native extraction owns the scalar/geometry data; release temporary
         # annotation-reference lists before allocating complete output tensors.
         del gts, dts
@@ -562,7 +571,7 @@ class COCOeval:
         """Compute and print the 12 (detection) or 10 (keypoint) summary
         metrics, in pycocotools' order and format."""
 
-        if self.lvis_style:
+        if self.lvis_style and self.lvis_protocol == "official":
             from ._lvis import summarize
             summarize(self)
             return
@@ -612,6 +621,11 @@ class COCOeval:
         else:
             raise ValueError(f"unsupported iouType {iouType!r}")
 
+        if self.lvis_style and self.lvis_protocol == "coco":
+            from ._lvis import frequency_stats
+            self.stats[0] = self._summarize(1, maxDets=self.params.maxDets[-1])
+            self._lvis_frequency_stats = frequency_stats(self)
+
     def run(self) -> None:
         """``evaluate()`` + ``accumulate()`` + ``summarize()``."""
         self.evaluate()
@@ -629,7 +643,7 @@ class COCOeval:
     @property
     def stats_as_dict(self) -> dict[str, float]:
         """The summary metrics keyed by name instead of by position."""
-        if self.lvis_style:
+        if self.lvis_style and self.lvis_protocol == "official":
             from ._lvis import names
             labels = names(self.params.maxDets[0])
         elif self.params.iouType in _DET_TYPES:
@@ -646,6 +660,8 @@ class COCOeval:
                 "AR", "AR_50", "AR_75", "AR_medium", "AR_large",
             ]
         values = {k: float(v) for k, v in zip(labels, self.stats)}
+        if self.lvis_style and self.lvis_protocol == "coco":
+            values.update(getattr(self, '_lvis_frequency_stats', {}))
         aliases = {'AP_all': 'AP', 'AP50': 'AP_50', 'AP75': 'AP_75',
                    'APs': 'AP_small', 'APm': 'AP_medium', 'APl': 'AP_large'}
         for canonical, legacy in aliases.items():

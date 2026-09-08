@@ -31,6 +31,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - {os: ubuntu-latest, python: '3.8', numpy: '1'}
+          - {os: ubuntu-24.04-arm, python: '3.12', numpy: '2'}
           - {os: ubuntu-latest, python: '3.9', numpy: '1'}
           - {os: ubuntu-latest, python: '3.12', numpy: '1'}
           - {os: ubuntu-latest, python: '3.12', numpy: '2'}
@@ -52,7 +54,7 @@ jobs:
       - name: Build and install native package with reference dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install ".[test,lvis-test]" "numpy>=${{ matrix.numpy }},<${{ matrix.numpy == '1' && '2' || '3' }}" "pycocotools==2.0.11"
+          python -m pip install ".[test,lvis-test]" "numpy>=${{ matrix.numpy }},<${{ matrix.numpy == '1' && '2' || '3' }}" "pycocotools==${{ matrix.python == '3.8' && '2.0.7' || '2.0.11' }}"
           python -c "import ultrafast_pycocotools._ufcoco, pycocotools.cocoeval, lvis, numpy; print('Native extension, COCO and LVIS references imported; NumPy', numpy.__version__)"
       - name: Fetch and verify official LVIS example
         run: python bench/fetch_lvis_fixture.py
@@ -72,6 +74,7 @@ jobs:
         run: |
           python -m pip install "faster-coco-eval==1.8.0"
           python bench/reproduce.py quick --out bench/out/ci-three-way --include-faster --verify-published quick
+          python -m pytest -q tests/test_faster_lvis_protocol.py
       - name: Retain test reports and reproduction logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

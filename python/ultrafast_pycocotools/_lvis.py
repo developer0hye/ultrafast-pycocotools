@@ -8,7 +8,8 @@ def collect(evaluator, ground_truth):
     p, gt, dt = evaluator.params, evaluator.cocoGt, evaluator.cocoDt
     if not p.useCats or p.iouType not in ('bbox', 'segm'):
         raise ValueError('LVIS supports category-aware bbox and segm evaluation')
-    if len(p.maxDets) != 1 or p.maxDets[0] <= 0:
+    coco_protocol = evaluator.lvis_protocol == 'coco'
+    if not coco_protocol and (len(p.maxDets) != 1 or p.maxDets[0] <= 0):
         raise ValueError('LVIS maxDets must contain one positive per-image limit, normally [300]')
     frequencies = {}
     for category_id in p.catIds:
@@ -23,14 +24,14 @@ def collect(evaluator, ground_truth):
     detections, not_exhaustive = [], []
     for image_id in p.imgIds:
         image = gt.imgs[image_id]
-        if 'neg_category_ids' not in image or 'not_exhaustive_category_ids' not in image:
+        if not coco_protocol and ('neg_category_ids' not in image or 'not_exhaustive_category_ids' not in image):
             raise ValueError(f'LVIS image {image_id} needs federated annotation metadata')
-        verified = set(image['neg_category_ids']) | positives.get(image_id, set())
-        not_exhaustive.extend((image_id, category) for category in image['not_exhaustive_category_ids'])
+        verified = set(image.get('neg_category_ids', [])) | positives.get(image_id, set())
+        not_exhaustive.extend((image_id, category) for category in image.get('not_exhaustive_category_ids', []))
         # The global per-image cap precedes both category selection and federated filtering.
         # Python's stable sort keeps original prediction order for tied scores.
         candidates = dt.imgToAnns.get(image_id, [])
-        if len(candidates) > p.maxDets[0]:
+        if not coco_protocol and len(candidates) > p.maxDets[0]:
             candidates = sorted(candidates, key=lambda ann: ann['score'], reverse=True)[:p.maxDets[0]]
         detections.extend(ann for ann in candidates if ann['category_id'] in selected_categories
                           and ann['category_id'] in verified)
@@ -38,6 +39,16 @@ def collect(evaluator, ground_truth):
     evaluator._lvis_freq_groups = {label: [i for i, cat in enumerate(p.catIds) if frequencies[cat] == label]
                                    for label in ('r', 'c', 'f')}
     return detections
+
+
+def frequency_stats(evaluator):
+    """Reduce COCO-style LVIS frequency AP at the largest per-category limit."""
+    values = {}
+    for frequency, categories in evaluator._lvis_freq_groups.items():
+        precision = evaluator.eval['precision'][:, :, categories, 0, -1]
+        valid = precision[precision > -1]
+        values['AP' + frequency] = float(np.mean(valid)) if valid.size else -1.0
+    return values
 
 
 def names(max_dets):

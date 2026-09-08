@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "ultrafast-pycocotools"
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 description = "A bit-exact, fast, memory-stable drop-in replacement for pycocotools"
 readme = "README.md"
 license = { text = "BSD-2-Clause" }

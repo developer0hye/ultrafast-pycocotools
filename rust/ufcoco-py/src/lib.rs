@@ -635,13 +635,15 @@ impl Evaluator {
         })
     }
 
+    #[pyo3(signature = (gt_ignore, non_exhaustive, preserve_crowds=false))]
     fn configure_lvis(
         &mut self,
         gt_ignore: Vec<bool>,
         non_exhaustive: Vec<(i64, i64)>,
+        preserve_crowds: bool,
     ) -> PyResult<()> {
         self.inner
-            .configure_lvis(gt_ignore, non_exhaustive)
+            .configure_lvis(gt_ignore, non_exhaustive, preserve_crowds)
             .map_err(PyValueError::new_err)
     }
 

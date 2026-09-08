@@ -30,15 +30,15 @@ and a successful `CI` check on the exact commit before allowing publication.
 
 ## Build and verify
 
-The workflow builds **24 CPython wheels**: Python 3.9–3.14 for Linux x86-64,
+The workflow builds **34 CPython wheels**: Python 3.8–3.14 for Linux x86-64/ARM64,
 Windows x86-64, macOS Intel and macOS Apple Silicon. Linux wheels use
-manylinux2014 (glibc 2.17+). Free-threaded CPython, Linux ARM and musl wheels
-are not included in this initial release matrix.
+manylinux2014 (glibc 2.17+). Apple Silicon wheels start at Python 3.9. Free-threaded CPython and musl wheels
+are not included in this release matrix.
 
 Every wheel is installed directly from its artifact without rebuilding the
 package and runs the existing pycocotools comparison suite. The separate
 Library CI covers optional LVIS and RF-DETR dependencies. A source archive is
-also rebuilt and tested independently. The final verification checks all 24
+also rebuilt and tested independently. The final verification checks all 34
 wheel tags, package versions, required Python/native files, source archive
 contents and strict PyPI metadata validity, then records SHA-256 checksums.
 
@@ -53,7 +53,7 @@ the tested wheels from the run's `distribution-*` artifacts and install with:
 
 ```bash
 python -m pip install --only-binary=ultrafast-pycocotools \
-  --find-links=dist ultrafast-pycocotools==0.1.5
+  --find-links=dist ultrafast-pycocotools==0.1.6
 ```
 
 Installing a compatible wheel requires no Rust compiler. Installing the source
@@ -67,12 +67,12 @@ After the build and Library CI pass, and the PyPI publisher is configured:
 2. Create and push `v<version>` at the tested commit on main.
 3. Explicitly run the release workflow on that tag with `publish=true`.
 
-For example, for version 0.1.5:
+For example, for version 0.1.6:
 
 ```bash
-git tag v0.1.5
-git push origin v0.1.5
-gh workflow run release.yml --ref v0.1.5 -f publish=true
+git tag v0.1.6
+git push origin v0.1.6
+gh workflow run release.yml --ref v0.1.6 -f publish=true
 ```
 
 The upload job publishes the exact artifacts that passed the build/test jobs in
@@ -81,7 +81,7 @@ not allow overwriting a released distribution: fixes require a new version.
 After publication, verify installation from PyPI in a fresh environment:
 
 ```bash
-python -m pip install --only-binary=ultrafast-pycocotools ultrafast-pycocotools==0.1.5
+python -m pip install --only-binary=ultrafast-pycocotools ultrafast-pycocotools==0.1.6
 python -c "import importlib.metadata as m; import ultrafast_pycocotools._ufcoco; print(m.version('ultrafast-pycocotools'))"
 ```
 
@@ -91,3 +91,8 @@ Version 0.1.4 published all 24 wheels, but PyPI rejected its source archive
 because the declared LICENSE file was missing from the archive. Version 0.1.5
 adds that file explicitly and checks declared license paths before upload.
 The evaluator implementation is unchanged from 0.1.4.
+
+Version 0.1.6 adds Python 3.8 and Linux ARM64 wheels, plus an explicit
+`lvis_protocol="coco"` mode that retains the federated per-category detection
+limits and COCO crowd semantics used by faster-coco-eval. The default official
+LVIS protocol and default pycocotools metrics remain unchanged.

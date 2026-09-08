@@ -17,15 +17,16 @@ def main():
     directory = Path(sys.argv[1])
     version = tomllib.loads(Path('Cargo.toml').read_text())['workspace']['package']['version']
     expected = set(itertools.product(
-        ['cp39', 'cp310', 'cp311', 'cp312', 'cp313', 'cp314'],
-        ['linux-x86_64', 'windows-x86_64', 'macos-x86_64', 'macos-arm64'],
+        ['cp38', 'cp39', 'cp310', 'cp311', 'cp312', 'cp313', 'cp314'],
+        ['linux-aarch64', 'linux-x86_64', 'windows-x86_64', 'macos-x86_64', 'macos-arm64'],
     ))
+    expected.remove(('cp38', 'macos-arm64'))
     found = set()
     files = sorted(directory.iterdir())
     wheels = [p for p in files if p.suffix == '.whl']
     sources = [p for p in files if p.name.endswith('.tar.gz')]
     if len(wheels) != len(expected) or len(sources) != 1 or len(files) != len(expected) + 1:
-        raise SystemExit('Expected exactly 24 wheels and one source archive')
+        raise SystemExit('Expected exactly 34 wheels and one source archive')
     for wheel in wheels:
         name, wheel_version, _, tags = parse_wheel_filename(wheel.name)
         if name != 'ultrafast-pycocotools' or str(wheel_version) != version:
@@ -34,7 +35,8 @@ def main():
         for tag in tags:
             platform = tag.platform
             if platform.startswith('manylinux_2_17_') or platform.startswith('manylinux2014_'):
-                system = 'linux-x86_64' if platform.endswith('_x86_64') else None
+                system = ('linux-x86_64' if platform.endswith('_x86_64') else
+                          'linux-aarch64' if platform.endswith('_aarch64') else None)
             elif platform == 'win_amd64':
                 system = 'windows-x86_64'
             elif platform.startswith('macosx_') and platform.endswith('_x86_64'):
