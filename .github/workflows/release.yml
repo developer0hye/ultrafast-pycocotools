@@ -1,0 +1,163 @@
+name: Build and publish distributions
+
+on:
+  push:
+    branches: ['release/**']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Upload to PyPI (requires a version tag and configured Trusted Publisher)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: distributions-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  RAYON_NUM_THREADS: '2'
+  OMP_NUM_THREADS: '2'
+  OPENBLAS_NUM_THREADS: '1'
+  PYTHONUTF8: '1'
+  MPLBACKEND: Agg
+
+jobs:
+  wheels:
+    name: Wheel (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest, macos-latest, macos-15-intel]
+        python: ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Build a portable release wheel
+        uses: PyO3/maturin-action@423a6347767a8b16e65c2a7a7042e4a921528da8 # v1
+        with:
+          maturin-version: 'v1.15.0'
+          rust-toolchain: stable
+          manylinux: '2014'
+          args: --release --locked --strip --out dist --interpreter ${{ runner.os == 'Linux' && format('python{0}', matrix.python) || 'python' }}
+      - name: Install the wheel without rebuilding the package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --only-binary=ultrafast-pycocotools --no-index --no-deps --find-links=dist ultrafast-pycocotools
+          python -m pip install "numpy>=1.21" "pytest>=7" "pycocotools==2.0.11"
+          python -c "import ultrafast_pycocotools._ufcoco as m; from pathlib import Path; assert Path.cwd() not in Path(m.__file__).resolve().parents; print(m.__file__)"
+      - name: Test the installed wheel against pycocotools
+        run: python -m pytest -q --strict-markers --junitxml=wheel-tests.xml
+      - name: Retain the tested wheel
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: distribution-${{ matrix.os }}-py${{ matrix.python }}
+          path: dist/*.whl
+          if-no-files-found: error
+          retention-days: 14
+      - name: Retain test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: wheel-tests-${{ matrix.os }}-py${{ matrix.python }}
+          path: wheel-tests.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
+  sdist:
+    name: Source distribution
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Build source archive
+        run: |
+          python -m pip install "maturin==1.15.0" "twine>=6,<7"
+          maturin sdist --out dist
+          python -m twine check --strict dist/*
+      - name: Build and install exclusively from the source archive
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          python -m pip install dist/*.tar.gz
+          python -m pip install "pytest>=7" "pycocotools==2.0.11"
+          python -m pytest -q --strict-markers --junitxml=sdist-tests.xml
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: distribution-sdist
+          path: dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
+  verify:
+    name: Verify release artifacts
+    needs: [wheels, sdist]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          pattern: distribution-*
+          path: dist
+          merge-multiple: true
+      - name: Check metadata, complete platform coverage and archive contents
+        run: |
+          python -m pip install "twine>=6,<7" "packaging>=24"
+          python -m twine check --strict dist/*
+          python scripts/check_distributions.py dist
+      - name: Require a tested version tag on main before publication
+        if: inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/check_release_ref.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-checksums
+          path: SHA256SUMS
+          retention-days: 14
+
+  publish:
+    name: Publish to PyPI
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref_type == 'tag'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/project/ultrafast-pycocotools/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          pattern: distribution-*
+          path: dist
+          merge-multiple: true
+      - name: Publish the exact tested artifacts with Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1

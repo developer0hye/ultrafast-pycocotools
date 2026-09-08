@@ -19,6 +19,10 @@ parameters and subclass behavior before replacing its reference evaluator.
 
 ## Installation
 
+PyPI publishing is being prepared. The [release workflow and maintainer guide](docs/publishing.md)
+build and test wheels for Python 3.9–3.14 on Linux, Windows and macOS before upload.
+Until the first PyPI release, use the source installation below.
+
 Requirements: Python 3.9+, a recent stable [Rust toolchain](https://rustup.rs/),
 and a working native compiler toolchain. NumPy is installed as a dependency.
 
