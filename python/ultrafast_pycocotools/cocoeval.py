@@ -552,6 +552,16 @@ class COCOeval:
 
         aind = [i for i, aRng in enumerate(p.areaRngLbl) if aRng == areaRng]
         mind = [i for i, mDet in enumerate(p.maxDets) if mDet == maxDets]
+        if self.lvis_style and len(aind) == len(mind) == 1:
+            from ._lvis import valid_values
+            array = self.eval["precision" if ap == 1 else "recall"]
+            thresholds = (list(range(array.shape[0])) if iouThr is None
+                          else np.where(iouThr == p.iouThrs)[0].tolist())
+            valid = valid_values(array, thresholds, list(range(array.shape[-3])), aind[0], mind[0])
+            if valid is not None:
+                mean_s = float(np.mean(valid)) if valid.size else -1.0
+                self.print_function(iStr.format(titleStr, typeStr, iouStr, areaRng, maxDets, mean_s))
+                return mean_s
         if ap == 1:
             s = self.eval["precision"]
             if iouThr is not None:

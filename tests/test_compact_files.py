@@ -335,3 +335,46 @@ def test_duplicate_geometry_fields_keep_last_json_value(tmp_path, field):
     actual.run()
     assert_bit_identical(reference, actual, f'duplicate {field}')
     assert gt.anns[3][field] == data['annotations'][0][field]
+
+
+@pytest.mark.parametrize('iou_type', ['segm', 'boundary'])
+@pytest.mark.parametrize('use_cats', [0, 1])
+def test_mask_cap_preserves_ties_and_reloads_geometry_when_limit_grows(tmp_path, iou_type, use_cats):
+    import numpy as np
+    gp, dp, data, dets = write_inputs(tmp_path)
+    # Interleave categories; category-major order, not file order, breaks
+    # cross-category ties when useCats=0. Each mask has a distinct location.
+    dets = [dict(image_id=2, category_id=cat, bbox=[x, 3, 12, 14], score=score)
+            for cat, x, score in [(2, 90, .8), (1, 2, .8), (1, 50, .9),
+                                  (2, 20, .8), (1, 70, -0.0), (1, 2, 0.0)]]
+    for ann in data['annotations'] + dets:
+        x, y, w, h = ann['bbox']
+        ann['segmentation'] = [[x, y, x+w, y, x+w, y+h, x, y+h]]
+    gp.write_text(json.dumps(data)); dp.write_text(json.dumps(dets))
+    gt = ufc.COCO(gp, verbose=False)
+    dt = gt.loadRes(dp)
+    ev = ufc.COCOeval(gt, dt, iou_type, print_function=lambda *_: None, store_eval_imgs=True)
+    ev.params.useCats = use_cats
+    for cap in (2, 0, 10):
+        ev.params.maxDets = [cap]
+        ev.evaluate(); ev.accumulate()
+        if iou_type == 'segm':
+            from pycocotools.coco import COCO
+            from pycocotools.cocoeval import COCOeval
+            rg = COCO(str(gp)); rd = rg.loadRes(str(dp))
+            ref = COCOeval(rg, rd, iou_type)
+        else:
+            rg = ufc.COCO(copy.deepcopy(data), verbose=False)
+            ref = ufc.COCOeval(rg, rg.loadRes(copy.deepcopy(dets)), iou_type,
+                              print_function=lambda *_: None, store_eval_imgs=True)
+        ref.params.useCats = use_cats
+        ref.params.maxDets = [cap]
+        ref.evaluate(); ref.accumulate()
+        for key in ('precision', 'recall', 'scores'):
+            np.testing.assert_array_equal(ev.eval[key], ref.eval[key])
+        for actual, expected in zip(ev.evalImgs, ref.evalImgs):
+            assert (actual is None) == (expected is None)
+            if actual is not None:
+                for key in ('dtIds', 'gtIds', 'dtMatches', 'gtMatches', 'dtIgnore', 'gtIgnore'):
+                    np.testing.assert_array_equal(actual[key], expected[key])
+        assert gt._compact is not None and dt._compact is not None

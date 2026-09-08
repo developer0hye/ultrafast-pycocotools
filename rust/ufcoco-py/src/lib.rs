@@ -16,6 +16,7 @@ mod alloc;
 mod compact;
 mod json;
 mod mask;
+mod summary;
 
 use numpy::ndarray::{Array1, Array2, ArrayD, IxDyn};
 use numpy::IntoPyArray;
@@ -81,8 +82,8 @@ fn iou_type_from_str(s: &str) -> PyResult<IouType> {
 
 /// Raw, not-yet-rasterised segmentation as it appears in the JSON.
 enum RawSegm {
-    /// No opposing annotation in this evaluation group. Scalar fields still
-    /// contribute FP/FN records; compute_iou never reads this placeholder.
+    /// No opposing annotation, or a detection beyond the largest maxDets.
+    /// Scalar fields remain intact; compute_iou never reads this placeholder.
     Unused,
     /// One or more polygon rings, unioned into a single mask. Stored flat
     /// (`ends[i]` is the exclusive end of ring `i`) so a multi-ring polygon
@@ -707,6 +708,7 @@ impl Evaluator {
                         &extract,
                         dt_groups.as_ref(),
                         use_cats,
+                        max_dets.last().copied().unwrap_or(0),
                     )
                 })?
             };
@@ -729,6 +731,7 @@ impl Evaluator {
                         &extract,
                         gt_groups.as_ref(),
                         use_cats,
+                        max_dets.last().copied().unwrap_or(0),
                     )
                 })?
             };
@@ -987,6 +990,7 @@ fn _ufcoco(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(compact::load_compact_bbox, m)?)?;
     m.add_function(wrap_pyfunction!(index_annotations, m)?)?;
     m.add_function(wrap_pyfunction!(prepare_bbox_results, m)?)?;
+    m.add_function(wrap_pyfunction!(summary::summary_values, m)?)?;
     m.add_function(wrap_pyfunction!(mask::encode, m)?)?;
     m.add_function(wrap_pyfunction!(mask::decode, m)?)?;
     m.add_function(wrap_pyfunction!(mask::merge, m)?)?;

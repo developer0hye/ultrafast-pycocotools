@@ -53,7 +53,7 @@ the tested wheels from the run's `distribution-*` artifacts and install with:
 
 ```bash
 python -m pip install --only-binary=ultrafast-pycocotools \
-  --find-links=dist ultrafast-pycocotools==0.1.8
+  --find-links=dist ultrafast-pycocotools==0.1.9
 ```
 
 Installing a compatible wheel requires no Rust compiler. Installing the source
@@ -67,12 +67,12 @@ After the build and Library CI pass, and the PyPI publisher is configured:
 2. Create and push `v<version>` at the tested commit on main.
 3. Explicitly run the release workflow on that tag with `publish=true`.
 
-For example, for version 0.1.8:
+For example, for version 0.1.9:
 
 ```bash
-git tag v0.1.8
-git push origin v0.1.8
-gh workflow run release.yml --ref v0.1.8 -f publish=true
+git tag v0.1.9
+git push origin v0.1.9
+gh workflow run release.yml --ref v0.1.9 -f publish=true
 ```
 
 The upload job publishes the exact artifacts that passed the build/test jobs in
@@ -81,7 +81,7 @@ not allow overwriting a released distribution: fixes require a new version.
 After publication, verify installation from PyPI in a fresh environment:
 
 ```bash
-python -m pip install --only-binary=ultrafast-pycocotools ultrafast-pycocotools==0.1.8
+python -m pip install --only-binary=ultrafast-pycocotools ultrafast-pycocotools==0.1.9
 python -c "import importlib.metadata as m; import ultrafast_pycocotools._ufcoco; print(m.version('ultrafast-pycocotools'))"
 ```
 
@@ -105,3 +105,9 @@ segmentation, boundary and keypoint evaluation, omits mask payload for empty
 opposing groups, and writes masks into their final buffers. Duplicate geometry
 JSON fields retain ordinary last-value semantics. Full real-task arrays and
 metrics match 0.1.7; see the [paired measurements and limitations](nonbbox-buffer-optimization.md).
+
+Version 0.1.9 omits decoded mask payload beyond maxDets, materializes only
+federated detections from eligible LVIS result snapshots, and gathers summary
+values in native code before NumPy performs the unchanged mean. Zero-cap
+evalImgs diagnostics now preserve detection-only records. Complete output
+arrays, stable score ties, mutable views and both LVIS protocols are retained.

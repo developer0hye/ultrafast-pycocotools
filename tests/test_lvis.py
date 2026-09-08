@@ -55,12 +55,15 @@ def official(tmp_path, data, predictions, iou_type, cap, categories, monkeypatch
 
 @pytest.mark.parametrize('iou_type', ['bbox', 'segm'])
 @pytest.mark.parametrize('cap,categories', [(300, None), (2, None), (2, [1, 2])])
-def test_lvis_matches_official_federated_protocol(tmp_path, monkeypatch, iou_type, cap, categories):
+@pytest.mark.parametrize('file_results', [False, True])
+def test_lvis_matches_official_federated_protocol(tmp_path, monkeypatch, iou_type, cap, categories, file_results):
     data, predictions = dataset()
     before = copy.deepcopy(data)
     reference = official(tmp_path, data, predictions, iou_type, cap, categories, monkeypatch)
     gt = ufc.COCO(data, verbose=False)
-    dt = gt.loadRes(copy.deepcopy(predictions))
+    prediction_path = tmp_path / 'predictions.json'
+    prediction_path.write_text(json.dumps(predictions))
+    dt = gt.loadRes(prediction_path if file_results else copy.deepcopy(predictions))
     ev = ufc.COCOeval(gt, dt, iou_type, lvis_style=True, print_function=lambda *_: None, store_eval_imgs=True)
     ev.params.maxDets = [cap]
     if categories is not None:
@@ -137,3 +140,45 @@ def test_coco_ignores_foreign_lvis_mark_metadata():
         ev.run()
         outputs.append(ev.eval['precision'].tobytes())
     assert outputs[0] == outputs[1]
+
+
+@pytest.mark.parametrize('protocol', ['official', 'coco'])
+@pytest.mark.parametrize('iou_type', ['bbox', 'segm'])
+def test_file_results_filter_before_materializing_and_keep_mutable_views(tmp_path, protocol, iou_type):
+    from test_eval_parity import assert_bit_identical
+    data, predictions = dataset()
+    # Early unverified high scores consume the official cap. Tied verified
+    # detections keep their original IDs/order across filtering and reuse.
+    predictions = [dict(predictions[4], score=.99) for _ in range(5)] + predictions
+    predictions += [dict(predictions[0], score=.8) for _ in range(4)]
+    path = tmp_path / 'predictions.json'
+    path.write_text(json.dumps(predictions))
+    gt = ufc.COCO(copy.deepcopy(data), verbose=False)
+    dt = gt.loadRes(path)
+    for cap, cats in [(2, [1, 2]), (300, [1, 2, 3, 4])]:
+        results = []
+        for detections in [dt, gt.loadRes(copy.deepcopy(predictions))]:
+            ev = ufc.COCOeval(gt, detections, iou_type, lvis_style=True,
+                              lvis_protocol=protocol, print_function=lambda *_: None,
+                              store_eval_imgs=True)
+            ev.params.maxDets = [cap] if protocol == 'official' else [1, 2, cap]
+            ev.params.catIds = cats
+            ev.run()
+            results.append(ev)
+        assert_bit_identical(results[0], results[1], f'{protocol}/{iou_type}/{cap}')
+        for a, b in zip(results[0].evalImgs, results[1].evalImgs):
+            assert (a is None) == (b is None)
+            if a is not None:
+                for key in ('dtIds', 'dtScores', 'dtMatches', 'dtIgnore'):
+                    np.testing.assert_array_equal(a[key], b[key])
+        assert dt._compact is not None
+    dt.anns[6]['score'] = .01
+    assert dt._compact is None
+    predictions[5]['score'] = .01
+    reference_dt = gt.loadRes(copy.deepcopy(predictions))
+    evaluations = [ufc.COCOeval(gt, d, iou_type, lvis_style=True,
+                    lvis_protocol=protocol, print_function=lambda *_: None)
+                   for d in (dt, reference_dt)]
+    for ev in evaluations:
+        ev.run()
+    assert_bit_identical(*evaluations, 'mutable detection score')

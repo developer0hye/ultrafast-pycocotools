@@ -298,6 +298,7 @@ impl CompactBbox {
         timings: &ExtractTimings,
         opposing_groups: Option<&HashSet<(u32, u32)>>,
         use_cats: bool,
+        max_det: usize,
     ) -> PyResult<Instances> {
         let mut out = self.instances(is_gt, images, categories);
         out.geom = super::new_geometry(out.len(), kind);
@@ -306,6 +307,9 @@ impl CompactBbox {
         } else {
             out.len()
         };
+        let detection_keep = (!is_gt && kind != IouType::Keypoints).then(|| {
+            ufcoco_core::eval::detection_geometry_keep(&out, categories.len(), use_cats, max_det)
+        });
         std::thread::scope(|scope| -> PyResult<()> {
             let (tx, rx) = std::sync::mpsc::sync_channel(2);
             let worker = scope.spawn(|| {
@@ -331,6 +335,7 @@ impl CompactBbox {
                 timings,
                 opposing_groups,
                 use_cats,
+                detection_keep: detection_keep.as_deref(),
             };
             let mut de = serde_json::Deserializer::from_slice(&self.raw);
             let result = if self.results {
@@ -505,6 +510,7 @@ struct GeometryRows<'a> {
     timings: &'a ExtractTimings,
     opposing_groups: Option<&'a HashSet<(u32, u32)>>,
     use_cats: bool,
+    detection_keep: Option<&'a [bool]>,
 }
 
 impl<'de> DeserializeSeed<'de> for &mut GeometryRows<'_> {
@@ -583,6 +589,7 @@ impl<'de> Visitor<'de> for &mut GeometryRows<'_> {
                 if self
                     .opposing_groups
                     .is_some_and(|groups| !groups.contains(&group))
+                    || self.detection_keep.is_some_and(|keep| !keep[selected])
                 {
                     raw = RawSegm::Unused;
                 }
@@ -606,6 +613,70 @@ impl<'de> Visitor<'de> for &mut GeometryRows<'_> {
 
 #[pymethods]
 impl CompactBbox {
+    /// Materialize only federated detections, without building the public
+    /// annotation indexes or releasing the immutable snapshot. The official
+    /// global image cap precedes category/federated filtering.
+    fn lvis_annotations(
+        &self,
+        py: Python<'_>,
+        image_ids: Vec<i64>,
+        categories: HashSet<i64>,
+        verified: HashMap<i64, HashSet<i64>>,
+        max_det: Option<usize>,
+    ) -> PyResult<Option<Py<PyList>>> {
+        if !self.results {
+            return Ok(None);
+        }
+        let mut by_image: HashMap<i64, Vec<usize>> = HashMap::new();
+        for (index, row) in self.rows.iter().enumerate() {
+            if verified.contains_key(&row.image) {
+                by_image.entry(row.image).or_default().push(index);
+            }
+        }
+        let mut selected = Vec::new();
+        for image in image_ids {
+            if let Some(indices) = by_image.get_mut(&image) {
+                if let Some(cap) = max_det {
+                    if indices.len() > cap {
+                        // Compact JSON scores are finite; equality preserves
+                        // file order, including positive/negative zero.
+                        indices.sort_by(|&a, &b| {
+                            self.rows[b].score.partial_cmp(&self.rows[a].score).unwrap()
+                        });
+                        indices.truncate(cap);
+                    }
+                }
+                selected.extend(indices.iter().copied().filter(|&index| {
+                    let category = self.rows[index].category;
+                    categories.contains(&category) && verified[&image].contains(&category)
+                }));
+            }
+        }
+        let mut positions = vec![usize::MAX; self.rows.len()];
+        for (position, &index) in selected.iter().enumerate() {
+            positions[index] = position;
+        }
+        let mut visitor = SelectedAnnotations {
+            py,
+            positions: &positions,
+            memo: HashMap::with_capacity(32),
+            records: std::iter::repeat_with(|| None)
+                .take(selected.len())
+                .collect(),
+        };
+        let mut de = serde_json::Deserializer::from_slice(&self.raw);
+        de.deserialize_seq(&mut visitor)
+            .and_then(|()| de.end())
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        let annotations = PyList::new(py, visitor.records.into_iter().map(Option::unwrap))?;
+        super::prepare_bbox_results(py, &annotations)?;
+        for (ann, index) in annotations.iter().zip(selected) {
+            // loadRes assigns IDs before filtering, not within the subset.
+            ann.set_item("id", index + 1)?;
+        }
+        Ok(Some(annotations.unbind()))
+    }
+
     fn annotations(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
         let value = super::json::parse_bytes(py, &self.raw)?;
         let annotations = if self.results {
@@ -638,6 +709,36 @@ impl CompactBbox {
                 .as_ref()
                 .map_or(0, |v| v.capacity() * std::mem::size_of::<GroundTruth>())
             + self.boxes.capacity() * std::mem::size_of::<[f64; 4]>()
+    }
+}
+
+struct SelectedAnnotations<'a, 'py> {
+    py: Python<'py>,
+    positions: &'a [usize],
+    memo: super::json::Memo,
+    records: Vec<Option<Py<PyAny>>>,
+}
+
+impl<'de> Visitor<'de> for &mut SelectedAnnotations<'_, '_> {
+    type Value = ();
+    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("a detection annotation array")
+    }
+    fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<(), A::Error> {
+        for &position in self.positions {
+            if position == usize::MAX {
+                seq.next_element::<serde::de::IgnoredAny>()?;
+            } else {
+                self.records[position] = Some(
+                    seq.next_element_seed(super::json::Builder {
+                        py: self.py,
+                        memo: &mut self.memo,
+                    })?
+                    .ok_or_else(|| serde::de::Error::custom("missing selected annotation"))?,
+                );
+            }
+        }
+        Ok(())
     }
 }
 

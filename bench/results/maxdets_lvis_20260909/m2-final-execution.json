@@ -1,0 +1,1494 @@
+[
+  {
+    "name": "segm-0-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-0-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0015762500115670264,
+        "host_cpu_percent": 50.0,
+        "available_ram": 5607718912
+      },
+      {
+        "seconds": 0.5067551250103861,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5499240448
+      },
+      {
+        "seconds": 1.0102898750046734,
+        "host_cpu_percent": 51.8,
+        "available_ram": 5447008256
+      },
+      {
+        "seconds": 1.5154269589984324,
+        "host_cpu_percent": 66.6,
+        "available_ram": 5396676608
+      }
+    ]
+  },
+  {
+    "name": "segm-0-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-0-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.001418542000465095,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5833523200
+      },
+      {
+        "seconds": 0.5019627079891507,
+        "host_cpu_percent": 48.6,
+        "available_ram": 5498322944
+      },
+      {
+        "seconds": 1.0026562080020085,
+        "host_cpu_percent": 59.7,
+        "available_ram": 5380980736
+      },
+      {
+        "seconds": 1.5031719169928692,
+        "host_cpu_percent": 68.9,
+        "available_ram": 5262065664
+      }
+    ]
+  },
+  {
+    "name": "segm-1-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-1-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0014139589911792427,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5786451968
+      },
+      {
+        "seconds": 0.5016356249980163,
+        "host_cpu_percent": 48.6,
+        "available_ram": 5499928576
+      },
+      {
+        "seconds": 1.0025131669826806,
+        "host_cpu_percent": 57.8,
+        "available_ram": 5296553984
+      },
+      {
+        "seconds": 1.5049980839830823,
+        "host_cpu_percent": 61.7,
+        "available_ram": 5226905600
+      }
+    ]
+  },
+  {
+    "name": "segm-1-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-1-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0015962920151650906,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5677039616
+      },
+      {
+        "seconds": 0.5018418330000713,
+        "host_cpu_percent": 72.9,
+        "available_ram": 5358256128
+      },
+      {
+        "seconds": 1.0022004580241628,
+        "host_cpu_percent": 95.8,
+        "available_ram": 5185699840
+      },
+      {
+        "seconds": 1.502570958022261,
+        "host_cpu_percent": 93.7,
+        "available_ram": 5158944768
+      },
+      {
+        "seconds": 2.0059232500207145,
+        "host_cpu_percent": 97.5,
+        "available_ram": 5378473984
+      }
+    ]
+  },
+  {
+    "name": "segm-2-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-2-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.002011916018091142,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5673943040
+      },
+      {
+        "seconds": 0.5022851249959785,
+        "host_cpu_percent": 85.1,
+        "available_ram": 5446254592
+      },
+      {
+        "seconds": 1.0038624580192845,
+        "host_cpu_percent": 94.0,
+        "available_ram": 5226332160
+      },
+      {
+        "seconds": 1.5058280000230297,
+        "host_cpu_percent": 93.7,
+        "available_ram": 5142003712
+      },
+      {
+        "seconds": 2.007252833020175,
+        "host_cpu_percent": 95.8,
+        "available_ram": 5196185600
+      }
+    ]
+  },
+  {
+    "name": "segm-2-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-2-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.002248167002107948,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5691883520
+      },
+      {
+        "seconds": 0.5042054170044139,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5346639872
+      },
+      {
+        "seconds": 1.0068631670146715,
+        "host_cpu_percent": 88.1,
+        "available_ram": 5350211584
+      },
+      {
+        "seconds": 1.5071971669967752,
+        "host_cpu_percent": 93.2,
+        "available_ram": 5181259776
+      },
+      {
+        "seconds": 2.0079332500172313,
+        "host_cpu_percent": 97.0,
+        "available_ram": 5147983872
+      }
+    ]
+  },
+  {
+    "name": "segm-3-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-3-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0024510840012226254,
+        "host_cpu_percent": 50.0,
+        "available_ram": 5668847616
+      },
+      {
+        "seconds": 0.5040206249977928,
+        "host_cpu_percent": 85.5,
+        "available_ram": 5344460800
+      },
+      {
+        "seconds": 1.005216166988248,
+        "host_cpu_percent": 79.2,
+        "available_ram": 5315002368
+      },
+      {
+        "seconds": 1.506831874983618,
+        "host_cpu_percent": 79.8,
+        "available_ram": 5037637632
+      },
+      {
+        "seconds": 2.007430416997522,
+        "host_cpu_percent": 75.3,
+        "available_ram": 5251940352
+      }
+    ]
+  },
+  {
+    "name": "segm-3-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-3-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0014993340009823442,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5766938624
+      },
+      {
+        "seconds": 0.5039107500051614,
+        "host_cpu_percent": 58.7,
+        "available_ram": 5766938624
+      },
+      {
+        "seconds": 1.0041106670105364,
+        "host_cpu_percent": 44.3,
+        "available_ram": 5264572416
+      },
+      {
+        "seconds": 1.5046654590114485,
+        "host_cpu_percent": 77.0,
+        "available_ram": 5065179136
+      }
+    ]
+  },
+  {
+    "name": "segm-4-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-4-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.002075583004625514,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5724717056
+      },
+      {
+        "seconds": 0.5059216249792371,
+        "host_cpu_percent": 70.4,
+        "available_ram": 5450268672
+      },
+      {
+        "seconds": 1.008109415997751,
+        "host_cpu_percent": 79.4,
+        "available_ram": 5305499648
+      },
+      {
+        "seconds": 1.510831749998033,
+        "host_cpu_percent": 79.3,
+        "available_ram": 5158584320
+      },
+      {
+        "seconds": 2.011086915998021,
+        "host_cpu_percent": 81.0,
+        "available_ram": 5365235712
+      }
+    ]
+  },
+  {
+    "name": "segm-4-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-4-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0022044999932404608,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5667700736
+      },
+      {
+        "seconds": 0.5025195829803124,
+        "host_cpu_percent": 71.4,
+        "available_ram": 5435097088
+      },
+      {
+        "seconds": 1.0066677079885267,
+        "host_cpu_percent": 81.8,
+        "available_ram": 5381226496
+      },
+      {
+        "seconds": 1.5076334579789545,
+        "host_cpu_percent": 82.4,
+        "available_ram": 5184454656
+      },
+      {
+        "seconds": 2.0079199579777196,
+        "host_cpu_percent": 81.2,
+        "available_ram": 5181030400
+      }
+    ]
+  },
+  {
+    "name": "segm-5-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-5-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0019080830097664148,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5690146816
+      },
+      {
+        "seconds": 0.5022100410133135,
+        "host_cpu_percent": 68.8,
+        "available_ram": 5471469568
+      },
+      {
+        "seconds": 1.0054962080030236,
+        "host_cpu_percent": 80.5,
+        "available_ram": 5318656000
+      },
+      {
+        "seconds": 1.5062706660246477,
+        "host_cpu_percent": 84.5,
+        "available_ram": 5147377664
+      },
+      {
+        "seconds": 2.0072936250071507,
+        "host_cpu_percent": 81.5,
+        "available_ram": 5165793280
+      }
+    ]
+  },
+  {
+    "name": "segm-5-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-5-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0015281249943654984,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5667094528
+      },
+      {
+        "seconds": 0.5042148749926127,
+        "host_cpu_percent": 70.2,
+        "available_ram": 5426724864
+      },
+      {
+        "seconds": 1.0067131670075469,
+        "host_cpu_percent": 81.0,
+        "available_ram": 5306253312
+      },
+      {
+        "seconds": 1.50964354199823,
+        "host_cpu_percent": 80.3,
+        "available_ram": 5110120448
+      },
+      {
+        "seconds": 2.0113628749968484,
+        "host_cpu_percent": 82.4,
+        "available_ram": 5439586304
+      }
+    ]
+  },
+  {
+    "name": "segm-6-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-6-baseline.json",
+      "--arrays-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-6-baseline.npz"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0015407500031869859,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5691162624
+      },
+      {
+        "seconds": 0.504401832993608,
+        "host_cpu_percent": 77.8,
+        "available_ram": 5448646656
+      },
+      {
+        "seconds": 1.007487458002288,
+        "host_cpu_percent": 79.1,
+        "available_ram": 5291327488
+      },
+      {
+        "seconds": 1.509312082984252,
+        "host_cpu_percent": 81.0,
+        "available_ram": 5164040192
+      },
+      {
+        "seconds": 2.009633457986638,
+        "host_cpu_percent": 83.9,
+        "available_ram": 5157814272
+      }
+    ]
+  },
+  {
+    "name": "segm-6-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-6-candidate.json",
+      "--arrays-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/segm-6-candidate.npz"
+    ],
+    "samples": [
+      {
+        "seconds": 0.002199000009568408,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5157814272
+      },
+      {
+        "seconds": 0.5027176250005141,
+        "host_cpu_percent": 70.6,
+        "available_ram": 5491441664
+      },
+      {
+        "seconds": 1.0050907089898828,
+        "host_cpu_percent": 82.3,
+        "available_ram": 5359271936
+      },
+      {
+        "seconds": 1.5064380420080852,
+        "host_cpu_percent": 80.8,
+        "available_ram": 5164777472
+      },
+      {
+        "seconds": 2.0067507500061765,
+        "host_cpu_percent": 69.9,
+        "available_ram": 5216796672
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-0-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-0-baseline.json",
+      "--lvis-protocol",
+      "official"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0015888329944573343,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5779226624
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-0-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-0-candidate.json",
+      "--lvis-protocol",
+      "official"
+    ],
+    "samples": [
+      {
+        "seconds": 0.001281042001210153,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5801721856
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-1-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-1-candidate.json",
+      "--lvis-protocol",
+      "official"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0013224580034147948,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5802852352
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-1-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-1-baseline.json",
+      "--lvis-protocol",
+      "official"
+    ],
+    "samples": [
+      {
+        "seconds": 0.001392040983773768,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5763547136
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-2-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-2-baseline.json",
+      "--lvis-protocol",
+      "official"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0013841250038240105,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5757403136
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-2-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-2-candidate.json",
+      "--lvis-protocol",
+      "official"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0010965420224238187,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5796560896
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-3-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-3-candidate.json",
+      "--lvis-protocol",
+      "official"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0017968339961953461,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5708054528
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-3-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-3-baseline.json",
+      "--lvis-protocol",
+      "official"
+    ],
+    "samples": [
+      {
+        "seconds": 0.001281375007238239,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5672943616
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-4-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-4-baseline.json",
+      "--lvis-protocol",
+      "official"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0013757499982602894,
+        "host_cpu_percent": 0.0,
+        "available_ram": 6096945152
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-4-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-4-candidate.json",
+      "--lvis-protocol",
+      "official"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0013589170121122152,
+        "host_cpu_percent": 0.0,
+        "available_ram": 6033768448
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-5-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-5-candidate.json",
+      "--lvis-protocol",
+      "official"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0017451250168960541,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5980471296
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-5-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-5-baseline.json",
+      "--lvis-protocol",
+      "official"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0015982500044628978,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5939789824
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-6-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-6-baseline.json",
+      "--lvis-protocol",
+      "official",
+      "--arrays-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-6-baseline.npz"
+    ],
+    "samples": [
+      {
+        "seconds": 0.001396084000589326,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5946245120
+      },
+      {
+        "seconds": 0.5016337090055458,
+        "host_cpu_percent": 47.5,
+        "available_ram": 5746376704
+      }
+    ]
+  },
+  {
+    "name": "lvis_official-6-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "bbox",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_100.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_dt_100.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-6-candidate.json",
+      "--lvis-protocol",
+      "official",
+      "--arrays-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_official-6-candidate.npz"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0013052920112386346,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5855936512
+      },
+      {
+        "seconds": 0.501718792016618,
+        "host_cpu_percent": 23.7,
+        "available_ram": 5908316160
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-0-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-0-baseline.json",
+      "--lvis-protocol",
+      "coco"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0011664170015137643,
+        "host_cpu_percent": 0.0,
+        "available_ram": 6088900608
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-0-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-0-candidate.json",
+      "--lvis-protocol",
+      "coco"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0013122500095050782,
+        "host_cpu_percent": 50.0,
+        "available_ram": 6120177664
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-1-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-1-candidate.json",
+      "--lvis-protocol",
+      "coco"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0010400000028312206,
+        "host_cpu_percent": 0.0,
+        "available_ram": 6132842496
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-1-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-1-baseline.json",
+      "--lvis-protocol",
+      "coco"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0014345420058816671,
+        "host_cpu_percent": 0.0,
+        "available_ram": 6093553664
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-2-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-2-baseline.json",
+      "--lvis-protocol",
+      "coco"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0011772919970098883,
+        "host_cpu_percent": 0.0,
+        "available_ram": 6088146944
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-2-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-2-candidate.json",
+      "--lvis-protocol",
+      "coco"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0011476250074338168,
+        "host_cpu_percent": 0.0,
+        "available_ram": 6109036544
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-3-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-3-candidate.json",
+      "--lvis-protocol",
+      "coco"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0012086660135537386,
+        "host_cpu_percent": 100.0,
+        "available_ram": 6109036544
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-3-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-3-baseline.json",
+      "--lvis-protocol",
+      "coco"
+    ],
+    "samples": [
+      {
+        "seconds": 0.001120250002713874,
+        "host_cpu_percent": 0.0,
+        "available_ram": 6075908096
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-4-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-4-baseline.json",
+      "--lvis-protocol",
+      "coco"
+    ],
+    "samples": [
+      {
+        "seconds": 0.001304499979596585,
+        "host_cpu_percent": 0.0,
+        "available_ram": 6061129728
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-4-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-4-candidate.json",
+      "--lvis-protocol",
+      "coco"
+    ],
+    "samples": [
+      {
+        "seconds": 0.001516249991254881,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5973360640
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-5-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-5-candidate.json",
+      "--lvis-protocol",
+      "coco"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0013006250082980841,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5940822016
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-5-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-5-baseline.json",
+      "--lvis-protocol",
+      "coco"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0013564590190071613,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5931909120
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-6-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-6-baseline.json",
+      "--lvis-protocol",
+      "coco",
+      "--arrays-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-6-baseline.npz"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00129145901883021,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5906563072
+      },
+      {
+        "seconds": 0.50166999999783,
+        "host_cpu_percent": 32.7,
+        "available_ram": 5571788800
+      },
+      {
+        "seconds": 1.0023956670193002,
+        "host_cpu_percent": 43.3,
+        "available_ram": 5546999808
+      }
+    ]
+  },
+  {
+    "name": "lvis_mask-6-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_gt_93_annotated.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/lvis_yolo26n_seg_93_annotated.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-6-candidate.json",
+      "--lvis-protocol",
+      "coco",
+      "--arrays-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/bench/out/mask-cap-lvis/m2-final/lvis_mask-6-candidate.npz"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0013621660182252526,
+        "host_cpu_percent": 50.0,
+        "available_ram": 5793759232
+      },
+      {
+        "seconds": 0.5017649579967838,
+        "host_cpu_percent": 43.9,
+        "available_ram": 5481103360
+      },
+      {
+        "seconds": 1.0024375000211876,
+        "host_cpu_percent": 37.2,
+        "available_ram": 5427068928
+      }
+    ]
+  }
+]

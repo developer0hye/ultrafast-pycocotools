@@ -1,0 +1,71 @@
+{
+  "iou_type": "segm",
+  "file_inputs": true,
+  "native_path": "/Users/yhkwon/Documents/ultrafast-pycocotools-mask-cap-lvis/.venv-alloc/lib/python3.12/site-packages/ultrafast_pycocotools/_ufcoco.cpython-312-darwin.so",
+  "rust": {
+    "enabled": true,
+    "live_bytes": 771602105,
+    "peak_bytes": 795596264,
+    "total_allocated_bytes": 1391084402,
+    "allocations": 2379785,
+    "frees": 1412264
+  },
+  "phases": [
+    {
+      "name": "COCO(gt) load",
+      "wall": 0.05229991700616665,
+      "rss_delta": 30818304,
+      "py_delta": 0,
+      "rust_live_delta": 22930360,
+      "rust_peak": 25821832,
+      "rust_allocs": 113920
+    },
+    {
+      "name": "loadRes(dt)",
+      "wall": 0.3365502090018708,
+      "rss_delta": 387907584,
+      "py_delta": 0,
+      "rust_live_delta": 371874429,
+      "rust_peak": 389997285,
+      "rust_allocs": 43
+    },
+    {
+      "name": "_prepare",
+      "wall": 0.0009661660005804151,
+      "rss_delta": 311296,
+      "py_delta": 0,
+      "rust_live_delta": 0,
+      "rust_peak": 0,
+      "rust_allocs": 0
+    },
+    {
+      "name": "engine build",
+      "wall": 0.763332000002265,
+      "rss_delta": 526909440,
+      "py_delta": 0,
+      "rust_live_delta": 361205998,
+      "rust_peak": 364287610,
+      "rust_allocs": 1814778
+    },
+    {
+      "name": "evaluate + accumulate",
+      "wall": 0.4667743750032969,
+      "rss_delta": 34947072,
+      "py_delta": 0,
+      "rust_live_delta": 15590630,
+      "rust_peak": 39584789,
+      "rust_allocs": 451026
+    }
+  ],
+  "rss_start": 36847616,
+  "rss_end": 1019445248,
+  "annotations": [
+    36781,
+    724953
+  ],
+  "array_bytes": {
+    "precision": 7756800,
+    "recall": 76800,
+    "scores": 7756800
+  }
+}
