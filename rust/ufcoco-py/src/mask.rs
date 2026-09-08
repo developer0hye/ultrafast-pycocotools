@@ -79,6 +79,21 @@ pub fn encode<'py>(
     }
     let (h, w, n) = (arr.shape()[0], arr.shape()[1], arr.shape()[2]);
     let out = PyList::empty(py);
+    // Reversing the axes makes Fortran-contiguous storage standard layout.
+    // Borrow it directly; D-FINE/TorchMetrics already provide this layout.
+    let fortran = arr.view().reversed_axes();
+    if let Some(data) = fortran.as_slice() {
+        let plane_len = h * w;
+        for i in 0..n {
+            let r = Rle::encode(
+                &data[i * plane_len..(i + 1) * plane_len],
+                h as u32,
+                w as u32,
+            );
+            out.append(rle_to_dict(py, &r)?)?;
+        }
+        return Ok(out);
+    }
     let mut buf = vec![0u8; h * w];
     for i in 0..n {
         // Column-major serialisation, which is the order RLE counts run in.

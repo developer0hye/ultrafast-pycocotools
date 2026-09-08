@@ -60,8 +60,10 @@ def main():
     previous = None
     for repeat in range(a.repeats):
         times = {}
+        cpu_times = {}
         with contextlib.redirect_stdout(io.StringIO()):
             t = time.perf_counter()
+            c = time.process_time()
             if a.input_mode == 'files':
                 gt = COCO(str(a.gt))
             else:
@@ -69,10 +71,13 @@ def main():
                 gt.dataset = gt_dict
                 gt.createIndex()
             times['gt_seconds'] = time.perf_counter() - t
+            cpu_times['gt_seconds'] = time.process_time() - c
             t = time.perf_counter()
+            c = time.process_time()
             # Match an in-memory evaluator loadRes call, including defensive copies.
             dt = gt.loadRes(str(a.pred) if a.input_mode == 'files' else [dict(d) for d in predictions])
             times['load_res_seconds'] = time.perf_counter() - t
+            cpu_times['load_res_seconds'] = time.process_time() - c
             if a.input_mode == 'files':
                 image_ids = sorted(gt.getImgIds())
                 compact = getattr(dt, '_compact', None)
@@ -86,8 +91,10 @@ def main():
             ev.params.imgIds = image_ids
             for method in ('evaluate', 'accumulate', 'summarize'):
                 t = time.perf_counter()
+                c = time.process_time()
                 getattr(ev, method)()
                 times[method + '_seconds'] = time.perf_counter() - t
+                cpu_times[method + '_seconds'] = time.process_time() - c
         engine = getattr(ev, '_engine', None)
         if engine is not None:
             native_timings.append(engine.timings())
@@ -101,6 +108,8 @@ def main():
             np.savez_compressed(a.out / 'arrays.npz', **arrays)
             previous = arrays
         times['total_scoring_seconds'] = sum(times.values())
+        cpu_times['total_scoring_seconds'] = sum(cpu_times.values())
+        times['cpu_seconds'] = cpu_times
         runs.append(times)
         del ev, gt, dt
     result = {'backend': a.backend, 'images': len(image_ids), 'detections': prediction_count,

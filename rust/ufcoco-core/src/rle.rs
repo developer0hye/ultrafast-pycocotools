@@ -162,11 +162,27 @@ impl Rle {
     /// Note the comparison is on raw byte values, not truthiness: a mask
     /// containing 2s produces transitions between 1 and 2 just like the C.
     pub fn encode(mask: &[u8], h: u32, w: u32) -> Rle {
-        let a = mask.len();
         let mut cnts: Vec<u32> = Vec::with_capacity(16);
         let mut p: u8 = 0;
         let mut c: u32 = 0;
-        for &t in mask.iter().take(a) {
+        // Object masks mostly contain long runs. Slice equality lets LLVM
+        // compare a whole block at once without architecture-specific SIMD.
+        let mut blocks = mask.chunks_exact(32);
+        for block in &mut blocks {
+            if block == [p; 32] {
+                c += 32;
+                continue;
+            }
+            for &t in block {
+                if t != p {
+                    cnts.push(c);
+                    c = 0;
+                    p = t;
+                }
+                c += 1;
+            }
+        }
+        for &t in blocks.remainder() {
             if t != p {
                 cnts.push(c);
                 c = 0;
@@ -945,6 +961,32 @@ mod tests {
         // the C does. Treating it as "non-zero" would merge the runs.
         let r = Rle::encode(&[0u8, 0, 2, 2, 1, 1], 6, 1);
         assert_eq!(r.cnts, vec![2, 2, 2]);
+    }
+
+    #[test]
+    fn encode_runs_across_block_boundaries() {
+        for len in [0, 1, 31, 32, 33, 63, 64, 65, 257] {
+            for first in [0, 1, 2, 255] {
+                for second in [0, 1, 2, 255] {
+                    for split in 0..=len {
+                        let mut mask = vec![first; split];
+                        mask.resize(len, second);
+                        let mut expected = Vec::new();
+                        let (mut previous, mut count) = (0, 0);
+                        for &value in &mask {
+                            if value != previous {
+                                expected.push(count);
+                                count = 0;
+                                previous = value;
+                            }
+                            count += 1;
+                        }
+                        expected.push(count);
+                        assert_eq!(Rle::encode(&mask, len as u32, 1).cnts, expected);
+                    }
+                }
+            }
+        }
     }
 
     #[test]

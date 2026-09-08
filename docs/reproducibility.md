@@ -155,3 +155,43 @@ byte-equality gate remains strict. Faster-coco-eval's numerical differences
 are reported separately, with absolute tolerance 1e-12 and zero relative
 tolerance. See the [comparison report](faster-coco-eval.md) for results and
 full commands.
+
+## Measurements on a busy desktop
+
+Use [interleaved.py](../bench/interleaved.py) to retain raw measurements and
+system-load samples while other applications are running:
+
+```bash
+python -m pip install psutil "faster-coco-eval==1.8.0"
+python bench/make_dataset.py --images 5000 --cats 80 --gt-per-image 12 \
+  --dt-per-image 40 --seed 0 --out bench/out/local-inputs
+python bench/interleaved.py --gt bench/out/local-inputs/gt_5000.json \
+  --pred bench/out/local-inputs/dt_5000.json --out bench/out/local-benchmark \
+  --threads 1 2 --rounds 6 --input-mode files
+```
+
+Each scorer starts in a fresh process. One warmup per backend/thread setting
+is saved but excluded from the summary. Six measured rounds use every ordering
+of the three backends; the thread-setting order alternates between rounds.
+Every round checks all four arrays for exact ultrafast parity and separately
+checks faster-coco-eval's numerical tolerance. No timing outliers are removed.
+
+`results.json` retains phase wall/CPU times, whole-process peak RSS, input and
+array hashes, package versions, and whole-host CPU/memory samples. Its summary
+reports the median, minimum, maximum, mean and standard deviation. Full arrays
+and logs stay in the output directory. In file mode the scoring total includes
+JSON loading, indexing, result loading, evaluate/accumulate/summarize; imports,
+evaluator construction, input bookkeeping and output serialization are excluded.
+CPU times cover the same phases and sum time consumed by process threads.
+
+Thread environment variables limit supported pools; they do not enforce a
+process-wide CPU quota or pin performance/efficiency cores. CPU time still
+depends on clock frequency, cache effects and scheduling. Telemetry is sampled
+about once per second over the entire child process lifetime, so it includes
+benchmark load and work outside the scoring timer; it cannot attribute short
+phase delays to a particular background process. Treat these as observations
+under the recorded load, not idle-machine performance or CPU-normalized scores.
+
+See the [Apple M2 desktop measurement](benchmark-apple-m2.md) and
+[i5-10400 / RTX 3070 server comparison](benchmark-rtx3070.md) for examples
+with identical inputs and all raw repetitions retained.

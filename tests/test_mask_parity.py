@@ -75,6 +75,42 @@ def test_encode_3d_stack():
     np.testing.assert_array_equal(ref.decode(a), ours.decode(b))
 
 
+@pytest.mark.parametrize("shape", [(13, 17, 3), (1, 17, 3), (13, 1, 3),
+                                   (13, 17, 1), (0, 17, 3), (13, 0, 3), (13, 17, 0)])
+@pytest.mark.parametrize("layout", ["fortran", "c", "reverse_rows", "reverse_masks",
+                                    "step_rows", "step_masks", "offset"])
+def test_encode_layouts_match_reference(shape, layout):
+    """Contiguous fast paths must retain the arbitrary-stride API extension."""
+    rng = np.random.default_rng(90210)
+    base = np.asfortranarray(rng.integers(0, 4, size=shape, dtype=np.uint8))
+    views = {
+        "fortran": base,
+        "c": np.ascontiguousarray(base),
+        "reverse_rows": base[::-1, :, :],
+        "reverse_masks": base[:, :, ::-1],
+        "step_rows": base[::2, :, :],
+        "step_masks": base[:, :, ::2],
+        "offset": base[:, :, 1:],
+    }
+    masks = views[layout]
+    before = masks.copy()
+    masks.flags.writeable = False
+    # Cython requires Fortran layout; our API additionally accepts strided arrays.
+    expected = ref.encode(np.asfortranarray(masks))
+    assert ours.encode(masks) == expected
+    np.testing.assert_array_equal(masks, before)
+    assert not masks.flags.writeable
+
+
+@pytest.mark.parametrize("length", [0, 1, 31, 32, 33, 63, 64, 65, 257])
+def test_encode_run_boundaries_match_reference(length):
+    for split in range(length + 1):
+        for first, second in [(0, 1), (1, 0), (2, 255), (255, 2), (255, 255)]:
+            mask = np.full((length, 1), first, dtype=np.uint8, order="F")
+            mask[split:] = second
+            assert ours.encode(mask) == ref.encode(mask)
+
+
 @pytest.mark.parametrize("intersect", [0, 1])
 def test_merge(intersect):
     rles = [ref.encode(blob_mask(40, 40)) for _ in range(4)]

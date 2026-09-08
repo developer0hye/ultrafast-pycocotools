@@ -1,0 +1,19 @@
+{
+  "version": "0.1.7",
+  "interpreter": "uv 0.10.9 managed CPython 3.8.20, macOS arm64",
+  "platform": {
+    "python": "3.8.20 (default, Oct  2 2024, 16:12:59) \n[Clang 18.1.8 ]",
+    "machine": "arm64",
+    "native": "/private/tmp/ufcoco-cp38-arm64/lib/python3.8/site-packages/ultrafast_pycocotools/_ufcoco.cpython-38-darwin.so"
+  },
+  "wheel": "ultrafast_pycocotools-0.1.7-cp38-cp38-macosx_11_0_arm64.whl",
+  "wheel_sha256": "ad560e94389739cd7d7a99f1167e78c0c43193a436034a7118a707e8aa191cea",
+  "native_sha256": "9bc02012ac12f9051405b594cd52798abefe649a3a01a792ace2476531ac18fb",
+  "installation": "pip install --no-index --no-deps --only-binary=:all: --find-links=<wheel directory> ultrafast-pycocotools==0.1.7",
+  "tests": {
+    "passed": 249,
+    "skipped": 17,
+    "junit_sha256": "69f38e723e939c080b255e7646c42be0d948c0d61fe2db5efdb5e36652c70d6d"
+  },
+  "note": "Local native binary-install proof; publication and hosted wheel-matrix validation are separate gates."
+}

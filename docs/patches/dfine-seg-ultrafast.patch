@@ -1,0 +1,623 @@
+diff --git a/README.md b/README.md
+index caf75e1..0b98545 100644
+--- a/README.md
++++ b/README.md
+@@ -119,6 +119,28 @@ This creates a `.venv/` with the package installed editable and every extra pres
+ 
+ Pretrained weights are auto-downloaded from [Hugging Face](https://huggingface.co/ArgoSA/D-FINE-seg) on first use, so no manual setup is needed - into `pretrained/` for the config-driven commands, and into the shared Hugging Face cache for `load_model("s")` when there is no `pretrained/` copy to reuse. To download manually instead, grab `dfine_<size>_<dataset>.pt` (size ∈ {n, s, m, l, x}, dataset ∈ {coco, obj2coco}) and place it in `pretrained/`. Segmentation weights are also available in the Hugging Face model card.
+ 
++### Optional faster COCO evaluation
++
++From this source checkout, install the ultrafast backend and select it for training validation:
++
++```bash
++pip install -e '.[ultrafast]'
++dfine train train.coco_backend=ultrafast
++```
++
++`train.coco_backend` defaults to `faster_coco_eval`. The `ultrafast` option uses
++[ultrafast-pycocotools](https://github.com/developer0hye/ultrafast-pycocotools)
++for bbox and instance-segmentation mAP on the CPU. It also applies wherever the
++shared Validator computes mAP, including INT8 validation. F1, threshold sweeps,
++semantic-segmentation metrics and model inference keep their existing computation.
++`dfine bench` currently disables mAP, so changing this option does not accelerate
++its reported inference latency or F1 calculation.
++
++For direct use, pass `coco_backend="ultrafast"` to `Validator`. The adapter changes
++only that metric instance and retains TorchMetrics' update/reset lifecycle.
++Tests compare full bbox/segm evaluation arrays with pycocotools and the existing
++backend, including crowd annotations, tied scores, empty detections and RLE masks.
++
+ ### Prepare Your Data
+ 
+ Two annotation formats are supported: **YOLO** (default) and **COCO JSON**. Semantic segmentation uses **PNG masks** instead (see below).
+diff --git a/config.yaml b/config.yaml
+index 884396e..8bfc4d0 100644
+--- a/config.yaml
++++ b/config.yaml
+@@ -73,6 +73,7 @@ train:
+   early_stopping: 0 # 0 - no early stopping
+   ignore_background_epochs: 0 # background images not used for N epochs in train set. Ignored for sem_seg
+   num_workers: 12 # In DDP used per GPU. Go lower if RAM is tight for segmentation
++  coco_backend: faster_coco_eval # faster_coco_eval | ultrafast (install [ultrafast])
+   mask_batch_size: 150 # number of images to process at once when computing mask metrics
+   freeze_except_mask: False # freeze everything except MaskDecoder
+ 
+diff --git a/dfine_seg/config/default.yaml b/dfine_seg/config/default.yaml
+index b03e231..96a7b6c 100644
+--- a/dfine_seg/config/default.yaml
++++ b/dfine_seg/config/default.yaml
+@@ -69,6 +69,7 @@ train:
+   early_stopping: 0 # 0 - no early stopping
+   ignore_background_epochs: 0 # background images not used for N epochs in train set. Ignored for sem_seg
+   num_workers: 12 # In DDP used per GPU. Go lower if RAM is tight for segmentation
++  coco_backend: faster_coco_eval # faster_coco_eval | ultrafast (install [ultrafast])
+   mask_batch_size: 150 # number of images to process at once when computing mask metrics
+   freeze_except_mask: False # freeze everything except MaskDecoder
+ 
+diff --git a/dfine_seg/dl/bench.py b/dfine_seg/dl/bench.py
+index 3a97a21..8c5c7b0 100644
+--- a/dfine_seg/dl/bench.py
++++ b/dfine_seg/dl/bench.py
+@@ -126,6 +126,7 @@ def test_model(
+     label_to_name: Dict[int, str],
+     compute_maps: bool,
+     to_draw_gt: bool,
++    coco_backend: str = "faster_coco_eval",
+ ):
+     logger.info(f"Testing {name} model")
+     latency = []
+@@ -225,6 +226,7 @@ def test_model(
+         conf_thresh=conf_thresh,
+         iou_thresh=iou_thresh,
+         label_to_name=label_to_name,
++        coco_backend=coco_backend,
+         compute_maps=compute_maps,  # as inference done with a conf threshold, mAPs don't make much sense
+     )
+ 
+@@ -454,6 +456,7 @@ def main(cfg: DictConfig):
+                 label_to_name=cfg.train.label_to_name,
+                 compute_maps=compute_maps,
+                 to_draw_gt=to_draw_gt,
++                coco_backend=getattr(cfg.train, "coco_backend", "faster_coco_eval"),
+             )
+         del model
+         gc.collect()
+diff --git a/dfine_seg/dl/ov_int8.py b/dfine_seg/dl/ov_int8.py
+index 18b85c9..c5999da 100644
+--- a/dfine_seg/dl/ov_int8.py
++++ b/dfine_seg/dl/ov_int8.py
+@@ -128,6 +128,7 @@ def main(cfg: DictConfig):
+             label_to_name=label_to_name,
+             conf_thresh=conf_thresh,
+             iou_thresh=iou_thresh,
++            coco_backend=getattr(cfg.train, "coco_backend", "faster_coco_eval"),
+         )
+         metrics = validator.compute_metrics(extended=False)
+         f1_score = metrics["f1"]
+diff --git a/dfine_seg/dl/train.py b/dfine_seg/dl/train.py
+index 5c43219..e0c37b7 100644
+--- a/dfine_seg/dl/train.py
++++ b/dfine_seg/dl/train.py
+@@ -40,6 +40,7 @@ from dfine_seg.model.dist_utils import (
+ )
+ from dfine_seg.model.utils import save_checkpoint, unwrap_checkpoint
+ from dfine_seg.dl.dataset import Loader
++from dfine_seg.dl.coco_metric import validate_coco_backend
+ from dfine_seg.dl.utils import (
+     auto_batch_size,
+     calculate_remaining_time,
+@@ -104,6 +105,9 @@ class ModelEMA:
+ class Trainer:
+     def __init__(self, cfg: DictConfig) -> None:
+         self.cfg = cfg
++        self.coco_backend = getattr(cfg.train, "coco_backend", "faster_coco_eval")
++        if cfg.task != "sem_seg":
++            validate_coco_backend(self.coco_backend)
+ 
+         # Only consider distributed if config says DDP enabled AND process group was initialized
+         self.distributed = (
+@@ -627,6 +631,7 @@ class Trainer:
+                     iou_thresh=iou_thresh,
+                     label_to_name=self.label_to_name,
+                     mask_batch_size=self.mask_batch_size,
++                    coco_backend=self.coco_backend,
+                 )
+                 metrics = validator.compute_metrics(extended=extended)
+             if path_to_save:  # val and test
+diff --git a/dfine_seg/dl/trt_int8.py b/dfine_seg/dl/trt_int8.py
+index 02b4d7f..0e03202 100644
+--- a/dfine_seg/dl/trt_int8.py
++++ b/dfine_seg/dl/trt_int8.py
+@@ -183,6 +183,7 @@ def validate_engine(
+     label_to_name: dict,
+     enable_mask_head: bool,
+     input_size: tuple,  # (H, W)
++    coco_backend: str = "faster_coco_eval",
+ ) -> float:
+     """
+     Load an engine, run the val set through it, return the F1 score.
+@@ -303,6 +304,7 @@ def validate_engine(
+         label_to_name=label_to_name,
+         conf_thresh=conf_thresh,
+         iou_thresh=iou_thresh,
++        coco_backend=coco_backend,
+     )
+     metrics = validator.compute_metrics(extended=False)
+     f1 = metrics["f1"]
+@@ -390,6 +392,7 @@ def main(cfg: DictConfig):
+             label_to_name=label_to_name,
+             enable_mask_head=enable_mask_head,
+             input_size=tuple(cfg.train.img_size),
++            coco_backend=getattr(cfg.train, "coco_backend", "faster_coco_eval"),
+         )
+         logger.info(f"Final INT8 F1: {f1:.4f}")
+ 
+diff --git a/dfine_seg/dl/validator.py b/dfine_seg/dl/validator.py
+index 097d8ce..80b4a0e 100644
+--- a/dfine_seg/dl/validator.py
++++ b/dfine_seg/dl/validator.py
+@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
+ import numpy as np
+ import torch
+ from loguru import logger
+-from torchmetrics.detection.mean_ap import MeanAveragePrecision
+ from torchvision.ops import box_iou
+ 
++from dfine_seg.dl.coco_metric import coco_metric
+ from dfine_seg.dl.utils import filter_preds, rle_to_masks
+ 
+ # Suppress verbose output from faster_coco_eval
+@@ -28,6 +28,7 @@ class Validator:
+         iou_thresh=0.5,
+         mask_batch_size=1000,
+         compute_maps=True,
++        coco_backend="faster_coco_eval",
+     ) -> None:
+         """
+         Format example:
+@@ -36,7 +37,8 @@ class Validator:
+         bboxes are in format [x1, y1, x2, y2], absolute values
+ 
+         mask_batch_size - Number of images to process at once when computing mask metrics.
+-            Lower values use less RAM but may be slower. Default 500.
++            Lower values use less RAM but may be slower. Default 1000.
++        coco_backend - "faster_coco_eval" (default) or "ultrafast" (requires [ultrafast]).
+         """
+         self.gt = gt
+         self.preds = preds
+@@ -50,11 +52,7 @@ class Validator:
+         self.mask_batch_size = mask_batch_size
+         self.compute_maps = compute_maps
+ 
+-        # Use faster_coco_eval backend for numpy 2.x compatibility
+-        self.torch_metric = MeanAveragePrecision(
+-            box_format="xyxy", iou_type="bbox", sync_on_compute=False, backend="faster_coco_eval"
+-        )
+-        self.torch_metric.warn_on_many_detections = False
++        self.torch_metric = coco_metric("bbox", coco_backend)
+ 
+         # get raw preds for torchmetrics (only needed when computing mAPs; the deepcopy
+         # duplicates every dense mask, so skip it otherwise to avoid an OOM spike)
+@@ -81,13 +79,7 @@ class Validator:
+ 
+         self.use_masks = any(_has_masks(p) for p in preds) and any(_has_masks(g) for g in gt)
+         if self.use_masks and self.compute_maps:
+-            self.torch_metric_mask = MeanAveragePrecision(
+-                box_format="xyxy",
+-                iou_type="segm",
+-                sync_on_compute=False,
+-                backend="faster_coco_eval",
+-            )
+-            self.torch_metric_mask.warn_on_many_detections = False
++            self.torch_metric_mask = coco_metric("segm", coco_backend)
+             # Decode RLE masks for torchmetrics in batches to avoid OOM
+             # torchmetrics supports incremental .update() calls
+             batch_size = self.mask_batch_size
+diff --git a/pyproject.toml b/pyproject.toml
+index 3283690..5b63d6b 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -53,6 +53,8 @@ dependencies = [
+ ]
+ 
+ [project.optional-dependencies]
++# Optional CPU evaluator for bbox and instance-segmentation mAP.
++ultrafast = ["ultrafast-pycocotools>=0.1.6,<0.2"]
+ # `make export` / `dfine export` backends. Large, so opt-in. nncf and openvino are
+ # capped at the tested major: a silent API change there yields a bad artifact, not an error.
+ export = [
+@@ -83,6 +85,7 @@ extra = [
+     "pillow-heif>=1.4.0",
+ ]
+ all = [
++    "dfine-seg[ultrafast]",
+     "dfine-seg[export]",
+     "dfine-seg[trt]",
+     "dfine-seg[label]",
+@@ -120,6 +123,7 @@ dev = [
+     "dfine-seg[all]",
+     "pre-commit>=4.6.0",
+     "pytest>=8",
++    "pycocotools>=2.0.11",
+     "pytest-xdist>=3",
+     "ruff==0.15.20",
+ ]
+diff --git a/tests/integration/test_light_import.py b/tests/integration/test_light_import.py
+index 6e32df9..2bb4741 100644
+--- a/tests/integration/test_light_import.py
++++ b/tests/integration/test_light_import.py
+@@ -30,6 +30,7 @@ FORBIDDEN = [
+     "sklearn",
+     "torchmetrics",
+     "faster_coco_eval",
++    "ultrafast_pycocotools",
+ ]
+ 
+ 
+diff --git a/tests/integration/test_pretrained_accuracy.py b/tests/integration/test_pretrained_accuracy.py
+index aeee2cb..a3f7649 100644
+--- a/tests/integration/test_pretrained_accuracy.py
++++ b/tests/integration/test_pretrained_accuracy.py
+@@ -59,7 +59,10 @@ def _load_yolo_labels(
+ 
+ 
+ @pytest.mark.slow
+-def test_pretrained_s_cpu_mAP_holds_baseline(coco_pretrained_path):
++@pytest.mark.parametrize("coco_backend", ["faster_coco_eval", "ultrafast"])
++def test_pretrained_s_cpu_mAP_holds_baseline(coco_pretrained_path, coco_backend):
++    if coco_backend == "ultrafast":
++        pytest.importorskip("ultrafast_pycocotools")
+     baseline = _require_fixtures()
+     # Only images with a matching label file count as fixture inputs — that's
+     # what the bootstrap writes, and it lets stray source images sit in the
+@@ -104,6 +107,7 @@ def test_pretrained_s_cpu_mAP_holds_baseline(coco_pretrained_path):
+         gt.append({"labels": gt_labels, "boxes": gt_boxes})
+ 
+     v = Validator(
++        coco_backend=coco_backend,
+         gt=copy.deepcopy(gt),
+         preds=copy.deepcopy(preds),
+         label_to_name=COCO80,
+diff --git a/uv.lock b/uv.lock
+index c7b8156..34b9985 100644
+--- a/uv.lock
++++ b/uv.lock
+@@ -584,6 +584,7 @@ all = [
+     { name = "starlette", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+     { name = "tensorrt", marker = "sys_platform == 'linux'" },
+     { name = "transformers", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
++    { name = "ultrafast-pycocotools", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+ ]
+ demo = [
+     { name = "gradio", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+@@ -610,11 +611,15 @@ label = [
+ trt = [
+     { name = "tensorrt", marker = "sys_platform == 'linux'" },
+ ]
++ultrafast = [
++    { name = "ultrafast-pycocotools", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
++]
+ 
+ [package.dev-dependencies]
+ dev = [
+     { name = "dfine-seg", extra = ["all"], marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+     { name = "pre-commit", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
++    { name = "pycocotools", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+     { name = "pytest", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+     { name = "pytest-xdist", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+     { name = "ruff", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+@@ -629,6 +634,7 @@ requires-dist = [
+     { name = "dfine-seg", extras = ["extra"], marker = "extra == 'all'", editable = "." },
+     { name = "dfine-seg", extras = ["label"], marker = "extra == 'all'", editable = "." },
+     { name = "dfine-seg", extras = ["trt"], marker = "extra == 'all'", editable = "." },
++    { name = "dfine-seg", extras = ["ultrafast"], marker = "extra == 'all'", editable = "." },
+     { name = "difpy", marker = "extra == 'extra'", specifier = ">=4.2.1" },
+     { name = "faster-coco-eval", specifier = ">=1.6.5" },
+     { name = "gradio", marker = "extra == 'demo'", specifier = ">=6.16.0,<7" },
+@@ -661,14 +667,16 @@ requires-dist = [
+     { name = "torchvision", specifier = ">=0.28.0" },
+     { name = "tqdm", specifier = ">=4.66.5" },
+     { name = "transformers", marker = "extra == 'label'", specifier = ">=5.15.0" },
++    { name = "ultrafast-pycocotools", marker = "extra == 'ultrafast'", specifier = ">=0.1.6,<0.2" },
+     { name = "wandb", specifier = ">=0.26.1" },
+ ]
+-provides-extras = ["export", "trt", "label", "demo", "extra", "all"]
++provides-extras = ["ultrafast", "export", "trt", "label", "demo", "extra", "all"]
+ 
+ [package.metadata.requires-dev]
+ dev = [
+     { name = "dfine-seg", extras = ["all"], editable = "." },
+     { name = "pre-commit", specifier = ">=4.6.0" },
++    { name = "pycocotools", specifier = ">=2.0.11" },
+     { name = "pytest", specifier = ">=8" },
+     { name = "pytest-xdist", specifier = ">=3" },
+     { name = "ruff", specifier = "==0.15.20" },
+@@ -2017,6 +2025,32 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/5d/f3/1f8651f23101e6fae41d0d504414c9722b0140bf0fc6acf87ac52e18aa41/pyaml-26.2.1-py3-none-any.whl", hash = "sha256:6261c2f0a2f33245286c794ad6ec234be33a73d2b05427079fd343e2812a87cf", size = 27211, upload-time = "2026-02-06T13:49:29.652Z" },
+ ]
+ 
++[[package]]
++name = "pycocotools"
++version = "2.0.11"
++source = { registry = "https://pypi.org/simple" }
++dependencies = [
++    { name = "numpy", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
++]
++sdist = { url = "https://files.pythonhosted.org/packages/a2/df/32354b5dda963ffdfc8f75c9acf8828ef7890723a4ed57bb3ff2dc1d6f7e/pycocotools-2.0.11.tar.gz", hash = "sha256:34254d76da85576fcaf5c1f3aa9aae16b8cb15418334ba4283b800796bd1993d", size = 25381, upload-time = "2025-12-15T22:31:46.148Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/b3/3f/41ce3fce61b7721158f21b61727eb054805babc0088cfa48506935b80a36/pycocotools-2.0.11-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:81bdceebb4c64e9265213e2d733808a12f9c18dfb14457323cc6b9af07fa0e61", size = 158947, upload-time = "2025-12-15T22:31:03.291Z" },
++    { url = "https://files.pythonhosted.org/packages/e2/9b/a739705b246445bd1376394bf9d1ec2dd292b16740e92f203461b2bb12ed/pycocotools-2.0.11-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a1c05f91ccc658dfe01325267209c4b435da1722c93eeb5749fabc1d087b6882", size = 485174, upload-time = "2025-12-15T22:31:04.395Z" },
++    { url = "https://files.pythonhosted.org/packages/34/70/7a12752784e57d8034a76c245c618a2f88a9d2463862b990f314aea7e5d6/pycocotools-2.0.11-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:18ba75ff58cedb33a85ce2c18f1452f1fe20c9dd59925eec5300b2bf6205dbe1", size = 493172, upload-time = "2025-12-15T22:31:05.504Z" },
++    { url = "https://files.pythonhosted.org/packages/5c/fc/d703599ac728209dba08aea8d4bee884d5adabfcd9041abed1658d863747/pycocotools-2.0.11-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:693417797f0377fd094eb815c0a1e7d1c3c0251b71e3b3779fce3b3cf24793c5", size = 480506, upload-time = "2025-12-15T22:31:06.77Z" },
++    { url = "https://files.pythonhosted.org/packages/81/d9/e1cfc320bbb2cd58c3b4398c3821cbe75d93c16ed3135ac9e774a18a02d3/pycocotools-2.0.11-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:b6a07071c441d0f5e480a8f287106191582e40289d4e242dfe684e0c8a751088", size = 497595, upload-time = "2025-12-15T22:31:08.277Z" },
++    { url = "https://files.pythonhosted.org/packages/87/12/2f2292332456e4e4aba1dec0e3de8f1fc40fb2f4fdb0ca1cb17db9861682/pycocotools-2.0.11-cp312-abi3-macosx_10_13_universal2.whl", hash = "sha256:a2e9634bc7cadfb01c88e0b98589aaf0bd12983c7927bde93f19c0103e5441f4", size = 147795, upload-time = "2025-12-15T22:31:11.519Z" },
++    { url = "https://files.pythonhosted.org/packages/63/3c/68d7ea376aada9046e7ea2d7d0dad0d27e1ae8b4b3c26a28346689390ab2/pycocotools-2.0.11-cp312-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7fd4121766cc057133534679c0ec3f9023dbd96e9b31cf95c86a069ebdac2b65", size = 398434, upload-time = "2025-12-15T22:31:12.558Z" },
++    { url = "https://files.pythonhosted.org/packages/23/59/dc81895beff4e1207a829d40d442ea87cefaac9f6499151965f05c479619/pycocotools-2.0.11-cp312-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a82d1c9ed83f75da0b3f244f2a3cf559351a283307bd9b79a4ee2b93ab3231dd", size = 411685, upload-time = "2025-12-15T22:31:13.995Z" },
++    { url = "https://files.pythonhosted.org/packages/0b/0b/5a8a7de300862a2eb5e2ecd3cb015126231379206cd3ebba8f025388d770/pycocotools-2.0.11-cp312-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:89e853425018e2c2920ee0f2112cf7c140a1dcf5f4f49abd9c2da112c3e0f4b3", size = 390500, upload-time = "2025-12-15T22:31:15.138Z" },
++    { url = "https://files.pythonhosted.org/packages/63/b5/519bb68647f06feea03d5f355c33c05800aeae4e57b9482b2859eb00752e/pycocotools-2.0.11-cp312-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:87af87b8d06d5b852a885a319d9362dca3bed9f8bbcc3feb6513acb1f88ea242", size = 409790, upload-time = "2025-12-15T22:31:16.326Z" },
++    { url = "https://files.pythonhosted.org/packages/5d/78/31c81e99d596a20c137d8a2e7a25f39a88f88fada5e0b253fce7323ecf0d/pycocotools-2.0.11-cp313-cp313t-macosx_10_13_universal2.whl", hash = "sha256:fd72b9734e6084b217c1fc3945bfd4ec05bdc75a44e4f0c461a91442bb804973", size = 168931, upload-time = "2025-12-15T22:31:19.845Z" },
++    { url = "https://files.pythonhosted.org/packages/5f/63/fdd488e4cd0fdc6f93134f2cd68b1fce441d41566e86236bf6156961ef9b/pycocotools-2.0.11-cp313-cp313t-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:f7eb43b79448476b094240450420b7425d06e297880144b8ea6f01e9b4340e43", size = 484856, upload-time = "2025-12-15T22:31:21.231Z" },
++    { url = "https://files.pythonhosted.org/packages/a1/fc/c83648a8fb7ea3b8e2ce2e761b469807e6cadb81577bf1af31c4f2ef0d87/pycocotools-2.0.11-cp313-cp313t-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c3546b93b39943347c4f5b0694b5824105cbe2174098a416bcad4acd9c21e957", size = 480994, upload-time = "2025-12-15T22:31:22.426Z" },
++    { url = "https://files.pythonhosted.org/packages/b6/2d/35e1122c0d007288aa9545be9549cbc7a4987b2c22f21d75045260a8b5b8/pycocotools-2.0.11-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:efd1694b2075f2f10c5828f10f6e6c4e44368841fd07dae385c3aa015c8e25f9", size = 467956, upload-time = "2025-12-15T22:31:23.754Z" },
++    { url = "https://files.pythonhosted.org/packages/e4/ff/30cfe8142470da3e45abe43a9842449ca0180d993320559890e2be19e4a5/pycocotools-2.0.11-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:368244f30eb8d6cae7003aa2c0831fbdf0153664a32859ec7fbceea52bfb6878", size = 474658, upload-time = "2025-12-15T22:31:24.883Z" },
++]
++
+ [[package]]
+ name = "pycparser"
+ version = "3.0"
+@@ -2970,6 +3004,29 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/ce/e4/dccd7f47c4b64213ac01ef921a1337ee6e30e8c6466046018326977efd95/tzdata-2026.2-py2.py3-none-any.whl", hash = "sha256:bbe9af844f658da81a5f95019480da3a89415801f6cc966806612cc7169bffe7", size = 349321, upload-time = "2026-04-24T15:22:05.876Z" },
+ ]
+ 
++[[package]]
++name = "ultrafast-pycocotools"
++version = "0.1.6"
++source = { registry = "https://pypi.org/simple" }
++dependencies = [
++    { name = "numpy", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
++]
++sdist = { url = "https://files.pythonhosted.org/packages/0f/b3/78921d5b2335129800369b342bc59792d3ea49a5ea8cc45139491f7dbac9/ultrafast_pycocotools-0.1.6.tar.gz", hash = "sha256:3badf4dea2aed7bee0d0185c961ed7ef487f1e5a3de89a346b516d88db3cd5ad", size = 85410, upload-time = "2026-09-08T11:56:30.484Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/c7/d4/05cbc107ea7a61f5a8df0ce13cddc8f68d9b124f0ed507f63690dc5f7a2a/ultrafast_pycocotools-0.1.6-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:526c7d1d940a7fffef5b1ee31ab59d1f99c7b3512fdcfea1ab30899df1a8f7cb", size = 514314, upload-time = "2026-09-08T11:55:44.6Z" },
++    { url = "https://files.pythonhosted.org/packages/7f/78/ebb12b845c6d0d41de88390880f8374089690715aae52b23e4d0be2cff90/ultrafast_pycocotools-0.1.6-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:205bfde1857e7822bc4ea3f43e128848567ed1093c7da9f0b87da15eecbee398", size = 499580, upload-time = "2026-09-08T11:55:46.016Z" },
++    { url = "https://files.pythonhosted.org/packages/e4/fd/95eb61ddd8ac593d0447f3832f27282d6f601dc49e83902802944f5cb699/ultrafast_pycocotools-0.1.6-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:e37d7a2c074e62f8269a073de5544148f4fd98a52df8ecf5716b13e8d010d844", size = 524059, upload-time = "2026-09-08T11:55:47.617Z" },
++    { url = "https://files.pythonhosted.org/packages/55/d9/16e24413eb93da1af8cddea53807bafbea71fc3f5d560b5d3b191c86cc70/ultrafast_pycocotools-0.1.6-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ee69993d10525c616d3036f8f5bf1295b344b300b4af851dfd7e5ac636997c1b", size = 555766, upload-time = "2026-09-08T11:55:49.476Z" },
++    { url = "https://files.pythonhosted.org/packages/75/e8/268efd455552ee022a74ed759ae6ef5438cfcbcacf61a868782962f9700e/ultrafast_pycocotools-0.1.6-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:d3be7d1e58bc2937f3226b740044373dfb735e041ebf77abdfd3c15e334a9fdd", size = 522117, upload-time = "2026-09-08T11:55:52.807Z" },
++    { url = "https://files.pythonhosted.org/packages/3d/52/052be2ce9dd94080ee1e413ecc1df3b3d21a5ffa39c0cc32129892ccb864/ultrafast_pycocotools-0.1.6-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:ceedbf8e007f0517dae639dc6748eab6de746a2786ea089afcaaf3b7d1951341", size = 495540, upload-time = "2026-09-08T11:55:54.64Z" },
++    { url = "https://files.pythonhosted.org/packages/52/3d/949afc876dd6815dcdd724192b6f3bc4156357903a126481301200e50a95/ultrafast_pycocotools-0.1.6-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:01ef36b10e16d1d726d039f8fa5c244accbf9d6787f0e6512f9d0d9f382ec4cb", size = 520724, upload-time = "2026-09-08T11:55:56.176Z" },
++    { url = "https://files.pythonhosted.org/packages/9b/2d/5199d5c4ae2b6c2a12fb6d69ae9ecfd88279c41fff527301657b3a58f2e8/ultrafast_pycocotools-0.1.6-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6c2630a49b302594d46f593319ad82e1185e2dca9e7df4364264d0c16894bb47", size = 554237, upload-time = "2026-09-08T11:55:57.682Z" },
++    { url = "https://files.pythonhosted.org/packages/be/ca/12b1778d0ec04f52061c4e970f5924c4d89f389ca07cdd52282ea8963c8f/ultrafast_pycocotools-0.1.6-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:151d17f1f73027bfbc01055dfd0462b9c13f72e4ace776fee0aed20cefeccb76", size = 521998, upload-time = "2026-09-08T11:56:01.009Z" },
++    { url = "https://files.pythonhosted.org/packages/b5/2d/b6e764d08daa4396aa2aadc7f5eff5a229cfc54427ebc578a1e14bd62aa9/ultrafast_pycocotools-0.1.6-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:1498a2e7382013a3aa106cec6b483f58cfbec91b4c6473287a1a9c895187d071", size = 495189, upload-time = "2026-09-08T11:56:02.754Z" },
++    { url = "https://files.pythonhosted.org/packages/1b/33/6f49d9c17060d263e7b10c1bb22da812881ea09e7aef8ce3f7b08a6cf33a/ultrafast_pycocotools-0.1.6-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7427473727bdb859484ebe5eb428c0a13d9aee6b8a94a4656b0f304dcf939ea0", size = 521061, upload-time = "2026-09-08T11:56:04.377Z" },
++    { url = "https://files.pythonhosted.org/packages/45/cb/3d819e12405358b8c3259d34fc122a2c5f1432f156d31d92bd2a335ab465/ultrafast_pycocotools-0.1.6-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:07010478a701b7b2c739de333b5d100e1a0cb61d73bbfdcc87e091dee1582a27", size = 554137, upload-time = "2026-09-08T11:56:05.87Z" },
++]
++
+ [[package]]
+ name = "urllib3"
+ version = "2.7.0"
+diff --git a/dfine_seg/dl/coco_metric.py b/dfine_seg/dl/coco_metric.py
+new file mode 100644
+index 0000000..b3a5af3
+--- /dev/null
++++ b/dfine_seg/dl/coco_metric.py
+@@ -0,0 +1,71 @@
++"""Per-metric COCO backend selection; no global import replacement."""
++
++from importlib import import_module
++
++import numpy as np
++from torchmetrics.detection.helpers import CocoBackend
++from torchmetrics.detection.mean_ap import MeanAveragePrecision
++
++
++class _MaskTools:
++    @staticmethod
++    def encode(value):
++        from ultrafast_pycocotools import mask
++
++        # TorchMetrics stores boolean masks; COCO's mask API expects uint8.
++        if value.dtype == np.bool_:
++            value = np.asfortranarray(value, dtype=np.uint8)
++        return mask.encode(value)
++
++    def __getattr__(self, name):
++        from ultrafast_pycocotools import mask
++
++        return getattr(mask, name)
++
++
++class _UltrafastBackend(CocoBackend):
++    @property
++    def coco(self):
++        from ultrafast_pycocotools import COCO
++
++        return COCO
++
++    @property
++    def cocoeval(self):
++        from ultrafast_pycocotools import COCOeval
++
++        return COCOeval
++
++    @property
++    def mask_utils(self):
++        return _MaskTools()
++
++
++def validate_coco_backend(backend: str) -> None:
++    """Reject unavailable backends before starting a training epoch."""
++    if backend not in ("faster_coco_eval", "ultrafast"):
++        raise ValueError("train.coco_backend must be 'faster_coco_eval' or 'ultrafast'")
++    if backend == "ultrafast":
++        try:
++            import_module("ultrafast_pycocotools")
++        except ModuleNotFoundError as exc:
++            if exc.name != "ultrafast_pycocotools":
++                raise
++            raise ModuleNotFoundError(
++                "The ultrafast backend requires: pip install 'dfine-seg[ultrafast]'"
++            ) from exc
++
++
++def coco_metric(iou_type: str, backend: str = "faster_coco_eval") -> MeanAveragePrecision:
++    """Create a fresh bbox/segm metric with TorchMetrics' normal state lifecycle."""
++    validate_coco_backend(backend)
++    metric = MeanAveragePrecision(
++        box_format="xyxy", iou_type=iou_type, sync_on_compute=False, backend="faster_coco_eval"
++    )
++    if backend == "ultrafast":
++        # TorchMetrics 1.9 exposes no public custom-backend constructor argument.
++        if not isinstance(getattr(metric, "_coco_backend", None), CocoBackend):
++            raise RuntimeError("Unsupported TorchMetrics COCO backend layout")
++        metric._coco_backend = _UltrafastBackend("faster_coco_eval")
++    metric.warn_on_many_detections = False
++    return metric
+diff --git a/tests/unit/test_coco_backend.py b/tests/unit/test_coco_backend.py
+new file mode 100644
+index 0000000..bbfc5f3
+--- /dev/null
++++ b/tests/unit/test_coco_backend.py
+@@ -0,0 +1,142 @@
++"""Exercise the optional backend through TorchMetrics and the real Validator."""
++
++import copy
++import pickle
++
++import pytest
++import torch
++from torchmetrics.detection.mean_ap import MeanAveragePrecision
++
++from dfine_seg.dl.coco_metric import coco_metric
++from dfine_seg.dl.utils import encode_sample_masks_to_rle
++from dfine_seg.dl.validator import Validator
++
++
++def samples():
++    gt, preds = [], []
++    for index in range(5):
++        boxes = torch.tensor([[2.0, 3.0, 18.0, 20.0], [12.0, 10.0, 28.0, 30.0]])
++        masks = torch.zeros((2, 32, 32), dtype=torch.bool)
++        masks[0, 3:20, 2:18] = True
++        masks[1, 10:30, 12:28] = True
++        n_gt = 0 if index in (3, 4) else 2
++        n_dt = 0 if index in (2, 4) else 2
++        gt.append(
++            {
++                "boxes": boxes[:n_gt].clone(),
++                "labels": torch.tensor([0, 1])[:n_gt],
++                "masks": masks[:n_gt].clone(),
++                "iscrowd": torch.tensor([0, index % 2])[:n_gt],
++                "area": torch.tensor([272.0, 320.0])[:n_gt],
++            }
++        )
++        preds.append(
++            {
++                "boxes": boxes[:n_dt].clone() + index,
++                "labels": torch.tensor([0, 1])[:n_dt],
++                "scores": torch.tensor([0.8, 0.8])[:n_dt],
++                "masks": torch.roll(masks[:n_dt], shifts=index, dims=-1),
++            }
++        )
++    return gt, preds
++
++
++@pytest.mark.parametrize("iou_type", ["bbox", "segm"])
++def test_full_arrays_and_metric_lifecycle(iou_type):
++    pytest.importorskip("ultrafast_pycocotools")
++    pytest.importorskip("pycocotools")
++    gt, preds = samples()
++    reference = MeanAveragePrecision(
++        box_format="xyxy", iou_type=iou_type, sync_on_compute=False, backend="pycocotools"
++    )
++    fast = coco_metric(iou_type, "ultrafast")
++    existing = coco_metric(iou_type)
++    assert existing._coco_backend.coco.__module__.startswith("faster_coco_eval")
++    assert fast._coco_backend.coco.__module__.startswith("ultrafast_pycocotools")
++    for metric in (reference, fast, existing):
++        metric.extended_summary = True
++        metric.class_metrics = True
++        # Incremental updates exercise the mask-batch path used by Validator.
++        metric.update(copy.deepcopy(preds[:2]), copy.deepcopy(gt[:2]))
++        metric.update(copy.deepcopy(preds[2:]), copy.deepcopy(gt[2:]))
++    expected = reference.compute()
++    actual = fast.compute()
++    torch.testing.assert_close(actual, expected, rtol=0, atol=0, equal_nan=True)
++    for key in ("precision", "recall", "scores"):
++        assert actual[key].numpy().tobytes() == expected[key].numpy().tobytes()
++    torch.testing.assert_close(existing.compute(), expected, rtol=0, atol=1e-12, equal_nan=True)
++    restored = pickle.loads(pickle.dumps(fast))
++    torch.testing.assert_close(restored.compute(), expected, rtol=0, atol=0, equal_nan=True)
++    for metric in (fast, restored):
++        metric.reset()
++        metric.update(copy.deepcopy(preds), copy.deepcopy(gt))
++        torch.testing.assert_close(metric.compute(), expected, rtol=0, atol=0, equal_nan=True)
++
++
++@pytest.mark.parametrize("encoding", ["bbox", "dense", "rle"])
++def test_validator_metrics_match_existing_backend(encoding):
++    pytest.importorskip("ultrafast_pycocotools")
++    gt, preds = samples()
++    # Validator's F1 code expects binary uint8 masks, matching training outputs.
++    for item in gt + preds:
++        item["masks"] = item["masks"].to(torch.uint8)
++        if encoding == "bbox":
++            del item["masks"]
++        elif encoding == "rle":
++            encode_sample_masks_to_rle(item)
++    outputs = []
++    for backend in ("faster_coco_eval", "ultrafast"):
++        validator = Validator(
++            copy.deepcopy(gt),
++            copy.deepcopy(preds),
++            {0: "cat", 1: "dog"},
++            coco_backend=backend,
++            mask_batch_size=2,
++        )
++        outputs.append(validator.compute_metrics(extended=True))
++        assert validator.torchmetrics_preds is None
++        assert len(validator.torch_metric.detection_labels) == 0
++    assert outputs[0].keys() == outputs[1].keys()
++    for key in outputs[0]:
++        assert outputs[1][key] == pytest.approx(outputs[0][key]), key
++
++
++def test_unknown_backend_rejected():
++    with pytest.raises(ValueError, match="train.coco_backend"):
++        coco_metric("bbox", "typo")
++
++
++def test_invalid_backend_fails_before_training_setup():
++    from omegaconf import OmegaConf
++
++    from dfine_seg.dl.train import Trainer
++
++    cfg = OmegaConf.create({"task": "detect", "train": {"coco_backend": "typo"}})
++    with pytest.raises(ValueError, match="train.coco_backend"):
++        Trainer(cfg)
++
++
++def test_missing_optional_dependency_is_actionable(monkeypatch):
++    from dfine_seg.dl import coco_metric as module
++
++    def missing(name):
++        raise ModuleNotFoundError(name=name)
++
++    monkeypatch.setattr(module, "import_module", missing)
++    with pytest.raises(ModuleNotFoundError, match=r"dfine-seg\[ultrafast\]"):
++        coco_metric("bbox", "ultrafast")
++    # The optional package must not be required by the default backend.
++    assert coco_metric("bbox")._coco_backend.coco.__module__.startswith("faster_coco_eval")
++
++
++def test_no_maps_still_returns_f1(synthetic_preds_gt):
++    pytest.importorskip("ultrafast_pycocotools")
++    validator = Validator(
++        copy.deepcopy(synthetic_preds_gt["gt"]),
++        copy.deepcopy(synthetic_preds_gt["preds"]),
++        {0: "cat", 1: "dog"},
++        coco_backend="ultrafast",
++        compute_maps=False,
++    )
++    result = validator.compute_metrics()
++    assert "f1" in result and "mAP_50" not in result
