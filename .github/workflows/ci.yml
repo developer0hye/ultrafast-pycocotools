@@ -1,0 +1,103 @@
+name: Library CI
+
+on:
+  push:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: library-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RAYON_NUM_THREADS: '2'
+  OMP_NUM_THREADS: '2'
+  OPENBLAS_NUM_THREADS: '1'
+  PYTHONUTF8: '1'
+
+jobs:
+  python:
+    name: Python (${{ matrix.os }}, ${{ matrix.python }}, NumPy ${{ matrix.numpy }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-latest, python: '3.9', numpy: '1'}
+          - {os: ubuntu-latest, python: '3.12', numpy: '1'}
+          - {os: ubuntu-latest, python: '3.12', numpy: '2'}
+          - {os: ubuntu-latest, python: '3.14', numpy: '2'}
+          - {os: macos-latest, python: '3.12', numpy: '2'}
+          - {os: windows-latest, python: '3.12', numpy: '2'}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Set up Rust
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+      - name: Build and install native package with reference dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install ".[test]" "numpy>=${{ matrix.numpy }},<${{ matrix.numpy == '1' && '2' || '3' }}" "pycocotools==2.0.11"
+          python -c "import ultrafast_pycocotools._ufcoco, pycocotools.cocoeval, numpy; print('Native extension and reference imported; NumPy', numpy.__version__)"
+      - name: Full API, metric parity and determinism suite
+        run: python -m pytest -q --strict-markers --junitxml=test-results.xml
+      - name: Generate data and compare scorers in separate processes
+        run: python bench/reproduce.py quick --out bench/out/ci-quick
+      - name: Check published hashes in the reference environment
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12' && matrix.numpy == '2'
+        run: |
+          python -m pip install "numpy==2.4.4"
+          python bench/reproduce.py quick --out bench/out/ci-published --verify-published quick
+      - name: Retain test reports and reproduction logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: reports-${{ matrix.os }}-py${{ matrix.python }}-numpy${{ matrix.numpy }}
+          path: |
+            test-results.xml
+            bench/out/ci-*/*.log
+            bench/out/ci-*/comparison.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  rust:
+    name: Rust core
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Set up Rust
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+      - run: cargo test --locked -p ufcoco-core
+      - run: cargo test --locked --release -p ufcoco-core
+
+  ci:
+    name: CI
+    if: always()
+    needs: [python, rust]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every test job to succeed
+        env:
+          PYTHON_RESULT: ${{ needs.python.result }}
+          RUST_RESULT: ${{ needs.rust.result }}
+        run: |
+          test "$PYTHON_RESULT" = success
+          test "$RUST_RESULT" = success

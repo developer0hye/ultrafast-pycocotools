@@ -1,5 +1,7 @@
 # ultrafast-pycocotools
 
+[![Library CI](https://github.com/developer0hye/ultrafast-pycocotools/actions/workflows/ci.yml/badge.svg)](https://github.com/developer0hye/ultrafast-pycocotools/actions/workflows/ci.yml)
+
 COCO evaluation in Rust, with a Python API compatible with `pycocotools`.
 
 Use it to reduce evaluation time while keeping the reference metrics. The test
@@ -168,6 +170,10 @@ not a standard pycocotools metric. See the [implementation notes](docs/implement
 for custom thresholds, area ranges, and diagnostic output formats.
 
 ## Development and verification
+
+[Automated CI](docs/ci.md) builds and tests Linux, macOS and Windows, checks
+NumPy 1/2 and multiple Python versions, and runs Rust tests in debug and release.
+The required `CI` status blocks `main` updates when any test job fails.
 
 Install the test dependencies and run the reference-comparison suite:
 
