@@ -293,10 +293,21 @@ impl CompactBbox {
     ) -> PyResult<Instances> {
         let mut out = self.instances(is_gt, images, categories);
         out.geom = super::new_geometry(out.len(), kind);
+        let mask_count = if kind == IouType::Keypoints {
+            0
+        } else {
+            out.len()
+        };
         std::thread::scope(|scope| -> PyResult<()> {
             let (tx, rx) = std::sync::mpsc::sync_channel(2);
             let worker = scope.spawn(|| {
-                super::rasterise_chunks(rx, kind == IouType::Boundary, boundary_dilation, timings)
+                super::rasterise_chunks(
+                    rx,
+                    kind == IouType::Boundary,
+                    boundary_dilation,
+                    timings,
+                    mask_count,
+                )
             });
             let start = Instant::now();
             let mut geometry = GeometryRows {

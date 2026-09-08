@@ -28,6 +28,8 @@ def main() -> None:
     ap.add_argument("--gt", type=Path, required=True)
     ap.add_argument("--dt", type=Path, required=True)
     ap.add_argument("--max-dets", type=int, default=100)
+    ap.add_argument("--run-storage", action="store_true",
+                    help="Count uint32 RLE storage for matched groups and the maxDets subset")
     args = ap.parse_args()
 
     gt = ufc.COCO(str(args.gt), verbose=False)
@@ -59,6 +61,39 @@ def main() -> None:
     print()
     print(f"masks rasterised for nothing: {total - used:,} of {total:,} "
           f"({(total - used) / max(total, 1):.1%})")
+
+    if args.run_storage:
+        # Valid compressed COCO RLE ends each integer with a byte in [48, 79].
+        # annToRLE canonicalizes polygons and uncompressed runs first. This
+        # diagnostic counts run payload only, excluding headers/allocator slack.
+        terminal = bytes(int(48 <= value < 80) for value in range(256))
+
+        def run_bytes(handle, ann):
+            counts = handle.annToRLE(ann)['counts']
+            if isinstance(counts, str):
+                counts = counts.encode('utf-8')
+            return counts.translate(terminal).count(b'\x01') * 4
+
+        gt_bytes = sum(run_bytes(gt, ann) for ann in gts
+                       if dt_groups.get((ann['image_id'], ann['category_id'])))
+        grouped = defaultdict(list)
+        for ann in dts:
+            if gt_groups.get((ann['image_id'], ann['category_id'])):
+                grouped[(ann['image_id'], ann['category_id'])].append(ann)
+        all_dt_bytes = capped_dt_bytes = 0
+        for group in grouped.values():
+            if not all(np.isfinite(ann['score']) for ann in group):
+                raise ValueError('Storage diagnostic requires finite prediction scores')
+            ordered = sorted(group, key=lambda ann: ann['score'], reverse=True)
+            for rank, ann in enumerate(ordered):
+                n = run_bytes(dt, ann)
+                all_dt_bytes += n
+                if rank < args.max_dets:
+                    capped_dt_bytes += n
+        print(f'GT decoded run payload in nonempty joins: {gt_bytes:,} bytes')
+        print(f'DT decoded run payload in nonempty joins: {all_dt_bytes:,} bytes')
+        print(f'DT decoded run payload after maxDets:     {capped_dt_bytes:,} bytes')
+        print(f'Additional payload avoidable at maxDets: {all_dt_bytes - capped_dt_bytes:,} bytes')
 
 
 if __name__ == "__main__":

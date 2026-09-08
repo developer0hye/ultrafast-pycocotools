@@ -259,6 +259,27 @@ fn raw_to_rle(raw: &RawSegm, h: u32, w: u32, scratch: &mut rle::PolyScratch) -> 
 /// A rasterised mask, plus its boundary when `iouType` is `boundary`.
 type BuiltMask = (Rle, Option<Rle>);
 
+/// Keep final mask columns directly. A segmentation-only run does not need
+/// one unused Option<Rle> per annotation, or a second vector when attaching.
+struct BuiltMasks {
+    masks: Vec<Rle>,
+    boundaries: Vec<Rle>,
+}
+
+impl BuiltMasks {
+    fn split_off(&mut self, at: usize) -> Self {
+        let masks = self.masks.split_off(at);
+        let boundaries = if self.boundaries.is_empty() {
+            Vec::new()
+        } else {
+            self.boundaries.split_off(at)
+        };
+        self.masks.shrink_to_fit();
+        self.boundaries.shrink_to_fit();
+        Self { masks, boundaries }
+    }
+}
+
 /// An empty `Instances` sized for `n` annotations of `iou_type`.
 fn new_instances(n: usize, iou_type: IouType) -> Instances {
     new_instances_with_geom(n, new_geometry(n, iou_type))
@@ -267,10 +288,10 @@ fn new_instances(n: usize, iou_type: IouType) -> Instances {
 fn new_geometry(n: usize, iou_type: IouType) -> GeomStore {
     match iou_type {
         IouType::Bbox => GeomStore::Bboxes(Vec::with_capacity(n)),
-        IouType::Segm => GeomStore::Masks(Vec::with_capacity(n)),
+        IouType::Segm => GeomStore::Masks(Vec::new()),
         IouType::Boundary => GeomStore::Boundaries {
-            masks: Vec::with_capacity(n),
-            boundaries: Vec::with_capacity(n),
+            masks: Vec::new(),
+            boundaries: Vec::new(),
         },
         IouType::Keypoints => GeomStore::Keypoints {
             data: Vec::new(),
@@ -304,19 +325,18 @@ fn instance_groups(instances: &Instances, use_cats: bool) -> HashSet<(u32, u32)>
         .collect()
 }
 
-fn attach_masks(geom: &mut GeomStore, masks: Vec<BuiltMask>) {
+fn attach_masks(geom: &mut GeomStore, built: BuiltMasks) {
     match geom {
-        GeomStore::Masks(v) => v.extend(masks.into_iter().map(|(m, _)| m)),
+        GeomStore::Masks(v) => *v = built.masks,
         GeomStore::Boundaries {
             masks: ms,
             boundaries,
         } => {
-            for (m, b) in masks {
-                ms.push(m);
-                boundaries.push(b.expect("boundary requested but not built"));
-            }
+            debug_assert_eq!(built.masks.len(), built.boundaries.len());
+            *ms = built.masks;
+            *boundaries = built.boundaries;
         }
-        _ => debug_assert!(masks.is_empty()),
+        _ => debug_assert!(built.masks.is_empty()),
     }
 }
 
@@ -325,10 +345,29 @@ fn rasterise_chunks(
     want_boundary: bool,
     boundary_dilation: f64,
     timings: &ExtractTimings,
-) -> Vec<BuiltMask> {
-    let mut out = Vec::new();
+    capacity: usize,
+) -> BuiltMasks {
+    let mut out = BuiltMasks {
+        masks: Vec::with_capacity(capacity),
+        boundaries: Vec::with_capacity(if want_boundary { capacity } else { 0 }),
+    };
     while let Ok(chunk) = chunks.recv() {
         let t = Instant::now();
+        if !want_boundary {
+            // Indexed parallel extension writes directly into the reserved
+            // final column; no per-chunk pair vector or header copy is needed.
+            out.masks.par_extend(
+                chunk
+                    .par_iter()
+                    .map_init(rle::PolyScratch::default, |scratch, (raw, h, w)| {
+                        raw_to_rle(raw, *h, *w, scratch)
+                    }),
+            );
+            timings
+                .rasterise_ns
+                .fetch_add(t.elapsed().as_nanos() as u64, Ordering::Relaxed);
+            continue;
+        }
         let built: Vec<BuiltMask> = chunk
             .par_iter()
             .map_init(rle::PolyScratch::default, |scratch, (r, h, w)| {
@@ -343,7 +382,12 @@ fn rasterise_chunks(
         timings
             .rasterise_ns
             .fetch_add(t.elapsed().as_nanos() as u64, Ordering::Relaxed);
-        out.extend(built);
+        for (mask, boundary) in built {
+            out.masks.push(mask);
+            if let Some(boundary) = boundary {
+                out.boundaries.push(boundary);
+            }
+        }
     }
     out
 }
@@ -382,59 +426,69 @@ fn extract_both(
     // Every annotation contributes exactly one raw segmentation when masks are
     // in play, so this is where the worker's output splits.
     let gt_mask_count = if needs_mask { gt_anns.len() } else { 0 };
+    let mask_count = if needs_mask {
+        gt_anns.len() + dt_anns.len()
+    } else {
+        0
+    };
 
-    let (gt_masks, dt_masks) =
-        std::thread::scope(|scope| -> PyResult<(Vec<BuiltMask>, Vec<BuiltMask>)> {
-            let (tx_raw, rx_raw) = std::sync::mpsc::sync_channel::<Vec<(RawSegm, u32, u32)>>(2);
-            let worker_timings = Arc::clone(&timings);
-            let worker = scope.spawn(move || {
-                rasterise_chunks(rx_raw, want_boundary, boundary_dilation, &worker_timings)
-            });
+    let (gt_masks, dt_masks) = std::thread::scope(|scope| -> PyResult<(BuiltMasks, BuiltMasks)> {
+        let (tx_raw, rx_raw) = std::sync::mpsc::sync_channel::<Vec<(RawSegm, u32, u32)>>(2);
+        let worker_timings = Arc::clone(&timings);
+        let worker = scope.spawn(move || {
+            rasterise_chunks(
+                rx_raw,
+                want_boundary,
+                boundary_dilation,
+                &worker_timings,
+                mask_count,
+            )
+        });
 
-            let mut raw_chunk: Vec<(RawSegm, u32, u32)> = Vec::with_capacity(CHUNK);
-            let outcome = read_annotations(
-                gt_anns,
-                true,
+        let mut raw_chunk: Vec<(RawSegm, u32, u32)> = Vec::with_capacity(CHUNK);
+        let outcome = read_annotations(
+            gt_anns,
+            true,
+            iou_type,
+            img_sizes,
+            img_slot,
+            cat_slot,
+            &keys,
+            needs_mask,
+            &mut gt,
+            &mut raw_chunk,
+            &tx_raw,
+            &timings,
+            true,
+        )
+        .and_then(|()| {
+            read_annotations(
+                dt_anns,
+                false,
                 iou_type,
                 img_sizes,
                 img_slot,
                 cat_slot,
                 &keys,
                 needs_mask,
-                &mut gt,
+                &mut dt,
                 &mut raw_chunk,
                 &tx_raw,
                 &timings,
-                true,
+                false,
             )
-            .and_then(|()| {
-                read_annotations(
-                    dt_anns,
-                    false,
-                    iou_type,
-                    img_sizes,
-                    img_slot,
-                    cat_slot,
-                    &keys,
-                    needs_mask,
-                    &mut dt,
-                    &mut raw_chunk,
-                    &tx_raw,
-                    &timings,
-                    false,
-                )
-            });
-            if outcome.is_ok() && !raw_chunk.is_empty() {
-                let _ = tx_raw.send(raw_chunk);
-            }
-            // Closing the channel is what lets the worker finish; it must
-            // happen on the error path too.
-            drop(tx_raw);
-            let mut built = worker.join().expect("mask worker panicked");
-            outcome?;
-            let dt_masks = built.split_off(gt_mask_count.min(built.len()));
-            Ok((built, dt_masks))
-        })?;
+        });
+        if outcome.is_ok() && !raw_chunk.is_empty() {
+            let _ = tx_raw.send(raw_chunk);
+        }
+        // Closing the channel is what lets the worker finish; it must
+        // happen on the error path too.
+        drop(tx_raw);
+        let mut built = worker.join().expect("mask worker panicked");
+        outcome?;
+        let dt_masks = built.split_off(gt_mask_count.min(built.masks.len()));
+        Ok((built, dt_masks))
+    })?;
 
     attach_masks(&mut gt.geom, gt_masks);
     attach_masks(&mut dt.geom, dt_masks);

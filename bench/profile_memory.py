@@ -29,7 +29,7 @@ import sys
 import time
 import tracemalloc
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -40,6 +40,9 @@ from ultrafast_pycocotools import _ufcoco
 
 def rss_bytes() -> int:
     """Current working set of this process."""
+    if sys.platform == "darwin":
+        import psutil
+        return psutil.Process().memory_info().rss
     if sys.platform == "win32":
         from ctypes import wintypes
 
@@ -132,6 +135,9 @@ def main() -> None:
     ap.add_argument("--gt", type=Path, required=True)
     ap.add_argument("--dt", type=Path, required=True)
     ap.add_argument("--iou-type", default="segm")
+    ap.add_argument("--json-out", type=Path)
+    ap.add_argument("--file-inputs", action="store_true",
+                    help="Keep native snapshots; install psutil for macOS RSS measurements")
     ap.add_argument(
         "--no-derive-segmentation",
         action="store_true",
@@ -160,10 +166,13 @@ def main() -> None:
     with rec.phase("COCO(gt) load"):
         gt = ufc.COCO(str(args.gt), verbose=False)
     with rec.phase("loadRes(dt)"):
-        with open(args.dt) as f:
-            dets = json.load(f)
-        dt = gt.loadRes(dets, derive_segmentation=not args.no_derive_segmentation)
-        del dets
+        if args.file_inputs:
+            dt = gt.loadRes(str(args.dt))
+        else:
+            with open(args.dt) as f:
+                dets = json.load(f)
+            dt = gt.loadRes(dets, derive_segmentation=not args.no_derive_segmentation)
+            del dets
 
     ev = ufc.COCOeval(gt, dt, args.iou_type, print_function=lambda *_: None)
     p = ev.params
@@ -172,7 +181,12 @@ def main() -> None:
     p.maxDets = sorted(p.maxDets)
 
     with rec.phase("_prepare"):
-        gts, dts, img_sizes = ev._collect()
+        if args.file_inputs:
+            gts = gt._compact if gt._compact is not None else gt._eval_annotations(p.imgIds, p.catIds)
+            dts = dt._compact if dt._compact is not None else dt._eval_annotations(p.imgIds, p.catIds)
+            img_sizes = ev._image_sizes()
+        else:
+            gts, dts, img_sizes = ev._collect()
 
     sigmas = getattr(p, "kpt_oks_sigmas", np.zeros(0))
     with rec.phase("engine build"):
@@ -184,7 +198,7 @@ def main() -> None:
             True, p.iouType, [float(s) for s in np.asarray(sigmas).ravel()], True, 0.02,
         )
     with rec.phase("evaluate + accumulate"):
-        engine.run(False)
+        arrays = engine.run(False)
 
     print()
     rec.report(rust_enabled)
@@ -198,9 +212,24 @@ def main() -> None:
         print(f"rust total allocated        : {mb(s['total_allocated_bytes'])}")
         print(f"rust allocations            : {s['allocations']:,}")
     print()
-    print(f"gt / dt annotations         : {len(gts)} / {len(dts)}")
+    counts = [x.annotation_count if isinstance(x, _ufcoco.CompactBbox) else len(x) for x in (gts, dts)]
+    print(f"gt / dt annotations         : {counts[0]} / {counts[1]}")
+    print(f"retained complete arrays    : {mb(sum(arrays[key].nbytes for key in ('precision', 'recall', 'scores')))}")
     print("note: RSS deltas include the allocator's own slack, so they exceed")
     print("      the Rust/Python figures and do not sum to the process total.")
+    if args.json_out:
+        args.json_out.parent.mkdir(parents=True, exist_ok=True)
+        args.json_out.write_text(json.dumps({
+            "iou_type": args.iou_type,
+            "file_inputs": args.file_inputs,
+            "native_path": _ufcoco.__file__,
+            "rust": _ufcoco.alloc_stats(),
+            "phases": [asdict(phase) for phase in rec.phases],
+            "rss_start": base_rss,
+            "rss_end": rss_bytes(),
+            "annotations": counts,
+            "array_bytes": {key: arrays[key].nbytes for key in ("precision", "recall", "scores")},
+        }, indent=2) + "\n")
 
 
 if __name__ == "__main__":
