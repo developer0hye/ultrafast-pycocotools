@@ -1,0 +1,506 @@
+[
+  {
+    "name": "segm-0-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-opt/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-g/segm-0-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0015170830010902137,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5558321152
+      },
+      {
+        "seconds": 0.5093710420187563,
+        "host_cpu_percent": 70.3,
+        "available_ram": 5538611200
+      },
+      {
+        "seconds": 1.0146843330003321,
+        "host_cpu_percent": 61.3,
+        "available_ram": 5409898496
+      },
+      {
+        "seconds": 1.5161958330136258,
+        "host_cpu_percent": 70.4,
+        "available_ram": 5373509632
+      }
+    ]
+  },
+  {
+    "name": "segm-0-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-g/segm-0-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0015601659833919257,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5948227584
+      },
+      {
+        "seconds": 0.5080286659940612,
+        "host_cpu_percent": 49.6,
+        "available_ram": 5751406592
+      },
+      {
+        "seconds": 1.009492915996816,
+        "host_cpu_percent": 66.6,
+        "available_ram": 5495980032
+      },
+      {
+        "seconds": 1.515517915977398,
+        "host_cpu_percent": 61.1,
+        "available_ram": 5361188864
+      }
+    ]
+  },
+  {
+    "name": "segm-1-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-g/segm-1-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0014009159931447357,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5911691264
+      },
+      {
+        "seconds": 0.5021822080016136,
+        "host_cpu_percent": 55.6,
+        "available_ram": 5685264384
+      },
+      {
+        "seconds": 1.0123284160217736,
+        "host_cpu_percent": 66.4,
+        "available_ram": 5450317824
+      },
+      {
+        "seconds": 1.517838458006736,
+        "host_cpu_percent": 56.8,
+        "available_ram": 5389860864
+      }
+    ]
+  },
+  {
+    "name": "segm-1-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-opt/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-g/segm-1-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0018500830046832561,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5888573440
+      },
+      {
+        "seconds": 0.5119813750206959,
+        "host_cpu_percent": 52.7,
+        "available_ram": 5633605632
+      },
+      {
+        "seconds": 1.0125741670199204,
+        "host_cpu_percent": 60.0,
+        "available_ram": 5354733568
+      },
+      {
+        "seconds": 1.5201369580172468,
+        "host_cpu_percent": 60.6,
+        "available_ram": 5399609344
+      }
+    ]
+  },
+  {
+    "name": "segm-2-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-opt/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-g/segm-2-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0016186249849852175,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5926748160
+      },
+      {
+        "seconds": 0.501848957996117,
+        "host_cpu_percent": 49.7,
+        "available_ram": 5574328320
+      },
+      {
+        "seconds": 1.002138207986718,
+        "host_cpu_percent": 59.8,
+        "available_ram": 5227905024
+      },
+      {
+        "seconds": 1.5101827079779468,
+        "host_cpu_percent": 60.5,
+        "available_ram": 5551407104
+      }
+    ]
+  },
+  {
+    "name": "segm-2-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-g/segm-2-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0026497080107219517,
+        "host_cpu_percent": 66.7,
+        "available_ram": 6057099264
+      },
+      {
+        "seconds": 0.5028907500091009,
+        "host_cpu_percent": 56.8,
+        "available_ram": 5763448832
+      },
+      {
+        "seconds": 1.0037077910092194,
+        "host_cpu_percent": 61.4,
+        "available_ram": 5484625920
+      },
+      {
+        "seconds": 1.5051166659977753,
+        "host_cpu_percent": 61.8,
+        "available_ram": 5319475200
+      }
+    ]
+  },
+  {
+    "name": "segm-3-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-g/segm-3-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0015982079785317183,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5941690368
+      },
+      {
+        "seconds": 0.5030625829822384,
+        "host_cpu_percent": 49.0,
+        "available_ram": 5779554304
+      },
+      {
+        "seconds": 1.0042492499924265,
+        "host_cpu_percent": 67.7,
+        "available_ram": 5603573760
+      },
+      {
+        "seconds": 1.510994957992807,
+        "host_cpu_percent": 66.0,
+        "available_ram": 5473042432
+      }
+    ]
+  },
+  {
+    "name": "segm-3-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-opt/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-g/segm-3-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0015538749867118895,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5473042432
+      },
+      {
+        "seconds": 0.5022655829961877,
+        "host_cpu_percent": 48.0,
+        "available_ram": 5722865664
+      },
+      {
+        "seconds": 1.0043330829939805,
+        "host_cpu_percent": 59.1,
+        "available_ram": 5334859776
+      },
+      {
+        "seconds": 1.5045722919749096,
+        "host_cpu_percent": 61.1,
+        "available_ram": 5458198528
+      }
+    ]
+  },
+  {
+    "name": "segm-4-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-opt/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-g/segm-4-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.001744291977956891,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5993119744
+      },
+      {
+        "seconds": 0.5097624170011841,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5564628992
+      },
+      {
+        "seconds": 1.0112036250066012,
+        "host_cpu_percent": 59.1,
+        "available_ram": 5686001664
+      },
+      {
+        "seconds": 1.5213195830001496,
+        "host_cpu_percent": 59.4,
+        "available_ram": 5432000512
+      }
+    ]
+  },
+  {
+    "name": "segm-4-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-g/segm-4-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0017642499879002571,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5951045632
+      },
+      {
+        "seconds": 0.501937541004736,
+        "host_cpu_percent": 60.1,
+        "available_ram": 5761089536
+      },
+      {
+        "seconds": 1.0022655409993604,
+        "host_cpu_percent": 77.6,
+        "available_ram": 5613912064
+      },
+      {
+        "seconds": 1.5044515829940792,
+        "host_cpu_percent": 67.4,
+        "available_ram": 5475762176
+      }
+    ]
+  },
+  {
+    "name": "segm-5-candidate",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-g/segm-5-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0015421250136569142,
+        "host_cpu_percent": 100.0,
+        "available_ram": 5921112064
+      },
+      {
+        "seconds": 0.5070613340067212,
+        "host_cpu_percent": 52.1,
+        "available_ram": 5585174528
+      },
+      {
+        "seconds": 1.013918292010203,
+        "host_cpu_percent": 59.8,
+        "available_ram": 5243404288
+      },
+      {
+        "seconds": 1.5213183340092655,
+        "host_cpu_percent": 67.7,
+        "available_ram": 5322473472
+      }
+    ]
+  },
+  {
+    "name": "segm-5-baseline",
+    "command": [
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-opt/.venv/bin/python",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--file-inputs",
+      "--threads",
+      "2",
+      "--iou-type",
+      "segm",
+      "--gt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/instances_val2017.json",
+      "--dt",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools/bench/out/ultralytics-pr26101-evidence-20260909/inputs/segment-predictions.json",
+      "--json-out",
+      "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/m2-g/segm-5-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0015292080061044544,
+        "host_cpu_percent": 0.0,
+        "available_ram": 5832458240
+      },
+      {
+        "seconds": 0.5017802499933168,
+        "host_cpu_percent": 51.5,
+        "available_ram": 5748490240
+      },
+      {
+        "seconds": 1.002202166011557,
+        "host_cpu_percent": 65.8,
+        "available_ram": 5444190208
+      },
+      {
+        "seconds": 1.5091943750157952,
+        "host_cpu_percent": 66.0,
+        "available_ram": 5260886016
+      }
+    ]
+  }
+]

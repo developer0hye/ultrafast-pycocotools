@@ -1,0 +1,9 @@
+                           total  needs a mask    wasted
+ground truth              36,781        36,331       450
+detections               724,953       379,232   345,721
+
+masks rasterised for nothing: 346,171 of 761,734 (45.4%)
+GT decoded run payload in nonempty joins: 34,928,080 bytes
+DT decoded run payload in nonempty joins: 290,920,280 bytes
+DT decoded run payload after maxDets:     270,362,716 bytes
+Additional payload avoidable at maxDets: 20,557,564 bytes
