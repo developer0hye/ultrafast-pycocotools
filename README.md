@@ -13,7 +13,7 @@ Benchmarks cover public pretrained detector outputs on COCO and a separate
 synthetic scalability workload on the public Objects365 dataset. Both compare
 complete evaluation arrays against pycocotools.
 
-**Status:** 0.1.4, alpha. Validate your application's
+**Status:** 0.1.5, alpha. Validate your application's
 parameters and subclass behavior before replacing its reference evaluator.
 
 ## Installation

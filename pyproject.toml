@@ -35,6 +35,7 @@ manifest-path = "rust/ufcoco-py/Cargo.toml"
 python-source = "python"
 module-name = "ultrafast_pycocotools._ufcoco"
 features = ["pyo3/extension-module"]
+include = [{ path = "LICENSE", format = "sdist" }]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

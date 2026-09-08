@@ -53,7 +53,7 @@ the tested wheels from the run's `distribution-*` artifacts and install with:
 
 ```bash
 python -m pip install --only-binary=ultrafast-pycocotools \
-  --find-links=dist ultrafast-pycocotools==0.1.4
+  --find-links=dist ultrafast-pycocotools==0.1.5
 ```
 
 Installing a compatible wheel requires no Rust compiler. Installing the source
@@ -67,12 +67,12 @@ After the build and Library CI pass, and the PyPI publisher is configured:
 2. Create and push `v<version>` at the tested commit on main.
 3. Explicitly run the release workflow on that tag with `publish=true`.
 
-For example, for version 0.1.4:
+For example, for version 0.1.5:
 
 ```bash
-git tag v0.1.4
-git push origin v0.1.4
-gh workflow run release.yml --ref v0.1.4 -f publish=true
+git tag v0.1.5
+git push origin v0.1.5
+gh workflow run release.yml --ref v0.1.5 -f publish=true
 ```
 
 The upload job publishes the exact artifacts that passed the build/test jobs in
@@ -81,6 +81,13 @@ not allow overwriting a released distribution: fixes require a new version.
 After publication, verify installation from PyPI in a fresh environment:
 
 ```bash
-python -m pip install --only-binary=ultrafast-pycocotools ultrafast-pycocotools==0.1.4
+python -m pip install --only-binary=ultrafast-pycocotools ultrafast-pycocotools==0.1.5
 python -c "import importlib.metadata as m; import ultrafast_pycocotools._ufcoco; print(m.version('ultrafast-pycocotools'))"
 ```
+
+## Release history
+
+Version 0.1.4 published all 24 wheels, but PyPI rejected its source archive
+because the declared LICENSE file was missing from the archive. Version 0.1.5
+adds that file explicitly and checks declared license paths before upload.
+The evaluator implementation is unchanged from 0.1.4.

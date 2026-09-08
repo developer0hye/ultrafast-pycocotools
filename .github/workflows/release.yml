@@ -91,6 +91,7 @@ jobs:
           python -m pip install "maturin==1.15.0" "twine>=6,<7"
           maturin sdist --out dist
           python -m twine check --strict dist/*
+          python scripts/check_sdist.py dist/*.tar.gz
       - name: Build and install exclusively from the source archive
         run: |
           rustup toolchain install stable --profile minimal

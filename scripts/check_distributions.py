@@ -10,6 +10,8 @@ from pathlib import Path
 
 from packaging.utils import parse_wheel_filename
 
+from check_sdist import check_sdist
+
 
 def main():
     directory = Path(sys.argv[1])
@@ -62,6 +64,7 @@ def main():
                 raise SystemExit(f'Inconsistent wheel metadata: {wheel.name}')
     if found != expected:
         raise SystemExit(f'Incorrect platform coverage: missing={expected-found}, extra={found-expected}')
+    check_sdist(sources[0])
     with tarfile.open(sources[0]) as archive:
         paths = archive.getnames()
         metadata_path = next(p for p in paths if p.endswith('/PKG-INFO'))
