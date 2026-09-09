@@ -1,0 +1,30 @@
+{
+  "files": {
+    "baseline": {
+      "wall_total": 0.7643721584463492,
+      "cpu_total": 0.792995136,
+      "eval_total": 0.5023112860508263,
+      "peak_rss_mb": 290.274
+    },
+    "candidate": {
+      "wall_total": 0.7072483397787437,
+      "cpu_total": 0.7343627775,
+      "eval_total": 0.4483676643576473,
+      "peak_rss_mb": 266.76800000000003
+    }
+  },
+  "list": {
+    "baseline": {
+      "wall_total": 2.4351294301450253,
+      "cpu_total": 2.4625029245,
+      "eval_total": 0.21613257203716785,
+      "peak_rss_mb": 565.8040000000001
+    },
+    "candidate": {
+      "wall_total": 2.410559207201004,
+      "cpu_total": 2.4366491979999996,
+      "eval_total": 0.19583443109877408,
+      "peak_rss_mb": 565.8
+    }
+  }
+}

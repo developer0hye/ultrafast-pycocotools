@@ -371,12 +371,109 @@ struct MaskGeometry {
     segmentation: Option<RawSegm>,
 }
 
+// Stream coordinates straight into evaluator storage; no per-annotation Vec.
+struct KeypointGeometry<'a> {
+    data: &'a mut Vec<f64>,
+    visible: &'a mut Vec<bool>,
+    k: &'a mut usize,
+    is_gt: bool,
+    instances: usize,
+}
+
 #[derive(Deserialize)]
-struct KeypointGeometry {
-    #[serde(default)]
-    keypoints: Option<Vec<Coordinate>>,
-    #[serde(default)]
-    num_keypoints: Option<Crowd>,
+#[serde(field_identifier, rename_all = "snake_case")]
+enum KeypointField {
+    Keypoints,
+    NumKeypoints,
+    #[serde(other)]
+    Other,
+}
+
+impl<'de> DeserializeSeed<'de> for KeypointGeometry<'_> {
+    type Value = Option<Crowd>;
+    fn deserialize<D: Deserializer<'de>>(self, d: D) -> Result<Self::Value, D::Error> {
+        d.deserialize_map(self)
+    }
+}
+impl<'de> Visitor<'de> for KeypointGeometry<'_> {
+    type Value = Option<Crowd>;
+    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("keypoint annotation")
+    }
+    fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
+        let mut count = None;
+        while let Some(key) = map.next_key::<KeypointField>()? {
+            match key {
+                KeypointField::Keypoints => map.next_value_seed(KeypointCoordinates {
+                    data: self.data,
+                    visible: self.visible,
+                    k: self.k,
+                    is_gt: self.is_gt,
+                    instances: self.instances,
+                })?,
+                KeypointField::NumKeypoints => count = map.next_value()?,
+                KeypointField::Other => {
+                    map.next_value::<serde::de::IgnoredAny>()?;
+                }
+            }
+        }
+        Ok(count)
+    }
+}
+
+struct KeypointCoordinates<'a> {
+    data: &'a mut Vec<f64>,
+    visible: &'a mut Vec<bool>,
+    k: &'a mut usize,
+    is_gt: bool,
+    instances: usize,
+}
+impl<'de> DeserializeSeed<'de> for KeypointCoordinates<'_> {
+    type Value = ();
+    fn deserialize<D: Deserializer<'de>>(self, d: D) -> Result<(), D::Error> {
+        d.deserialize_option(self)
+    }
+}
+impl<'de> Visitor<'de> for KeypointCoordinates<'_> {
+    type Value = ();
+    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("x/y/visibility triplets")
+    }
+    fn visit_none<E: serde::de::Error>(self) -> Result<(), E> {
+        Ok(())
+    }
+    fn visit_some<D: Deserializer<'de>>(self, d: D) -> Result<(), D::Error> {
+        d.deserialize_seq(self)
+    }
+    fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<(), A::Error> {
+        let mut joints = 0;
+        while let Some(x) = seq.next_element::<Coordinate>()? {
+            let y = seq
+                .next_element::<Coordinate>()?
+                .ok_or_else(|| serde::de::Error::custom("incomplete keypoint triplet"))?;
+            let v = seq
+                .next_element::<Coordinate>()?
+                .ok_or_else(|| serde::de::Error::custom("incomplete keypoint triplet"))?;
+            self.data.extend_from_slice(&[x.0, y.0]);
+            if self.is_gt {
+                self.visible.push(v.0 > 0.0);
+            }
+            joints += 1;
+        }
+        if *self.k != 0 && joints != *self.k {
+            return Err(serde::de::Error::custom("inconsistent keypoint counts"));
+        }
+        if *self.k == 0 && joints != 0 {
+            *self.k = joints;
+            self.data
+                .reserve_exact(self.instances * joints * 2 - self.data.len());
+            if self.is_gt {
+                self.visible
+                    .reserve_exact(self.instances * joints - self.visible.len());
+            }
+        }
+        Ok(())
+    }
 }
 
 struct Coordinate(f64);
@@ -546,24 +643,27 @@ impl<'de> Visitor<'de> for &mut GeometryRows<'_> {
                 continue;
             }
             if self.kind == IouType::Keypoints {
-                let record = seq
-                    .next_element::<KeypointGeometry>()?
-                    .ok_or_else(|| serde::de::Error::custom("missing keypoint annotation"))?;
                 if self.is_gt {
-                    let visible = match record.num_keypoints {
-                        Some(Crowd::Bool(b)) => b,
-                        Some(Crowd::Int(n)) => n != 0,
-                        None => false,
-                    };
-                    self.out.ignore[selected] |= !visible;
+                    self.out.bboxes.push(self.source.boxes[index]);
                 }
-                self.out.bboxes.push(self.source.boxes[index]);
-                if let GeomStore::Keypoints { data, k } = &mut self.out.geom {
-                    let points = record.keypoints.unwrap_or_default();
-                    if *k == 0 && !points.is_empty() {
-                        *k = points.len() / 3;
+                if let GeomStore::Keypoints { data, visible, k } = &mut self.out.geom {
+                    let num_keypoints = seq
+                        .next_element_seed(KeypointGeometry {
+                            data,
+                            visible,
+                            k,
+                            is_gt: self.is_gt,
+                            instances: self.out.ids.len(),
+                        })?
+                        .ok_or_else(|| serde::de::Error::custom("missing keypoint annotation"))?;
+                    if self.is_gt {
+                        let has_keypoints = match num_keypoints {
+                            Some(Crowd::Bool(b)) => b,
+                            Some(Crowd::Int(n)) => n != 0,
+                            None => false,
+                        };
+                        self.out.ignore[selected] |= !has_keypoints;
                     }
-                    data.extend(points.into_iter().map(|coordinate| coordinate.0));
                 }
             } else {
                 let record = seq

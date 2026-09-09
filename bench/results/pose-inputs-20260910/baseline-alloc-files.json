@@ -1,0 +1,36 @@
+{
+  "mode": "files",
+  "diagnostic_only": true,
+  "python": "3.12.13 (main, Mar  3 2026, 15:35:03) [Clang 21.1.4 ]",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "native_sha256": "44b59da61f4198cd425b5be9f6bbd03ce9cdcbb38d64d000358aa6426e0eb917",
+  "start": {
+    "enabled": true,
+    "live_bytes": 688,
+    "peak_bytes": 1014,
+    "total_allocated_bytes": 1392,
+    "allocations": 18,
+    "frees": 5
+  },
+  "loaded": {
+    "enabled": true,
+    "live_bytes": 172768754,
+    "peak_bytes": 179907650,
+    "total_allocated_bytes": 182040227,
+    "allocations": 62181,
+    "frees": 62091
+  },
+  "evaluated": {
+    "enabled": true,
+    "live_bytes": 301259269,
+    "peak_bytes": 311538810,
+    "total_allocated_bytes": 398570251,
+    "allocations": 847517,
+    "frees": 263176
+  },
+  "arrays": {
+    "precision": "1de2eae8c54a8c877fcabc45279c8233de34ca4bc3df6de34c2fd34f16f3cce9",
+    "recall": "ecb41c9ed31caceed74047e1f304ad65206471d4df502ff6f48a0175f4db3d4d",
+    "scores": "8bc12df8da30fb4bb898793174aa3800b353bdabd89bfc7f937c3371a3f8b84a"
+  }
+}

@@ -1,0 +1,252 @@
+diff --git a/bench/run_impl.py b/bench/run_impl.py
+index 9e443ae..8a864e7 100644
+--- a/bench/run_impl.py
++++ b/bench/run_impl.py
+@@ -138,6 +138,7 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool
+     else:
+         raise SystemExit(f"unknown impl {impl}")
+ 
++    cpu_start = time.process_time()
+     t = time.perf_counter()
+     gt = COCO(gt_path)
+     timings["load_gt"] = time.perf_counter() - t
+@@ -175,6 +176,7 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool
+ 
+     # Array hashes can allocate a large contiguous byte buffer (notably LVIS).
+     # Capture evaluation memory before any result-verification/provenance work.
++    cpu_total = time.process_time() - cpu_start
+     peak = peak_rss_mb()
+ 
+     stats = [float(x) for x in ev.stats]
+@@ -222,6 +224,7 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool
+         "cpu_load_before": LOAD_BEFORE,
+         "cpu_load_after": cpu_load_percent(),
+         "wall_total": sum(timings.values()),
++        "cpu_total": cpu_total,
+         "stats": stats,
+         "digests": digests,
+         "platform": f"{sys.platform}/{platform.machine()}",
+diff --git a/rust/ufcoco-core/src/eval.rs b/rust/ufcoco-core/src/eval.rs
+index 96b095f..44e4523 100644
+--- a/rust/ufcoco-core/src/eval.rs
++++ b/rust/ufcoco-core/src/eval.rs
+@@ -105,9 +105,10 @@ pub enum GeomStore {
+         masks: Vec<Rle>,
+         boundaries: Vec<Rle>,
+     },
+-    /// Flat `k * 3` keypoint triplets per instance.
++    /// Flat x/y pairs; visibility is retained only for ground truth.
+     Keypoints {
+         data: Vec<f64>,
++        visible: Vec<bool>,
+         k: usize,
+     },
+ }
+@@ -506,10 +507,15 @@ impl Evaluator {
+             rle::bb_iou_indexed(dv, gv, dt_idx, gt_idx, &self.gt.iscrowd, &mut out);
+             return out;
+         }
+-        let iscrowd: Vec<u8> = gt_idx
+-            .iter()
+-            .map(|&g| self.gt.iscrowd[g as usize] as u8)
+-            .collect();
++        // Pose never consumes crowd flags in the OKS kernel.
++        let iscrowd: Vec<u8> = if self.params.iou_type == IouType::Keypoints {
++            Vec::new()
++        } else {
++            gt_idx
++                .iter()
++                .map(|&g| self.gt.iscrowd[g as usize] as u8)
++                .collect()
++        };
+         let floor = self.match_floor();
+ 
+         match (&self.dt.geom, &self.gt.geom) {
+@@ -546,8 +552,13 @@ impl Evaluator {
+                     }
+                 }
+             }
+-            (GeomStore::Keypoints { data: dd, k }, GeomStore::Keypoints { data: gd, .. }) => {
+-                self.compute_oks(dt_idx, gt_idx, dd, gd, *k, &mut out);
++            (
++                GeomStore::Keypoints { data: dd, k, .. },
++                GeomStore::Keypoints {
++                    data: gd, visible, ..
++                },
++            ) => {
++                self.compute_oks(dt_idx, gt_idx, dd, gd, visible, *k, &mut out);
+             }
+             _ => panic!("ground truth and detection geometry kinds disagree"),
+         }
+@@ -559,12 +570,14 @@ impl Evaluator {
+     /// The divisions are applied one at a time (`/ vars / area / 2`), which is
+     /// not the same in floating point as dividing by the product, so they stay
+     /// separate here.
++    #[allow(clippy::too_many_arguments)]
+     fn compute_oks(
+         &self,
+         dt_idx: &[u32],
+         gt_idx: &[u32],
+         dd: &[f64],
+         gd: &[f64],
++        visible: &[bool],
+         k: usize,
+         out: &mut [f64],
+     ) {
+@@ -576,8 +589,9 @@ impl Evaluator {
+             .map(|s| (s * 2.0) * (s * 2.0))
+             .collect();
+         for (j, &gi) in gt_idx.iter().enumerate() {
+-            let g = &gd[(gi as usize) * k * 3..(gi as usize + 1) * k * 3];
+-            let k1 = (0..k).filter(|&t| g[t * 3 + 2] > 0.0).count();
++            let g = &gd[(gi as usize) * k * 2..(gi as usize + 1) * k * 2];
++            let v = &visible[gi as usize * k..(gi as usize + 1) * k];
++            let k1 = v.iter().filter(|&&flag| flag).count();
+             let bb = self.gt.bboxes[gi as usize];
+             let (x0, x1) = (bb[0] - bb[2], bb[0] + bb[2] * 2.0);
+             let (y0, y1) = (bb[1] - bb[3], bb[1] + bb[3] * 2.0);
+@@ -587,21 +601,16 @@ impl Evaluator {
+                 bb[3] * bb[2] * 0.53
+             };
+             for (i, &di) in dt_idx.iter().enumerate() {
+-                let d = &dd[(di as usize) * k * 3..(di as usize + 1) * k * 3];
++                let d = &dd[(di as usize) * k * 2..(di as usize + 1) * k * 2];
+                 let mut sum = 0.0f64;
+                 let mut cnt = 0usize;
+                 for t in 0..k {
+-                    // `!(v > 0.0)`, not `v <= 0.0`: pycocotools filters with
+-                    // the boolean mask `vg > 0`, so a NaN visibility flag is
+-                    // excluded. The negation is what reproduces that; the
+-                    // "simpler" comparison would keep it.
+-                    #[allow(clippy::neg_cmp_op_on_partial_ord)]
+-                    if k1 > 0 && !(g[t * 3 + 2] > 0.0) {
++                    if k1 > 0 && !v[t] {
+                         continue;
+                     }
+-                    let (xd, yd) = (d[t * 3], d[t * 3 + 1]);
++                    let (xd, yd) = (d[t * 2], d[t * 2 + 1]);
+                     let (dx, dy) = if k1 > 0 {
+-                        (xd - g[t * 3], yd - g[t * 3 + 1])
++                        (xd - g[t * 2], yd - g[t * 2 + 1])
+                     } else {
+                         (
+                             f64::max(0.0, x0 - xd) + f64::max(0.0, xd - x1),
+@@ -1725,7 +1734,14 @@ mod tests {
+             img_slot: vec![0; n],
+             cat_slot: vec![0; n],
+             geom: GeomStore::Keypoints {
+-                data: kps.concat(),
++                data: kps
++                    .iter()
++                    .flat_map(|p| p.chunks_exact(3).flat_map(|p| [p[0], p[1]]))
++                    .collect(),
++                visible: kps
++                    .iter()
++                    .flat_map(|p| p.chunks_exact(3).map(|p| p[2] > 0.0))
++                    .collect(),
+                 k,
+             },
+         }
+diff --git a/rust/ufcoco-py/src/compact.rs b/rust/ufcoco-py/src/compact.rs
+index eff09fc..b133b91 100644
+--- a/rust/ufcoco-py/src/compact.rs
++++ b/rust/ufcoco-py/src/compact.rs
+@@ -557,13 +557,30 @@ impl<'de> Visitor<'de> for &mut GeometryRows<'_> {
+                     };
+                     self.out.ignore[selected] |= !visible;
+                 }
+-                self.out.bboxes.push(self.source.boxes[index]);
+-                if let GeomStore::Keypoints { data, k } = &mut self.out.geom {
++                if self.is_gt {
++                    self.out.bboxes.push(self.source.boxes[index]);
++                }
++                if let GeomStore::Keypoints { data, visible, k } = &mut self.out.geom {
+                     let points = record.keypoints.unwrap_or_default();
++                    if points.len() % 3 != 0 || (*k != 0 && points.len() != *k * 3) {
++                        return Err(serde::de::Error::custom(
++                            "keypoints must contain the same number of x/y/visibility triplets",
++                        ));
++                    }
+                     if *k == 0 && !points.is_empty() {
+                         *k = points.len() / 3;
++                        data.reserve_exact(self.out.ids.len() * *k * 2);
++                        if self.is_gt {
++                            visible.reserve_exact(self.out.ids.len() * *k);
++                        }
++                    }
++                    for (component, coordinate) in points.into_iter().enumerate() {
++                        if component % 3 != 2 {
++                            data.push(coordinate.0);
++                        } else if self.is_gt {
++                            visible.push(coordinate.0 > 0.0);
++                        }
+                     }
+-                    data.extend(points.into_iter().map(|coordinate| coordinate.0));
+                 }
+             } else {
+                 let record = seq
+diff --git a/rust/ufcoco-py/src/lib.rs b/rust/ufcoco-py/src/lib.rs
+index 7bc723c..9b7a0c1 100644
+--- a/rust/ufcoco-py/src/lib.rs
++++ b/rust/ufcoco-py/src/lib.rs
+@@ -295,6 +295,7 @@ fn new_geometry(n: usize, iou_type: IouType) -> GeomStore {
+         },
+         IouType::Keypoints => GeomStore::Keypoints {
+             data: Vec::new(),
++            visible: Vec::new(),
+             k: 0,
+         },
+     }
+@@ -574,16 +575,43 @@ fn read_annotations(
+ 
+         match &mut inst.geom {
+             GeomStore::Bboxes(v) => v.push(bbox),
+-            GeomStore::Keypoints { data, k } => {
+-                inst.bboxes.push(bbox);
+-                let kp: Vec<f64> = match d.get_item(keys.keypoints)? {
+-                    Some(v) if !v.is_none() => v.extract()?,
+-                    _ => Vec::new(),
+-                };
+-                if *k == 0 && !kp.is_empty() {
+-                    *k = kp.len() / 3;
++            GeomStore::Keypoints { data, visible, k } => {
++                if is_gt {
++                    inst.bboxes.push(bbox);
++                }
++                if let Some(points) = d.get_item(keys.keypoints)?.filter(|v| !v.is_none()) {
++                    let n = points.len()?;
++                    if n % 3 != 0 || (*k != 0 && n != *k * 3) {
++                        return Err(PyValueError::new_err(
++                            "keypoints must contain the same number of x/y/visibility triplets",
++                        ));
++                    }
++                    if *k == 0 && n != 0 {
++                        *k = n / 3;
++                        data.reserve_exact(anns.len() * *k * 2);
++                        if is_gt {
++                            visible.reserve_exact(anns.len() * *k);
++                        }
++                    }
++                    // Convert every input component (including DT visibility)
++                    // to preserve numeric validation, but retain only used data.
++                    // Iteration remains checked if conversion re-enters Python.
++                    let list = points.cast::<PyList>().ok();
++                    for component in 0..n {
++                        let value = if let Some(list) = list {
++                            list.get_item(component)?
++                        } else {
++                            points.get_item(component)?
++                        };
++                        let value = read_float(&value)?;
++                        if component % 3 != 2 {
++                            data.push(value);
++                        } else if is_gt {
++                            // NaN visibility is excluded, exactly as `vg > 0`.
++                            visible.push(value > 0.0);
++                        }
++                    }
+                 }
+-                data.extend_from_slice(&kp);
+             }
+             _ => {
+                 let (h, w) = *img_sizes.get(&image_id).ok_or_else(|| {
