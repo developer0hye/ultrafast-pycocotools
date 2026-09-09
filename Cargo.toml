@@ -17,7 +17,7 @@ serde = { version = "1", features = ["derive"] }
 # annotation's `area` decides its small/medium/large bucket — a one-ULP shift
 # on a value sitting near 32^2 moves AP_small. Caught by
 # tests/test_json_loader.py against real COCO annotations.
-serde_json = { version = "1", features = ["float_roundtrip"] }
+serde_json = { version = "1", features = ["float_roundtrip", "raw_value"] }
 
 # Equivalence with pycocotools is decided by floating-point details, so the
 # release profile must not enable anything that lets LLVM reassociate FP math

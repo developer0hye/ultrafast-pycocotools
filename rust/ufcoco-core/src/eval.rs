@@ -109,6 +109,9 @@ pub enum GeomStore {
     Keypoints {
         data: Vec<f64>,
         visible: Vec<bool>,
+        /// Optional scalar-row to coordinate offset map for capped file inputs.
+        /// Unused rows retain their scalar metadata but have no coordinate payload.
+        offsets: Vec<usize>,
         k: usize,
     },
 }
@@ -553,12 +556,17 @@ impl Evaluator {
                 }
             }
             (
-                GeomStore::Keypoints { data: dd, k, .. },
+                GeomStore::Keypoints {
+                    data: dd,
+                    offsets,
+                    k,
+                    ..
+                },
                 GeomStore::Keypoints {
                     data: gd, visible, ..
                 },
             ) => {
-                self.compute_oks(dt_idx, gt_idx, dd, gd, visible, *k, &mut out);
+                self.compute_oks(dt_idx, gt_idx, dd, gd, visible, offsets, *k, &mut out);
             }
             _ => panic!("ground truth and detection geometry kinds disagree"),
         }
@@ -578,6 +586,7 @@ impl Evaluator {
         dd: &[f64],
         gd: &[f64],
         visible: &[bool],
+        offsets: &[usize],
         k: usize,
         out: &mut [f64],
     ) {
@@ -601,7 +610,12 @@ impl Evaluator {
                 bb[3] * bb[2] * 0.53
             };
             for (i, &di) in dt_idx.iter().enumerate() {
-                let d = &dd[(di as usize) * k * 2..(di as usize + 1) * k * 2];
+                let start = if offsets.is_empty() {
+                    di as usize * k * 2
+                } else {
+                    offsets[di as usize]
+                };
+                let d = &dd[start..start + k * 2];
                 let mut sum = 0.0f64;
                 let mut cnt = 0usize;
                 for t in 0..k {
@@ -1742,6 +1756,7 @@ mod tests {
                     .iter()
                     .flat_map(|p| p.chunks_exact(3).map(|p| p[2] > 0.0))
                     .collect(),
+                offsets: Vec::new(),
                 k,
             },
         }

@@ -65,6 +65,8 @@ def compare_arrays(reference, candidate):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--build-description', default='Released wheels',
+                        help='Provenance label when comparing an unreleased candidate build')
     parser.add_argument('--inputs', type=Path, required=True)
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--threads', type=int, nargs='+', default=[1, 2])
@@ -92,7 +94,7 @@ def main():
                   input_sha256={n: digest(p) for n, p in files.items()},
                   script_sha256={p.name: digest(p) for p in (Path(__file__), HERE/'run_impl.py')},
                   threads=args.threads, rounds=args.rounds, modes=args.modes, tasks=args.tasks,
-                  method='Released wheels; 1 excluded array-export warmup per backend/task/mode/thread; '
+                  method=args.build_description + '; 1 excluded array-export warmup per backend/task/mode/thread; '
                          'alternating backend order and reversed thread order each round; fresh process each run. '
                          'Wall/CPU include GT and DT loading, construction, evaluation and summary; imports and '
                          'post-timing hashes excluded. RSS captured before output conversion/hash/export. '
