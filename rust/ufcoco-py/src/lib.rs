@@ -295,6 +295,7 @@ fn new_geometry(n: usize, iou_type: IouType) -> GeomStore {
         },
         IouType::Keypoints => GeomStore::Keypoints {
             data: Vec::new(),
+            visible: Vec::new(),
             k: 0,
         },
     }
@@ -574,16 +575,43 @@ fn read_annotations(
 
         match &mut inst.geom {
             GeomStore::Bboxes(v) => v.push(bbox),
-            GeomStore::Keypoints { data, k } => {
-                inst.bboxes.push(bbox);
-                let kp: Vec<f64> = match d.get_item(keys.keypoints)? {
-                    Some(v) if !v.is_none() => v.extract()?,
-                    _ => Vec::new(),
-                };
-                if *k == 0 && !kp.is_empty() {
-                    *k = kp.len() / 3;
+            GeomStore::Keypoints { data, visible, k } => {
+                if is_gt {
+                    inst.bboxes.push(bbox);
                 }
-                data.extend_from_slice(&kp);
+                if let Some(points) = d.get_item(keys.keypoints)?.filter(|v| !v.is_none()) {
+                    let n = points.len()?;
+                    if n % 3 != 0 || (*k != 0 && n != *k * 3) {
+                        return Err(PyValueError::new_err(
+                            "keypoints must contain the same number of x/y/visibility triplets",
+                        ));
+                    }
+                    if *k == 0 && n != 0 {
+                        *k = n / 3;
+                        data.reserve_exact(anns.len() * *k * 2);
+                        if is_gt {
+                            visible.reserve_exact(anns.len() * *k);
+                        }
+                    }
+                    // Convert every input component (including DT visibility)
+                    // to preserve numeric validation, but retain only used data.
+                    // Iteration remains checked if conversion re-enters Python.
+                    let list = points.cast::<PyList>().ok();
+                    for component in 0..n {
+                        let value = if let Some(list) = list {
+                            list.get_item(component)?
+                        } else {
+                            points.get_item(component)?
+                        };
+                        let value = read_float(&value)?;
+                        if component % 3 != 2 {
+                            data.push(value);
+                        } else if is_gt {
+                            // NaN visibility is excluded, exactly as `vg > 0`.
+                            visible.push(value > 0.0);
+                        }
+                    }
+                }
             }
             _ => {
                 let (h, w) = *img_sizes.get(&image_id).ok_or_else(|| {

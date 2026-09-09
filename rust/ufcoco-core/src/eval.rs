@@ -105,9 +105,10 @@ pub enum GeomStore {
         masks: Vec<Rle>,
         boundaries: Vec<Rle>,
     },
-    /// Flat `k * 3` keypoint triplets per instance.
+    /// Flat x/y pairs; visibility is retained only for ground truth.
     Keypoints {
         data: Vec<f64>,
+        visible: Vec<bool>,
         k: usize,
     },
 }
@@ -506,10 +507,15 @@ impl Evaluator {
             rle::bb_iou_indexed(dv, gv, dt_idx, gt_idx, &self.gt.iscrowd, &mut out);
             return out;
         }
-        let iscrowd: Vec<u8> = gt_idx
-            .iter()
-            .map(|&g| self.gt.iscrowd[g as usize] as u8)
-            .collect();
+        // Pose never consumes crowd flags in the OKS kernel.
+        let iscrowd: Vec<u8> = if self.params.iou_type == IouType::Keypoints {
+            Vec::new()
+        } else {
+            gt_idx
+                .iter()
+                .map(|&g| self.gt.iscrowd[g as usize] as u8)
+                .collect()
+        };
         let floor = self.match_floor();
 
         match (&self.dt.geom, &self.gt.geom) {
@@ -546,8 +552,13 @@ impl Evaluator {
                     }
                 }
             }
-            (GeomStore::Keypoints { data: dd, k }, GeomStore::Keypoints { data: gd, .. }) => {
-                self.compute_oks(dt_idx, gt_idx, dd, gd, *k, &mut out);
+            (
+                GeomStore::Keypoints { data: dd, k, .. },
+                GeomStore::Keypoints {
+                    data: gd, visible, ..
+                },
+            ) => {
+                self.compute_oks(dt_idx, gt_idx, dd, gd, visible, *k, &mut out);
             }
             _ => panic!("ground truth and detection geometry kinds disagree"),
         }
@@ -559,12 +570,14 @@ impl Evaluator {
     /// The divisions are applied one at a time (`/ vars / area / 2`), which is
     /// not the same in floating point as dividing by the product, so they stay
     /// separate here.
+    #[allow(clippy::too_many_arguments)]
     fn compute_oks(
         &self,
         dt_idx: &[u32],
         gt_idx: &[u32],
         dd: &[f64],
         gd: &[f64],
+        visible: &[bool],
         k: usize,
         out: &mut [f64],
     ) {
@@ -576,8 +589,9 @@ impl Evaluator {
             .map(|s| (s * 2.0) * (s * 2.0))
             .collect();
         for (j, &gi) in gt_idx.iter().enumerate() {
-            let g = &gd[(gi as usize) * k * 3..(gi as usize + 1) * k * 3];
-            let k1 = (0..k).filter(|&t| g[t * 3 + 2] > 0.0).count();
+            let g = &gd[(gi as usize) * k * 2..(gi as usize + 1) * k * 2];
+            let v = &visible[gi as usize * k..(gi as usize + 1) * k];
+            let k1 = v.iter().filter(|&&flag| flag).count();
             let bb = self.gt.bboxes[gi as usize];
             let (x0, x1) = (bb[0] - bb[2], bb[0] + bb[2] * 2.0);
             let (y0, y1) = (bb[1] - bb[3], bb[1] + bb[3] * 2.0);
@@ -587,21 +601,16 @@ impl Evaluator {
                 bb[3] * bb[2] * 0.53
             };
             for (i, &di) in dt_idx.iter().enumerate() {
-                let d = &dd[(di as usize) * k * 3..(di as usize + 1) * k * 3];
+                let d = &dd[(di as usize) * k * 2..(di as usize + 1) * k * 2];
                 let mut sum = 0.0f64;
                 let mut cnt = 0usize;
                 for t in 0..k {
-                    // `!(v > 0.0)`, not `v <= 0.0`: pycocotools filters with
-                    // the boolean mask `vg > 0`, so a NaN visibility flag is
-                    // excluded. The negation is what reproduces that; the
-                    // "simpler" comparison would keep it.
-                    #[allow(clippy::neg_cmp_op_on_partial_ord)]
-                    if k1 > 0 && !(g[t * 3 + 2] > 0.0) {
+                    if k1 > 0 && !v[t] {
                         continue;
                     }
-                    let (xd, yd) = (d[t * 3], d[t * 3 + 1]);
+                    let (xd, yd) = (d[t * 2], d[t * 2 + 1]);
                     let (dx, dy) = if k1 > 0 {
-                        (xd - g[t * 3], yd - g[t * 3 + 1])
+                        (xd - g[t * 2], yd - g[t * 2 + 1])
                     } else {
                         (
                             f64::max(0.0, x0 - xd) + f64::max(0.0, xd - x1),
@@ -1725,7 +1734,14 @@ mod tests {
             img_slot: vec![0; n],
             cat_slot: vec![0; n],
             geom: GeomStore::Keypoints {
-                data: kps.concat(),
+                data: kps
+                    .iter()
+                    .flat_map(|p| p.chunks_exact(3).flat_map(|p| [p[0], p[1]]))
+                    .collect(),
+                visible: kps
+                    .iter()
+                    .flat_map(|p| p.chunks_exact(3).map(|p| p[2] > 0.0))
+                    .collect(),
                 k,
             },
         }

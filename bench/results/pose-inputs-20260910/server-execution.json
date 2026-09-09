@@ -1,0 +1,2342 @@
+[
+  {
+    "name": "files-0-baseline",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/baseline/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/files-0-baseline.json",
+      "--file-inputs"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00037063308991491795,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31680315392
+      },
+      {
+        "seconds": 0.5006345079746097,
+        "host_cpu_percent": 5.0,
+        "available_ram": 31498387456
+      },
+      {
+        "seconds": 1.0009246559347957,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31439687680
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": true,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028384126955643296,
+        "load_dt": 0.23517865594476461,
+        "evaluate": 0.5223528970964253,
+        "accumulate": 3.2010022550821304e-05,
+        "summarize": 0.0003795910160988569
+      },
+      "eval_total": 0.522764498135075,
+      "eval_cpu": 0.5504688770000001,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 0.7863272810354829,
+      "cpu_total": 0.814384803,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 297.396,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "c8e97e1a30b2fe32862fb54f438b45965bef300c74982e08cab6c0a0d1891766",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "files-0-candidate",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/candidate/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/files-0-candidate.json",
+      "--file-inputs"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00039124488830566406,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31443189760
+      },
+      {
+        "seconds": 0.5006101620383561,
+        "host_cpu_percent": 5.3,
+        "available_ram": 31253331968
+      },
+      {
+        "seconds": 1.0009696139022708,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31203540992
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": true,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.02843082998879254,
+        "load_dt": 0.23087047482840717,
+        "evaluate": 0.4481421208474785,
+        "accumulate": 3.321212716400623e-05,
+        "summarize": 0.00038616987876594067
+      },
+      "eval_total": 0.44856150285340846,
+      "eval_cpu": 0.4752203870000001,
+      "threads": "2",
+      "cpu_load_before": 0.4166666666666667,
+      "cpu_load_after": 0.4149377593360996,
+      "wall_total": 0.7078628076706082,
+      "cpu_total": 0.734843384,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 266.816,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "57ebb5b5347f204830003c9a3a18bbdefed0beafcc6b291cc8e735ef85d3820d",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "files-1-candidate",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/candidate/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/files-1-candidate.json",
+      "--file-inputs"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0003479421138763428,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31220056064
+      },
+      {
+        "seconds": 0.5005811990704387,
+        "host_cpu_percent": 4.8,
+        "available_ram": 31023570944
+      },
+      {
+        "seconds": 1.0009683321695775,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30977105920
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": true,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028215052094310522,
+        "load_dt": 0.22990939090959728,
+        "evaluate": 0.4452572138980031,
+        "accumulate": 3.3196061849594116e-05,
+        "summarize": 0.0003772769123315811
+      },
+      "eval_total": 0.4456676868721843,
+      "eval_cpu": 0.4723892050000001,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 0.7037921298760921,
+      "cpu_total": 0.7308361710000001,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 266.744,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "57ebb5b5347f204830003c9a3a18bbdefed0beafcc6b291cc8e735ef85d3820d",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "files-1-baseline",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/baseline/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/files-1-baseline.json",
+      "--file-inputs"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0004035311285406351,
+        "host_cpu_percent": 100.0,
+        "available_ram": 31011700736
+      },
+      {
+        "seconds": 0.5006152330897748,
+        "host_cpu_percent": 5.2,
+        "available_ram": 31011196928
+      },
+      {
+        "seconds": 1.0008901641704142,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30972674048
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": true,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.027957274112850428,
+        "load_dt": 0.23438332905061543,
+        "evaluate": 0.5007053900044411,
+        "accumulate": 3.4742988646030426e-05,
+        "summarize": 0.00038393796421587467
+      },
+      "eval_total": 0.501124070957303,
+      "eval_cpu": 0.529937762,
+      "threads": "2",
+      "cpu_load_before": 0.4166666666666667,
+      "cpu_load_after": 0.0,
+      "wall_total": 0.7634646741207689,
+      "cpu_total": 0.792639736,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 290.288,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "c8e97e1a30b2fe32862fb54f438b45965bef300c74982e08cab6c0a0d1891766",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "files-2-baseline",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/baseline/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/files-2-baseline.json",
+      "--file-inputs"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00040023098699748516,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31014113280
+      },
+      {
+        "seconds": 0.500613649841398,
+        "host_cpu_percent": 5.2,
+        "available_ram": 31014772736
+      },
+      {
+        "seconds": 1.0008954899385571,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30988701696
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": true,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.0280038439668715,
+        "load_dt": 0.23366213217377663,
+        "evaluate": 0.5015184248331934,
+        "accumulate": 3.403611481189728e-05,
+        "summarize": 0.0003849249333143234
+      },
+      "eval_total": 0.5019373858813196,
+      "eval_cpu": 0.5300296189999999,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 0.7636033620219678,
+      "cpu_total": 0.792065134,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 290.26,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "c8e97e1a30b2fe32862fb54f438b45965bef300c74982e08cab6c0a0d1891766",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "files-2-candidate",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/candidate/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/files-2-candidate.json",
+      "--file-inputs"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00034823990426957607,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31026319360
+      },
+      {
+        "seconds": 0.5005633339751512,
+        "host_cpu_percent": 5.2,
+        "available_ram": 31027519488
+      },
+      {
+        "seconds": 1.0009567360393703,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31023284224
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": true,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028281132923439145,
+        "load_dt": 0.229312838986516,
+        "evaluate": 0.4486171680036932,
+        "accumulate": 3.1403033062815666e-05,
+        "summarize": 0.0003913289401680231
+      },
+      "eval_total": 0.44903989997692406,
+      "eval_cpu": 0.47598271,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 0.7066338718868792,
+      "cpu_total": 0.733882171,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 266.776,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "57ebb5b5347f204830003c9a3a18bbdefed0beafcc6b291cc8e735ef85d3820d",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "files-3-candidate",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/candidate/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/files-3-candidate.json",
+      "--file-inputs"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00035983696579933167,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31058493440
+      },
+      {
+        "seconds": 0.5005943779833615,
+        "host_cpu_percent": 5.5,
+        "available_ram": 31066341376
+      },
+      {
+        "seconds": 1.0009544079657644,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31025446912
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": true,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.02820701408199966,
+        "load_dt": 0.2331404739525169,
+        "evaluate": 0.4482953189872205,
+        "accumulate": 3.31890769302845e-05,
+        "summarize": 0.000378401018679142
+      },
+      "eval_total": 0.44870690908282995,
+      "eval_cpu": 0.475924911,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 0.7100543971173465,
+      "cpu_total": 0.7376468770000001,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 266.724,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "57ebb5b5347f204830003c9a3a18bbdefed0beafcc6b291cc8e735ef85d3820d",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "files-3-baseline",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/baseline/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/files-3-baseline.json",
+      "--file-inputs"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00034135417081415653,
+        "host_cpu_percent": 100.0,
+        "available_ram": 31080894464
+      },
+      {
+        "seconds": 0.5005734600126743,
+        "host_cpu_percent": 5.0,
+        "available_ram": 31080415232
+      },
+      {
+        "seconds": 1.0008583480957896,
+        "host_cpu_percent": 9.0,
+        "available_ram": 31026606080
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": true,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028177967062219977,
+        "load_dt": 0.23574458807706833,
+        "evaluate": 0.5022592721506953,
+        "accumulate": 3.189197741448879e-05,
+        "summarize": 0.0003940220922231674
+      },
+      "eval_total": 0.502685186220333,
+      "eval_cpu": 0.531428341,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 0.7666077413596213,
+      "cpu_total": 0.795730831,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 290.12,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "c8e97e1a30b2fe32862fb54f438b45965bef300c74982e08cab6c0a0d1891766",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "files-4-baseline",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/baseline/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/files-4-baseline.json",
+      "--file-inputs"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0003536019939929247,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31070007296
+      },
+      {
+        "seconds": 0.5005673940759152,
+        "host_cpu_percent": 5.2,
+        "available_ram": 31070027776
+      },
+      {
+        "seconds": 1.0008777119219303,
+        "host_cpu_percent": 8.8,
+        "available_ram": 31033245696
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": true,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028408170910552144,
+        "load_dt": 0.2338818300049752,
+        "evaluate": 0.5012114269193262,
+        "accumulate": 3.295089118182659e-05,
+        "summarize": 0.0003969480749219656
+      },
+      "eval_total": 0.50164132588543,
+      "eval_cpu": 0.5302248039999999,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 0.7639313268009573,
+      "cpu_total": 0.792902483,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 290.444,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "c8e97e1a30b2fe32862fb54f438b45965bef300c74982e08cab6c0a0d1891766",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "files-4-candidate",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/candidate/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/files-4-candidate.json",
+      "--file-inputs"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00036581489257514477,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31066750976
+      },
+      {
+        "seconds": 0.5005777499172837,
+        "host_cpu_percent": 5.0,
+        "available_ram": 31091548160
+      },
+      {
+        "seconds": 1.0009397310204804,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31081783296
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": true,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028569702059030533,
+        "load_dt": 0.22895276406779885,
+        "evaluate": 0.446108226897195,
+        "accumulate": 3.268709406256676e-05,
+        "summarize": 0.0003737797960639
+      },
+      "eval_total": 0.44651469378732145,
+      "eval_cpu": 0.47304999500000006,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 0.7040371599141508,
+      "cpu_total": 0.730931586,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 266.82,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "57ebb5b5347f204830003c9a3a18bbdefed0beafcc6b291cc8e735ef85d3820d",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "files-5-candidate",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/candidate/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/files-5-candidate.json",
+      "--file-inputs"
+    ],
+    "samples": [
+      {
+        "seconds": 0.000310937175527215,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31162687488
+      },
+      {
+        "seconds": 0.5005619490984827,
+        "host_cpu_percent": 5.2,
+        "available_ram": 31156502528
+      },
+      {
+        "seconds": 1.0009198561310768,
+        "host_cpu_percent": 8.7,
+        "available_ram": 31103102976
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": true,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028404441894963384,
+        "load_dt": 0.23441031388938427,
+        "evaluate": 0.44775904109701514,
+        "accumulate": 3.3173942938447e-05,
+        "summarize": 0.00038161082193255424
+      },
+      "eval_total": 0.44817382586188614,
+      "eval_cpu": 0.474513123,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.8333333333333334,
+      "wall_total": 0.7109885816462338,
+      "cpu_total": 0.737689528,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 266.76,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "57ebb5b5347f204830003c9a3a18bbdefed0beafcc6b291cc8e735ef85d3820d",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "files-5-baseline",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/baseline/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/files-5-baseline.json",
+      "--file-inputs"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00031807483173906803,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31153803264
+      },
+      {
+        "seconds": 0.5005670678801835,
+        "host_cpu_percent": 5.0,
+        "available_ram": 31153586176
+      },
+      {
+        "seconds": 1.000857293838635,
+        "host_cpu_percent": 8.7,
+        "available_ram": 31108456448
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": true,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.02841331297531724,
+        "load_dt": 0.23369632614776492,
+        "evaluate": 0.5022896039299667,
+        "accumulate": 3.3749034628272057e-05,
+        "summarize": 0.0003799980040639639
+      },
+      "eval_total": 0.5027033509686589,
+      "eval_cpu": 0.5305895519999999,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 0.7648129900917411,
+      "cpu_total": 0.793087789,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 290.152,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "c8e97e1a30b2fe32862fb54f438b45965bef300c74982e08cab6c0a0d1891766",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "list-0-baseline",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/baseline/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/list-0-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0003277920186519623,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31141625856
+      },
+      {
+        "seconds": 0.5005518461111933,
+        "host_cpu_percent": 5.0,
+        "available_ram": 31034847232
+      },
+      {
+        "seconds": 1.000861454056576,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31034847232
+      },
+      {
+        "seconds": 1.5011389979626983,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30977282048
+      },
+      {
+        "seconds": 2.001416902989149,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30870351872
+      },
+      {
+        "seconds": 2.501743278000504,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30820782080
+      },
+      {
+        "seconds": 3.0020235129632056,
+        "host_cpu_percent": 5.7,
+        "available_ram": 30835761152
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": false,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028200779110193253,
+        "load_dt": 2.1797776410821825,
+        "evaluate": 0.21731572202406824,
+        "accumulate": 3.41727863997221e-05,
+        "summarize": 0.00039772805757820606
+      },
+      "eval_total": 0.21774762286804616,
+      "eval_cpu": 0.24472840000000007,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 2.425726043060422,
+      "cpu_total": 2.452894337,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 565.768,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "c8e97e1a30b2fe32862fb54f438b45965bef300c74982e08cab6c0a0d1891766",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "list-0-candidate",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/candidate/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/list-0-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00038013793528079987,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31149711360
+      },
+      {
+        "seconds": 0.5006081170868129,
+        "host_cpu_percent": 5.3,
+        "available_ram": 31050772480
+      },
+      {
+        "seconds": 1.0008855098858476,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31050772480
+      },
+      {
+        "seconds": 1.5011633848771453,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30993358848
+      },
+      {
+        "seconds": 2.001479723956436,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30894387200
+      },
+      {
+        "seconds": 2.501732073025778,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30836400128
+      },
+      {
+        "seconds": 3.002002360066399,
+        "host_cpu_percent": 5.3,
+        "available_ram": 30851026944
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": false,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028851147973909974,
+        "load_dt": 2.1893875531386584,
+        "evaluate": 0.19669934804551303,
+        "accumulate": 3.208499401807785e-05,
+        "summarize": 0.0004590780008584261
+      },
+      "eval_total": 0.19719051104038954,
+      "eval_cpu": 0.22319473999999984,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 2.415429212152958,
+      "cpu_total": 2.4416222490000004,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 565.612,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "57ebb5b5347f204830003c9a3a18bbdefed0beafcc6b291cc8e735ef85d3820d",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "list-1-candidate",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/candidate/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/list-1-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0003488489892333746,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31157182464
+      },
+      {
+        "seconds": 0.5005692639388144,
+        "host_cpu_percent": 5.0,
+        "available_ram": 31074873344
+      },
+      {
+        "seconds": 1.000845175003633,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31074873344
+      },
+      {
+        "seconds": 1.5011586768087,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31017189376
+      },
+      {
+        "seconds": 2.0014284278731793,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30918217728
+      },
+      {
+        "seconds": 2.5017206689808518,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30878347264
+      },
+      {
+        "seconds": 3.0020199248101562,
+        "host_cpu_percent": 5.5,
+        "available_ram": 30874550272
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": false,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028278629994019866,
+        "load_dt": 2.186862593051046,
+        "evaluate": 0.19549116399139166,
+        "accumulate": 3.245007246732712e-05,
+        "summarize": 0.0004391560796648264
+      },
+      "eval_total": 0.1959627701435238,
+      "eval_cpu": 0.2221467450000003,
+      "threads": "2",
+      "cpu_load_before": 0.4166666666666667,
+      "cpu_load_after": 0.0,
+      "wall_total": 2.41110399318859,
+      "cpu_total": 2.4375292089999996,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 565.8,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "57ebb5b5347f204830003c9a3a18bbdefed0beafcc6b291cc8e735ef85d3820d",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "list-1-baseline",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/baseline/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/list-1-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.000315242912620306,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31219126272
+      },
+      {
+        "seconds": 0.5005671679973602,
+        "host_cpu_percent": 5.2,
+        "available_ram": 31120461824
+      },
+      {
+        "seconds": 1.0008395449258387,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31120302080
+      },
+      {
+        "seconds": 1.5011129050981253,
+        "host_cpu_percent": 8.3,
+        "available_ram": 31054524416
+      },
+      {
+        "seconds": 2.001388068078086,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30955483136
+      },
+      {
+        "seconds": 2.501739942934364,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30906146816
+      },
+      {
+        "seconds": 3.0020175580866635,
+        "host_cpu_percent": 5.5,
+        "available_ram": 30907977728
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": false,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028219830011948943,
+        "load_dt": 2.1892924760468304,
+        "evaluate": 0.21503671095706522,
+        "accumulate": 3.2596057280898094e-05,
+        "summarize": 0.0003730989992618561
+      },
+      "eval_total": 0.21544240601360798,
+      "eval_cpu": 0.24286055299999942,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 2.4329547120723873,
+      "cpu_total": 2.460541679,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 565.868,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "c8e97e1a30b2fe32862fb54f438b45965bef300c74982e08cab6c0a0d1891766",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "list-2-baseline",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/baseline/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/list-2-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00034957705065608025,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31389626368
+      },
+      {
+        "seconds": 0.5005723021458834,
+        "host_cpu_percent": 5.2,
+        "available_ram": 31135309824
+      },
+      {
+        "seconds": 1.0008469170425087,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31134810112
+      },
+      {
+        "seconds": 1.5011664230842143,
+        "host_cpu_percent": 8.7,
+        "available_ram": 31077154816
+      },
+      {
+        "seconds": 2.001442168140784,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30978211840
+      },
+      {
+        "seconds": 2.501722489017993,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30937018368
+      },
+      {
+        "seconds": 3.0020136011298746,
+        "host_cpu_percent": 5.3,
+        "available_ram": 30930145280
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": false,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028354003094136715,
+        "load_dt": 2.1933943091426045,
+        "evaluate": 0.21514556603506207,
+        "accumulate": 3.324798308312893e-05,
+        "summarize": 0.00037702196277678013
+      },
+      "eval_total": 0.21555583598092198,
+      "eval_cpu": 0.24251976399999986,
+      "threads": "2",
+      "cpu_load_before": 0.8298755186721992,
+      "cpu_load_after": 0.0,
+      "wall_total": 2.437304148217663,
+      "cpu_total": 2.46446417,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 565.812,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "c8e97e1a30b2fe32862fb54f438b45965bef300c74982e08cab6c0a0d1891766",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "list-2-candidate",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/candidate/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/list-2-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0003149739932268858,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31241379840
+      },
+      {
+        "seconds": 0.5005913709755987,
+        "host_cpu_percent": 5.2,
+        "available_ram": 30893215744
+      },
+      {
+        "seconds": 1.0008752068970352,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30893199360
+      },
+      {
+        "seconds": 1.5011563398875296,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30844047360
+      },
+      {
+        "seconds": 2.001438831910491,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30745075712
+      },
+      {
+        "seconds": 2.5017256271094084,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30688034816
+      },
+      {
+        "seconds": 3.0019991020672023,
+        "host_cpu_percent": 5.8,
+        "available_ram": 30721294336
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": false,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.02855818090029061,
+        "load_dt": 2.1808394810650498,
+        "evaluate": 0.1952148110140115,
+        "accumulate": 3.35590448230505e-05,
+        "summarize": 0.00045772199518978596
+      },
+      "eval_total": 0.19570609205402434,
+      "eval_cpu": 0.22161494900000012,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 2.4051037540193647,
+      "cpu_total": 2.431302398,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 565.88,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "57ebb5b5347f204830003c9a3a18bbdefed0beafcc6b291cc8e735ef85d3820d",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "list-3-candidate",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/candidate/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/list-3-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00033522420562803745,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31041691648
+      },
+      {
+        "seconds": 0.5005632219836116,
+        "host_cpu_percent": 5.0,
+        "available_ram": 30951399424
+      },
+      {
+        "seconds": 1.0008849350269884,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30959398912
+      },
+      {
+        "seconds": 1.5011577680706978,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30901874688
+      },
+      {
+        "seconds": 2.0014389210846275,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30811070464
+      },
+      {
+        "seconds": 2.5017434030305594,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30753361920
+      },
+      {
+        "seconds": 3.0020116951782256,
+        "host_cpu_percent": 5.4,
+        "available_ram": 30770659328
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": false,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.027954798890277743,
+        "load_dt": 2.1876169678289443,
+        "evaluate": 0.19865301507525146,
+        "accumulate": 3.197905607521534e-05,
+        "summarize": 0.00046090479008853436
+      },
+      "eval_total": 0.1991458989214152,
+      "eval_cpu": 0.22555320699999992,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 2.4147176656406373,
+      "cpu_total": 2.441408628,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 565.836,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "57ebb5b5347f204830003c9a3a18bbdefed0beafcc6b291cc8e735ef85d3820d",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "list-3-baseline",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/baseline/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/list-3-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00035831891000270844,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31081746432
+      },
+      {
+        "seconds": 0.5005785499233752,
+        "host_cpu_percent": 5.2,
+        "available_ram": 30957883392
+      },
+      {
+        "seconds": 1.0008525538723916,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30978093056
+      },
+      {
+        "seconds": 1.5011037609074265,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30921797632
+      },
+      {
+        "seconds": 2.001378804910928,
+        "host_cpu_percent": 8.7,
+        "available_ram": 30814429184
+      },
+      {
+        "seconds": 2.501675005070865,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30756888576
+      },
+      {
+        "seconds": 3.0020111380144954,
+        "host_cpu_percent": 5.7,
+        "available_ram": 30763339776
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": false,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028159615118056536,
+        "load_dt": 2.2067442110273987,
+        "evaluate": 0.21620773593895137,
+        "accumulate": 3.286614082753658e-05,
+        "summarize": 0.0004687060136348009
+      },
+      "eval_total": 0.2167093080934137,
+      "eval_cpu": 0.2437321800000003,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 2.451613134238869,
+      "cpu_total": 2.4788259150000003,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 565.844,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "c8e97e1a30b2fe32862fb54f438b45965bef300c74982e08cab6c0a0d1891766",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "list-4-baseline",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/baseline/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/list-4-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.000349684851244092,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31084650496
+      },
+      {
+        "seconds": 0.5005696129519492,
+        "host_cpu_percent": 5.2,
+        "available_ram": 30986903552
+      },
+      {
+        "seconds": 1.0008451719768345,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30986903552
+      },
+      {
+        "seconds": 1.501163556938991,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30937636864
+      },
+      {
+        "seconds": 2.001436118967831,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30838665216
+      },
+      {
+        "seconds": 2.5017268378287554,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30780604416
+      },
+      {
+        "seconds": 3.002032821998,
+        "host_cpu_percent": 5.5,
+        "available_ram": 30791725056
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": false,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.029934356920421124,
+        "load_dt": 2.19543683482334,
+        "evaluate": 0.217884988989681,
+        "accumulate": 5.48558309674263e-05,
+        "summarize": 0.00037747505120933056
+      },
+      "eval_total": 0.21831731987185776,
+      "eval_cpu": 0.24527347700000046,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 2.443688511615619,
+      "cpu_total": 2.4705790459999997,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 565.796,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "c8e97e1a30b2fe32862fb54f438b45965bef300c74982e08cab6c0a0d1891766",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "list-4-candidate",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/candidate/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/list-4-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.00035225600004196167,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31104020480
+      },
+      {
+        "seconds": 0.5005711468402296,
+        "host_cpu_percent": 5.3,
+        "available_ram": 31004995584
+      },
+      {
+        "seconds": 1.0008477619849145,
+        "host_cpu_percent": 8.5,
+        "available_ram": 31004995584
+      },
+      {
+        "seconds": 1.5011612030211836,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30955642880
+      },
+      {
+        "seconds": 2.0014403029344976,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30855852032
+      },
+      {
+        "seconds": 2.501728610834107,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30806306816
+      },
+      {
+        "seconds": 3.002032798016444,
+        "host_cpu_percent": 5.5,
+        "available_ram": 30819700736
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": false,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028217457002028823,
+        "load_dt": 2.1868795959744602,
+        "evaluate": 0.19441431807354093,
+        "accumulate": 3.204122185707092e-05,
+        "summarize": 0.00047100894153118134
+      },
+      "eval_total": 0.19491736823692918,
+      "eval_cpu": 0.2203848439999998,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 2.4100144212134182,
+      "cpu_total": 2.435769187,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 565.8,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "57ebb5b5347f204830003c9a3a18bbdefed0beafcc6b291cc8e735ef85d3820d",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "list-5-candidate",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/candidate/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/list-5-candidate.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.0003479409497231245,
+        "host_cpu_percent": 0.0,
+        "available_ram": 31106224128
+      },
+      {
+        "seconds": 0.5005689500831068,
+        "host_cpu_percent": 5.0,
+        "available_ram": 30790557696
+      },
+      {
+        "seconds": 1.000842458102852,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30790352896
+      },
+      {
+        "seconds": 1.5011567089240998,
+        "host_cpu_percent": 8.8,
+        "available_ram": 30749532160
+      },
+      {
+        "seconds": 2.001429842086509,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30633816064
+      },
+      {
+        "seconds": 2.5017122589051723,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30584754176
+      },
+      {
+        "seconds": 3.0019821650348604,
+        "host_cpu_percent": 5.5,
+        "available_ram": 30580428800
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": false,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.028450961923226714,
+        "load_dt": 2.1802433531265706,
+        "evaluate": 0.19197800010442734,
+        "accumulate": 3.329501487314701e-05,
+        "summarize": 0.0004279911518096924
+      },
+      "eval_total": 0.19243928627111018,
+      "eval_cpu": 0.21797742600000047,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 2.4011336013209075,
+      "cpu_total": 2.426928821,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 565.652,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "57ebb5b5347f204830003c9a3a18bbdefed0beafcc6b291cc8e735ef85d3820d",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/candidate/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  },
+  {
+    "name": "list-5-baseline",
+    "command": [
+      "/tmp/ufcoco-pose-20260910/baseline/.venv/bin/python",
+      "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py",
+      "--impl",
+      "ufcoco",
+      "--threads",
+      "2",
+      "--iou-type",
+      "keypoints",
+      "--gt",
+      "/tmp/ultralytics-pr26101/data/coco/annotations/person_keypoints_val2017.json",
+      "--dt",
+      "/tmp/ultralytics-pr26101/results/formal/pose-full-0-replacement/predictions.json",
+      "--json-out",
+      "/tmp/ufcoco-pose-20260910/results/list-5-baseline.json"
+    ],
+    "samples": [
+      {
+        "seconds": 0.000350303016602993,
+        "host_cpu_percent": 0.0,
+        "available_ram": 30899892224
+      },
+      {
+        "seconds": 0.5005703950300813,
+        "host_cpu_percent": 5.0,
+        "available_ram": 30826115072
+      },
+      {
+        "seconds": 1.000845205038786,
+        "host_cpu_percent": 8.6,
+        "available_ram": 30830551040
+      },
+      {
+        "seconds": 1.5011552879586816,
+        "host_cpu_percent": 8.3,
+        "available_ram": 30781399040
+      },
+      {
+        "seconds": 2.0014329159166664,
+        "host_cpu_percent": 8.2,
+        "available_ram": 30686576640
+      },
+      {
+        "seconds": 2.5017173108644783,
+        "host_cpu_percent": 8.5,
+        "available_ram": 30629126144
+      },
+      {
+        "seconds": 3.0019919429905713,
+        "host_cpu_percent": 5.5,
+        "available_ram": 30637228032
+      }
+    ],
+    "result": {
+      "impl": "ufcoco",
+      "file_inputs": false,
+      "lvis_protocol": null,
+      "diagnostic_only": false,
+      "iou_type": "keypoints",
+      "timings": {
+        "load_gt": 0.027993736090138555,
+        "load_dt": 2.1843100739642978,
+        "evaluate": 0.21455999207682908,
+        "accumulate": 3.268290311098099e-05,
+        "summarize": 0.00037356093525886536
+      },
+      "eval_total": 0.21496623591519892,
+      "eval_cpu": 0.24196155399999997,
+      "threads": "2",
+      "cpu_load_before": 0.0,
+      "cpu_load_after": 0.0,
+      "wall_total": 2.4272700459696352,
+      "cpu_total": 2.4544801250000003,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "platform": "linux/x86_64",
+      "peak_rss_mb": 565.668,
+      "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+      "numpy": "2.4.4",
+      "runtime_file_sha256": {
+        "/usr/bin/python3.12": "1643dacd9feaedc58f3cc581e4d22577dfe25c09b10282936186ccf0f2e61118"
+      },
+      "source_file_sha256": {
+        "/tmp/ufcoco-pose-20260910/candidate/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/_ufcoco.cpython-312-x86_64-linux-gnu.so": "c8e97e1a30b2fe32862fb54f438b45965bef300c74982e08cab6c0a0d1891766",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+        "/tmp/ufcoco-pose-20260910/baseline/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+      }
+    }
+  }
+]

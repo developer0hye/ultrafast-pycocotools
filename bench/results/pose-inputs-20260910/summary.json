@@ -1,0 +1,79 @@
+{
+  "benchmark": "COCO val2017 saved YOLO26n pose predictions",
+  "cpu": "Apple M2",
+  "ram_bytes": 17179869184,
+  "physical_cores": 8,
+  "threads": 2,
+  "rustc": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "baseline_commit": "0080c20babadc5babe7d95e93e00ce1d266ea529",
+  "results": {
+    "files": {
+      "baseline": {
+        "wall_total": 0.6036542300425936,
+        "cpu_total": 0.612891,
+        "eval_total": 0.3918959799630102,
+        "peak_rss_mb": 330.399744
+      },
+      "candidate": {
+        "wall_total": 0.5668449170188978,
+        "cpu_total": 0.5806365,
+        "eval_total": 0.3560661874944344,
+        "peak_rss_mb": 275.00544
+      }
+    },
+    "list": {
+      "baseline": {
+        "wall_total": 1.7706882299971767,
+        "cpu_total": 1.7806920000000002,
+        "eval_total": 0.13660118746338412,
+        "peak_rss_mb": 817.299456
+      },
+      "candidate": {
+        "wall_total": 1.747854167013429,
+        "cpu_total": 1.7558975,
+        "eval_total": 0.12011802100460045,
+        "peak_rss_mb": 808.804352
+      }
+    }
+  },
+  "allocations": {
+    "files": {
+      "baseline": {
+        "live_bytes": 128490515,
+        "total_allocated_bytes": 216530024,
+        "allocations": 785336,
+        "peak_bytes": 311538810
+      },
+      "candidate": {
+        "live_bytes": 46270975,
+        "total_allocated_bytes": 59717308,
+        "allocations": 54266,
+        "peak_bytes": 229319270
+      }
+    },
+    "list": {
+      "baseline": {
+        "live_bytes": 128490515,
+        "total_allocated_bytes": 202523368,
+        "allocations": 246663,
+        "peak_bytes": 149671761
+      },
+      "candidate": {
+        "live_bytes": 46270975,
+        "total_allocated_bytes": 59717740,
+        "allocations": 54282,
+        "peak_bytes": 67452221
+      }
+    }
+  },
+  "input_sha256": {
+    "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+    "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+  },
+  "counts": {
+    "images": 5000,
+    "ground_truth": 11004,
+    "detections": 134663
+  }
+}

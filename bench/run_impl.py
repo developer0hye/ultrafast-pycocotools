@@ -138,6 +138,7 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool 
     else:
         raise SystemExit(f"unknown impl {impl}")
 
+    cpu_start = time.process_time()
     t = time.perf_counter()
     gt = COCO(gt_path)
     timings["load_gt"] = time.perf_counter() - t
@@ -175,6 +176,7 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool 
 
     # Array hashes can allocate a large contiguous byte buffer (notably LVIS).
     # Capture evaluation memory before any result-verification/provenance work.
+    cpu_total = time.process_time() - cpu_start
     peak = peak_rss_mb()
 
     stats = [float(x) for x in ev.stats]
@@ -222,6 +224,7 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool 
         "cpu_load_before": LOAD_BEFORE,
         "cpu_load_after": cpu_load_percent(),
         "wall_total": sum(timings.values()),
+        "cpu_total": cpu_total,
         "stats": stats,
         "digests": digests,
         "platform": f"{sys.platform}/{platform.machine()}",

@@ -1,0 +1,53 @@
+{
+  "impl": "ufcoco",
+  "file_inputs": true,
+  "lvis_protocol": null,
+  "diagnostic_only": true,
+  "iou_type": "keypoints",
+  "timings": {
+    "load_gt": 0.02582916704704985,
+    "load_dt": 0.23677995800971985,
+    "evaluate": 0.46748791699064896,
+    "accumulate": 2.8083042707294226e-05,
+    "summarize": 0.00033866596641018987
+  },
+  "eval_total": 0.46785466599976644,
+  "eval_cpu": 0.4523319999999999,
+  "threads": "2",
+  "cpu_load_before": NaN,
+  "cpu_load_after": NaN,
+  "wall_total": 0.7304637910565361,
+  "cpu_total": 0.693395,
+  "stats": [
+    0.5638424803359239,
+    0.8196351834130865,
+    0.6089962809874976,
+    0.4897993433730227,
+    0.682574551089035,
+    0.6315963476070529,
+    0.8765743073047859,
+    0.676794710327456,
+    0.5475279978148048,
+    0.7487179487179488
+  ],
+  "digests": {
+    "precision": "1de2eae8c54a8c87",
+    "recall": "ecb41c9ed31cacee",
+    "scores": "8bc12df8da30fb4b"
+  },
+  "platform": "darwin/arm64",
+  "peak_rss_mb": 275.726336,
+  "python": "3.12.13 (main, Mar  3 2026, 15:35:03) [Clang 21.1.4 ]",
+  "numpy": "2.4.4",
+  "runtime_file_sha256": {
+    "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/python-runtime-frozen/bin/python3.12": "eb9d74b9c7cfdfb2c9b91614edb2c3607360ba46c5aa7fc4557b3a4a23e97cff",
+    "/Users/yhkwon/Documents/ultrafast-pycocotools-nonbbox-memory/bench/out/nonbbox-memory/python-runtime-frozen/lib/libpython3.12.dylib": "fa093ebc503f4f2559ff65433afd1c5e71e63576ba699b5d11e7fab90df7e4a8",
+    "/Users/yhkwon/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/libpython3.12.dylib": "fa093ebc503f4f2559ff65433afd1c5e71e63576ba699b5d11e7fab90df7e4a8"
+  },
+  "source_file_sha256": {
+    "/Users/yhkwon/Documents/ultrafast-pycocotools-native-inputs/bench/run_impl.py": "8deb3fc76d2bf7ca545e5e732d38a02724012bd17c02a12c2c194b8354a60d88",
+    "/Users/yhkwon/Documents/ultrafast-pycocotools-native-inputs/python/ultrafast_pycocotools/_ufcoco.cpython-312-darwin.so": "e409c0f5dc18e9857744d5851ff47048072e777df8d4230c51abe13e179abf68",
+    "/Users/yhkwon/Documents/ultrafast-pycocotools-native-inputs/python/ultrafast_pycocotools/coco.py": "1082458d035b8b48e25475d41c40e8cb299ce7d5187d58529d545a109d550680",
+    "/Users/yhkwon/Documents/ultrafast-pycocotools-native-inputs/python/ultrafast_pycocotools/cocoeval.py": "09e49746c38b2238eaf1f14898b9f3d574dcb2752fce1658f8b2dcbe208d6d5f"
+  }
+}
