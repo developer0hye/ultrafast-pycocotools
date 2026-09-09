@@ -294,6 +294,7 @@ fn new_geometry(n: usize, iou_type: IouType) -> GeomStore {
             boundaries: Vec::new(),
         },
         IouType::Keypoints => GeomStore::Keypoints {
+            offsets: Vec::new(),
             data: Vec::new(),
             visible: Vec::new(),
             k: 0,
@@ -575,7 +576,9 @@ fn read_annotations(
 
         match &mut inst.geom {
             GeomStore::Bboxes(v) => v.push(bbox),
-            GeomStore::Keypoints { data, visible, k } => {
+            GeomStore::Keypoints {
+                data, visible, k, ..
+            } => {
                 if is_gt {
                     inst.bboxes.push(bbox);
                 }

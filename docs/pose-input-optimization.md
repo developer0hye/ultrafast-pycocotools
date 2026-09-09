@@ -2,6 +2,8 @@
 
 This implements expert recommendation 3.1: write keypoint x/y pairs directly into final native storage, retain only GT visibility predicates (`v > 0`), and omit unused detection bboxes. File snapshots stream coordinates through the existing serde parser; Python inputs use checked element access without an intermediate vector. Ground-truth `num_keypoints` retains its separate ignore behavior. The pose kernel also stops allocating unused crowd flags (part of 3.2). OKS arithmetic and summation order are unchanged.
 
+See the [parallel pose loading follow-up](pose-parallel-loading.md) for indexed JSON spans, capped DT coordinates and direct parallel decoding measured against this implementation.
+
 ## Measured results
 
 Apple M2 (8 cores, 16 GiB RAM), macOS 26.6.2, CPython 3.12.13, NumPy 2.4.4, rustc 1.98.0. Both variants used the same compiler, portable release flags and 2 Rayon threads. Baseline is `0080c20babadc5babe7d95e93e00ce1d266ea529`, the 0.1.10 safety fixes before this optimization.

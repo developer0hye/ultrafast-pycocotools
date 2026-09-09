@@ -228,6 +228,11 @@ byte-identical for these inputs. The report includes this reproduction, all
 file/list and pool-size-1/2 measurements, CPU time, hardware and raw evidence.
 [Detailed comparison and reproduction](docs/benchmark-hotcoco.md).
 
+The unreleased [pose loading follow-up](docs/pose-parallel-loading.md) reduces
+file-route time by 24.9% on M2 and 22.7% on the server versus the previous main
+build, with lower peak RSS. It also improves M2's pool-size-2 result against
+hotcoco; the released-wheel table above remains unchanged.
+
 ## YOLO26n benchmark (0.1.2)
 
 
