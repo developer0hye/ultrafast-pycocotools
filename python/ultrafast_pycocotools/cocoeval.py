@@ -222,9 +222,18 @@ class COCOeval:
     def _image_sizes(self) -> dict:
         img_sizes: dict = {}
         if self.params.iouType in ("segm", "boundary"):
+            selected_images = set(self.params.imgIds)
+            categories = self.params.catIds if self.params.useCats else []
             for src in (self.cocoGt, self.cocoDt):
                 for img_id, img in src.imgs.items():
-                    if img_id not in img_sizes:
+                    if img_id in selected_images and img_id not in img_sizes:
+                        # TorchMetrics retains dimensionless images when one
+                        # side has no masks. They require no rasterization;
+                        # the other side can still supply this image's size.
+                        if ("height" not in img or "width" not in img) and not src.getAnnIds(
+                            imgIds=[img_id], catIds=categories
+                        ):
+                            continue
                         img_sizes[int(img_id)] = (int(img["height"]), int(img["width"]))
         return img_sizes
 
