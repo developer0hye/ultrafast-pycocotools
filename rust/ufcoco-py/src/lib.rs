@@ -127,9 +127,8 @@ fn read_ring(obj: &Bound<'_, PyAny>, out: &mut Vec<f64>) -> PyResult<()> {
         let n = list.len();
         out.reserve(n);
         for i in 0..n {
-            // SAFETY: `i < n`, and `list` is a list for as long as we hold
-            // the GIL here.
-            let item = unsafe { list.get_item_unchecked(i) };
+            // A previous item's __float__ may have resized this list.
+            let item = list.get_item(i)?;
             out.push(read_float(&item)?);
         }
         return Ok(());
@@ -160,8 +159,8 @@ fn read_bbox(v: &Bound<'_, PyAny>) -> PyResult<[f64; 4]> {
     if let Ok(list) = v.cast::<PyList>() {
         if list.len() == 4 {
             for (i, slot) in out.iter_mut().enumerate() {
-                // SAFETY: length checked immediately above.
-                let item = unsafe { list.get_item_unchecked(i) };
+                // Numeric conversion may re-enter Python and resize the list.
+                let item = list.get_item(i)?;
                 *slot = read_float(&item)?;
             }
             return Ok(out);
@@ -983,7 +982,9 @@ fn append_index(
     Ok(())
 }
 
-#[pymodule]
+// Python object extraction and blocking rasterizer joins have not been audited
+// for free-threaded execution. Require the GIL until that audit is complete.
+#[pymodule(gil_used = true)]
 fn _ufcoco(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Evaluator>()?;
     m.add_class::<compact::CompactBbox>()?;
