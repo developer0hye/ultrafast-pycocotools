@@ -1,0 +1,5 @@
+hotcoco==1.0.0
+ultrafast-pycocotools==0.1.10
+pycocotools==2.0.11
+numpy==2.4.4
+psutil==7.2.2

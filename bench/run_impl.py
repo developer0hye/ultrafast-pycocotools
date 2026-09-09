@@ -9,9 +9,8 @@ single-threaded and barely notices background load; anything using rayon is
 competing for the same cores and loses wall-clock that has nothing to do with
 its own efficiency. Two things here address that:
 
-* ``--threads N`` pins the thread pool, and ``--threads 1`` removes the
-  parallelism from the comparison entirely — what is left is the algorithmic
-  difference, which is the part that does not depend on whose machine it is.
+* ``--threads N`` configures the Rayon/OpenMP pools. It is not a process-wide
+  thread cap or CPU affinity setting: streaming producers can overlap workers.
 * CPU time is reported next to wall time. Under contention wall inflates and
   CPU does not, so a gap between them is the measurement telling you it was
   disturbed.
@@ -24,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.metadata
 import json
 import os
 import platform
@@ -203,6 +203,16 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool 
             candidates.append(Path(libdir) / library)
         runtime_paths.extend(path.resolve() for path in candidates if path.is_file())
     source_paths = [Path(__file__).resolve()]
+    distribution = importlib.metadata.distribution({
+        'ufcoco': 'ultrafast-pycocotools', 'faster': 'faster-coco-eval',
+    }.get(impl, impl))
+    # Native classes can report __module__='builtins' (hotcoco). Distribution
+    # files still identify the exact installed binary for every backend.
+    source_paths.extend(
+        Path(distribution.locate_file(path)).resolve()
+        for path in distribution.files or []
+        if str(path).endswith(('.so', '.pyd', '.dylib'))
+    )
     if impl == 'ufcoco':
         from ultrafast_pycocotools import _ufcoco
         source_paths.extend([Path(_ufcoco.__file__),
@@ -213,6 +223,14 @@ def run(impl: str, gt_path: str, dt_path: str, iou_type: str, file_inputs: bool 
             source_paths.append(Path(_lvis.__file__))
     return {
         "impl": impl,
+        "package_version": distribution.version,
+        "params": {
+            "maxDets": list(ev.params.maxDets),
+            "useCats": ev.params.useCats,
+            "iouThrs": np.asarray(ev.params.iouThrs).tolist(),
+            "recThrs": np.asarray(ev.params.recThrs).tolist(),
+            "areaRng": np.asarray(ev.params.areaRng).tolist(),
+        },
         "file_inputs": file_inputs,
         "lvis_protocol": lvis_protocol,
         "diagnostic_only": arrays_out is not None,
@@ -242,7 +260,7 @@ def main() -> None:
     ap.add_argument(
         "--threads",
         type=int,
-        help="pin the rayon pool; 1 removes parallelism from the comparison",
+        help="configure Rayon/OpenMP pool size (not a process-wide CPU/thread cap)",
     )
     ap.add_argument("--gt", required=True)
     ap.add_argument("--dt", required=True)

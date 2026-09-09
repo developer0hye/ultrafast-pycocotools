@@ -1,0 +1,86 @@
+{
+  "gt": {
+    "images": [
+      {
+        "id": 1,
+        "width": 200,
+        "height": 200
+      },
+      {
+        "id": 2,
+        "width": 200,
+        "height": 200
+      }
+    ],
+    "categories": [
+      {
+        "id": 1,
+        "name": "object"
+      }
+    ],
+    "annotations": [
+      {
+        "id": 1,
+        "image_id": 1,
+        "category_id": 1,
+        "bbox": [
+          0,
+          0,
+          10,
+          10
+        ],
+        "area": 100,
+        "iscrowd": 0
+      }
+    ]
+  },
+  "detections": [
+    {
+      "image_id": 1,
+      "category_id": 1,
+      "bbox": [
+        0,
+        0,
+        10,
+        10
+      ],
+      "score": 0.5
+    },
+    {
+      "image_id": 2,
+      "category_id": 1,
+      "bbox": [
+        0,
+        0,
+        100,
+        100
+      ],
+      "score": 0.9
+    }
+  ],
+  "results": {
+    "pycocotools": {
+      "AP": 0.5,
+      "small_precision_recall0": 0.9999999999999998,
+      "small_score_recall0": 0.9
+    },
+    "hotcoco": {
+      "AP": 0.5,
+      "small_precision_recall0": 1.0,
+      "small_score_recall0": 0.5
+    },
+    "ultrafast": {
+      "AP": 0.5,
+      "small_precision_recall0": 0.9999999999999998,
+      "small_score_recall0": 0.9
+    }
+  },
+  "score_index": [
+    0,
+    0,
+    0,
+    1,
+    2
+  ],
+  "interpretation": "IoU 0.5, recall 0, category 1, small area, maxDets 100"
+}

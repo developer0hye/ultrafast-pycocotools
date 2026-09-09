@@ -205,6 +205,29 @@ includes cold/cached replay, complete arrays, LVIS compatibility and background 
 [Measurements and reproducible evidence](docs/ultralytics-pr26101-validation.md) ·
 [Reviewer checklist](docs/ultralytics-review-checklist.md).
 
+## hotcoco comparison (0.1.10)
+
+Against **hotcoco 1.0.0**, using identical saved predictions for all 5,000 COCO
+val2017 images, released ultrafast 0.1.10 has the following results for file
+input with Rayon/OpenMP pool size 2 (six-run medians):
+
+| Host | Task | Wall-time speed ratio (hotcoco / ultrafast) | Peak RSS reduction |
+| --- | --- | ---: | ---: |
+| Apple M2 | bbox | 2.18× | 89.3% |
+| Apple M2 | segmentation | 2.42× | 74.7% |
+| Apple M2 | keypoints | 0.79× (hotcoco faster) | 72.5% |
+| i5-10400 / RTX 3070 server | bbox | 2.73× | 88.1% |
+| i5-10400 / RTX 3070 server | segmentation | 2.34× | 75.3% |
+| i5-10400 / RTX 3070 server | keypoints | 1.27× | 54.8% |
+
+Times include input loading and CPU metric computation; inference is excluded.
+Pool size is not a process-wide CPU quota. M2 measurements include concurrent
+load and paging. AP/AR agree within 1e-12, but hotcoco differs from pycocotools
+in some bbox/mask sampled `scores` entries; ultrafast's full arrays are
+byte-identical for these inputs. The report includes this reproduction, all
+file/list and pool-size-1/2 measurements, CPU time, hardware and raw evidence.
+[Detailed comparison and reproduction](docs/benchmark-hotcoco.md).
+
 ## YOLO26n benchmark (0.1.2)
 
 
