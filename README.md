@@ -228,10 +228,10 @@ byte-identical for these inputs. The report includes this reproduction, all
 file/list and pool-size-1/2 measurements, CPU time, hardware and raw evidence.
 [Detailed comparison and reproduction](docs/benchmark-hotcoco.md).
 
-The unreleased [numeric-decoding follow-up](docs/hotcoco-performance-goal.md)
-now has lower median wall time and peak RSS than hotcoco in **all 24 measured
-configurations** across both hosts, three tasks, file/list inputs and pool
-sizes 1/2. All 144 matched timing pairs favor the candidate. M2 pose file input
+The pose optimizations included in 0.1.11 showed lower median wall time and peak
+RSS than hotcoco in **all 24 measured configurations** in the
+[source-build comparison](docs/hotcoco-performance-goal.md) across both hosts,
+three tasks, file/list inputs and pool sizes 1/2. All 144 matched timing pairs favor the candidate. M2 pose file input
 at pool size 1 is now 0.506 → 0.490 seconds; pool size 2 is 0.457 → 0.378 seconds.
 These are source-build measurements; the released-wheel table above is unchanged.
 
