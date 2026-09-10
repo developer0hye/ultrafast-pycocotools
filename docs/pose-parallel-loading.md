@@ -1,5 +1,7 @@
 # Parallel pose loading and capped coordinate storage
 
+The later [numeric-decoding comparison](hotcoco-performance-goal.md) closes the remaining measured M2 pool-size-1 exception. This report retains the earlier source build and its original measurements.
+
 This follow-up optimizes **pose file input** after the earlier
 [compact coordinate storage change](pose-input-optimization.md).
 It indexes keypoint JSON byte ranges while loading the immutable snapshot,

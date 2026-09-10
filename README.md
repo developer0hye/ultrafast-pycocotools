@@ -228,10 +228,12 @@ byte-identical for these inputs. The report includes this reproduction, all
 file/list and pool-size-1/2 measurements, CPU time, hardware and raw evidence.
 [Detailed comparison and reproduction](docs/benchmark-hotcoco.md).
 
-The unreleased [pose loading follow-up](docs/pose-parallel-loading.md) reduces
-file-route time by 24.9% on M2 and 22.7% on the server versus the previous main
-build, with lower peak RSS. It also improves M2's pool-size-2 result against
-hotcoco; the released-wheel table above remains unchanged.
+The unreleased [numeric-decoding follow-up](docs/hotcoco-performance-goal.md)
+now has lower median wall time and peak RSS than hotcoco in **all 24 measured
+configurations** across both hosts, three tasks, file/list inputs and pool
+sizes 1/2. All 144 matched timing pairs favor the candidate. M2 pose file input
+at pool size 1 is now 0.506 → 0.490 seconds; pool size 2 is 0.457 → 0.378 seconds.
+These are source-build measurements; the released-wheel table above is unchanged.
 
 ## YOLO26n benchmark (0.1.2)
 

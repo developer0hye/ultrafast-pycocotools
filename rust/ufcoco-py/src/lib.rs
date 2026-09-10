@@ -16,6 +16,7 @@ mod alloc;
 mod compact;
 mod json;
 mod mask;
+mod pose_numbers;
 mod summary;
 
 use numpy::ndarray::{Array1, Array2, ArrayD, IxDyn};

@@ -98,6 +98,8 @@ jobs:
       - name: Set up Rust
         run: rustup toolchain install stable --profile minimal && rustup default stable
       - run: cargo test --locked -p ufcoco-core
+      - name: Pose decimal conversion oracle
+        run: cargo test --locked --release -p ufcoco-py --test pose_numbers
       - run: cargo test --locked --release -p ufcoco-core
 
   rfdetr:

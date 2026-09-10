@@ -390,13 +390,16 @@ impl CompactBbox {
         let parse = |index: usize, destination: &mut [f64]| -> Result<(), serde_json::Error> {
             let ranges = &self.pose[index];
             let range = ranges.points.as_ref().unwrap();
-            let mut de = serde_json::Deserializer::from_slice(&self.raw[range.clone()]);
-            CoordinateSlice {
-                destination,
-                joints,
+            let raw = &self.raw[range.clone()];
+            if !super::pose_numbers::decode(raw, destination, joints) {
+                let mut de = serde_json::Deserializer::from_slice(raw);
+                CoordinateSlice {
+                    destination,
+                    joints,
+                }
+                .deserialize(&mut de)?;
+                de.end()?;
             }
-            .deserialize(&mut de)?;
-            de.end()?;
             if let Some(range) = &ranges.count {
                 serde_json::from_slice::<Crowd>(&self.raw[range.clone()])?;
             }
