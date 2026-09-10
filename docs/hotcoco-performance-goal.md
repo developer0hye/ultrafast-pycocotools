@@ -1,6 +1,9 @@
 # Closing the hotcoco performance gap
 
-This report compares hotcoco 1.0.0 with an **unreleased ultrafast source build**
+The optimizations measured here are included in version 0.1.11. The results
+below remain measurements of the original source build, not of the release wheels.
+
+This report compares hotcoco 1.0.0 with an **ultrafast source build unreleased at measurement time**
 based on `d4b8c12c75052c7c7bd3acc71daca4310354b0f9` and the pose numeric-decoding
 change described below. It follows the [parallel pose loader](pose-parallel-loading.md),
 whose remaining measured exception was M2 pose file input at pool size 1.
