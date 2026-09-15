@@ -29,12 +29,30 @@ since Python caches modules on first import.
 from __future__ import annotations
 
 import sys
+from importlib.metadata import PackageNotFoundError, version as _distribution_version
 
 from . import coco, cocoeval, mask
 from .coco import COCO
 from .cocoeval import COCOeval, Params
 
-__version__ = "0.1.6"
+
+def _read_version() -> str:
+    """Return the installed distribution's version.
+
+    maturin stamps the wheel and source archive with the workspace version from
+    ``Cargo.toml`` (``pyproject.toml`` declares ``version`` dynamic), and the
+    release gate checks that same version against the git tag. Reading it back
+    from the installed metadata keeps ``__version__`` on that single source
+    instead of a literal that has to be bumped by hand and drifted from 0.1.6
+    through three releases.
+    """
+    try:
+        return _distribution_version("ultrafast-pycocotools")
+    except PackageNotFoundError:  # imported from a source tree that was never installed
+        return "0.0.0+unknown"
+
+
+__version__ = _read_version()
 
 __all__ = [
     "COCO",
