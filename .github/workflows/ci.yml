@@ -16,6 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  MATURIN_PEP517_ARGS: --locked
   RAYON_NUM_THREADS: '2'
   OMP_NUM_THREADS: '2'
   OPENBLAS_NUM_THREADS: '1'
