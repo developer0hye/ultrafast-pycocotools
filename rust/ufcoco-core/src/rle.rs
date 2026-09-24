@@ -48,6 +48,43 @@ fn c_i32(x: f64) -> i32 {
     }
 }
 
+/// `(t / h, t % h)` for a fixed column height `h`, and `(0, 0)` when `h` is 0
+/// (as `to_bbox` does), without a hardware divide.
+///
+/// `inverse = floor(2^32 / h)` underestimates `1 / h` by less than `2^-32 / h`,
+/// so for any `u32` `t` the estimate `floor(t * inverse / 2^32)` is the true
+/// quotient or one less; one comparison of the remainder corrects it.
+#[derive(Clone, Copy)]
+struct ColumnDivider {
+    h: u32,
+    inverse: u64,
+}
+
+impl ColumnDivider {
+    fn new(h: u32) -> Self {
+        let inverse = if h == 0 {
+            0
+        } else {
+            (1u64 << 32) / u64::from(h)
+        };
+        ColumnDivider { h, inverse }
+    }
+
+    #[inline]
+    fn split(self, t: u32) -> (u32, u32) {
+        if self.h == 0 {
+            return (0, 0);
+        }
+        let mut q = ((u64::from(t) * self.inverse) >> 32) as u32;
+        let mut r = t - q * self.h;
+        if r >= self.h {
+            q += 1;
+            r -= self.h;
+        }
+        (q, r)
+    }
+}
+
 /// Hand back a run array with no capacity slack.
 ///
 /// The counts vectors are built by pushing, so they carry up to 2x the bytes
@@ -92,6 +129,56 @@ impl Rle {
             j += 2;
         }
         a
+    }
+
+    /// [`Rle::to_bbox`] and [`Rle::area`] in one pass over the runs.
+    ///
+    /// Both walk the same complete (start, length) pairs: `area` sums the odd
+    /// entries, and every odd index lies below `to_bbox`'s even-truncated
+    /// count. The column-major index is split into (x, y) with an exact
+    /// reciprocal division (see [`ColumnDivider`]) instead of a hardware
+    /// divide per run; the integers, and so both results, are unchanged.
+    pub fn bbox_and_area(&self) -> ([f64; 4], u32) {
+        let h = self.h;
+        let w = self.w;
+        let m = (self.cnts.len() / 2) * 2;
+        if m == 0 {
+            return ([0.0, 0.0, 0.0, 0.0], 0);
+        }
+        let divider = ColumnDivider::new(h);
+        let (mut xs, mut ys) = (w, h);
+        let (mut xe, mut ye) = (0u32, 0u32);
+        let mut cc: u32 = 0;
+        let mut xp: u32 = 0;
+        let mut area: u32 = 0;
+        for j in 0..m {
+            let count = self.cnts[j];
+            cc = cc.wrapping_add(count);
+            let t = cc.wrapping_sub((j % 2) as u32);
+            let (x, y) = divider.split(t);
+            if j % 2 == 0 {
+                xp = x;
+            } else {
+                area = area.wrapping_add(count);
+                if xp < x {
+                    ys = 0;
+                    ye = h.saturating_sub(1);
+                }
+            }
+            xs = xs.min(x);
+            xe = xe.max(x);
+            ys = ys.min(y);
+            ye = ye.max(y);
+        }
+        (
+            [
+                xs as f64,
+                ys as f64,
+                (xe.wrapping_sub(xs).wrapping_add(1)) as f64,
+                (ye.wrapping_sub(ys).wrapping_add(1)) as f64,
+            ],
+            area,
+        )
     }
 
     /// `rleToBbox`: tight [x, y, w, h] box around the set pixels.
@@ -252,14 +339,25 @@ impl Rle {
 /// The `rleFrString` decoder shared by [`Rle::from_str`] and
 /// [`Rle::from_json_counts`].
 fn decode_counts(s: &[u8], escaped: bool) -> Vec<u32> {
-    let mut cnts: Vec<u32> = Vec::with_capacity(s.len() / 2 + 1);
+    if escaped {
+        decode_counts_as::<true>(s)
+    } else {
+        decode_counts_as::<false>(s)
+    }
+}
+
+/// [`decode_counts`] specialized for plain or `\\`-escaped text, so the
+/// plain loop carries no escape test.
+fn decode_counts_as<const ESCAPED: bool>(s: &[u8]) -> Vec<u32> {
+    // Every count takes at least one character, so this never reallocates.
+    let mut cnts: Vec<u32> = Vec::with_capacity(s.len());
     let mut p = 0usize;
     while p < s.len() {
         let mut x: i64 = 0;
         let mut k = 0u32;
         let mut more = true;
         while more && p < s.len() {
-            if escaped && s[p] == b'\\' {
+            if ESCAPED && s[p] == b'\\' {
                 p += 1;
             }
             let c = s[p].wrapping_sub(48);
@@ -461,22 +559,24 @@ pub fn rle_iou_refs(dt: &[&Rle], gt: &[&Rle], iscrowd: &[u8], out: &mut [f64]) {
 /// substituting `0.0` for a true `0.37` would change which ground truth wins.
 pub fn rle_iou_refs_above(dt: &[&Rle], gt: &[&Rle], iscrowd: &[u8], min_thr: f64, out: &mut [f64]) {
     let n = gt.len();
-    let db: Vec<[f64; 4]> = dt.iter().map(|r| r.to_bbox()).collect();
-    let gb: Vec<[f64; 4]> = gt.iter().map(|r| r.to_bbox()).collect();
+    // Boxes and areas come from the same pass over each mask's runs.
+    let (db, da): (Vec<[f64; 4]>, Vec<f64>) = dt
+        .iter()
+        .map(|r| {
+            let (bbox, area) = r.bbox_and_area();
+            (bbox, area as f64)
+        })
+        .unzip();
+    let (gb, ga): (Vec<[f64; 4]>, Vec<f64>) = gt
+        .iter()
+        .map(|r| {
+            let (bbox, area) = r.bbox_and_area();
+            (bbox, area as f64)
+        })
+        .unzip();
     bb_iou(&db, &gb, iscrowd, out);
 
     let bound_on = min_thr > 0.0;
-    // Areas only when the bound can use them; `area()` is another pass over the
-    // runs and a cell with one detection and one ground truth would pay two of
-    // them to maybe save one merge.
-    let (da, ga): (Vec<f64>, Vec<f64>) = if bound_on {
-        (
-            dt.iter().map(|r| r.area() as f64).collect(),
-            gt.iter().map(|r| r.area() as f64).collect(),
-        )
-    } else {
-        (Vec::new(), Vec::new())
-    };
 
     for g in 0..n {
         let crowd = iscrowd.get(g).is_some_and(|&c| c != 0);
@@ -1026,6 +1126,58 @@ mod tests {
             cases.push((xy, h, w));
         }
         cases
+    }
+
+    #[test]
+    fn column_divider_matches_hardware_division() {
+        for h in (0..2000u32).chain([65535, 65536, 1 << 20, u32::MAX - 1, u32::MAX]) {
+            let divider = ColumnDivider::new(h);
+            let mut state = 0x9e37_79b9u64 ^ u64::from(h);
+            for i in 0..2000u32 {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                for t in [
+                    i,
+                    state as u32,
+                    u32::MAX - i,
+                    h.wrapping_mul(i),
+                    h.wrapping_mul(i).wrapping_sub(1),
+                ] {
+                    let expected = if h == 0 { (0, 0) } else { (t / h, t % h) };
+                    assert_eq!(divider.split(t), expected, "{t} / {h}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn bbox_and_area_match_the_separate_passes() {
+        let mut state = 0xdead_beef_cafe_f00du64;
+        let mut next = move || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+        for case in 0..50000 {
+            let h = (next() % 60) as u32;
+            let w = (next() % 60) as u32;
+            let n = (next() % 14) as usize;
+            let scale = [1, 3, 50, 5000][case % 4];
+            let mut cnts: Vec<u32> = (0..n).map(|_| (next() % scale) as u32).collect();
+            if case % 97 == 0 && !cnts.is_empty() {
+                cnts[0] = u32::MAX - 5; // wrapping cumulative counts
+            }
+            let r = Rle::new(h, w, cnts);
+            let (bbox, area) = r.bbox_and_area();
+            assert_eq!(
+                bbox.map(f64::to_bits),
+                r.to_bbox().map(f64::to_bits),
+                "{r:?}"
+            );
+            assert_eq!(area, r.area(), "{r:?}");
+        }
     }
 
     #[test]
