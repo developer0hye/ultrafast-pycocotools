@@ -438,10 +438,12 @@ struct CatImage<'a> {
 #[derive(Default)]
 struct ImgMatch {
     dt_scores: Vec<f64>,
-    /// `T * D`, ground-truth slot or -1.
+    /// `T * D`, ground-truth slot or -1. Kept only for the APIs that report
+    /// matches (`evalImgs`, `per_instance`); otherwise the matcher uses scratch.
     dt_match: Vec<i32>,
-    /// `T * D`
-    dt_ignore: Vec<bool>,
+    /// `D * T` (detection-major): `IGNORED`, `TRUE_POSITIVE` or
+    /// `FALSE_POSITIVE` at each IoU threshold. All that accumulation reads.
+    outcome: Vec<u8>,
     /// `G`, in ignore-sorted order.
     gt_ignore: Vec<bool>,
     /// Permutation applied to the ground truth (ignore-sorted, stable).
@@ -744,7 +746,7 @@ impl Evaluator {
     fn evaluate_img(&self, ci: &CatImage<'_>, area_idx: usize) -> Option<ImgMatch> {
         let mut out = ImgMatch::default();
         let mut scratch = MatchScratch::default();
-        self.evaluate_img_into(ci, area_idx, &mut out, &mut scratch)
+        self.evaluate_img_into(ci, area_idx, &mut out, &mut scratch, true)
             .then_some(out)
     }
 
@@ -755,13 +757,14 @@ impl Evaluator {
     /// Reusing `out` across area ranges is what keeps this off the allocator:
     /// at Objects365 scale the per-image vectors were 20 million allocations,
     /// and sixteen threads contending for the heap costs more than the
-    /// matching itself.
+    /// matching itself. `keep_matches` retains `dt_match` in `out`.
     fn evaluate_img_into(
         &self,
         ci: &CatImage<'_>,
         area_idx: usize,
         out: &mut ImgMatch,
         scratch: &mut MatchScratch,
+        keep_matches: bool,
     ) -> bool {
         // RunJoin already excludes groups with neither GT nor detections.
         // A zero maxDets may empty a real detection-only group afterwards;
@@ -775,10 +778,17 @@ impl Evaluator {
         let ImgMatch {
             dt_scores,
             dt_match,
-            dt_ignore,
+            outcome,
             gt_ignore,
             gt_perm,
         } = out;
+        let dt_match = if keep_matches {
+            dt_match
+        } else {
+            dt_match.clear();
+            dt_match.shrink_to_fit();
+            &mut scratch.dt_match
+        };
 
         // Ignore flags, then a stable partition that puts them last.
         let ignore = &mut scratch.ignore;
@@ -845,17 +855,25 @@ impl Evaluator {
 
         // Unmatched detections outside the area range (or LVIS-marked) are
         // ignored rather than counted as false positives.
-        dt_ignore.clear();
-        dt_ignore.resize(t_n * d_n, false);
-        for tind in 0..t_n {
-            for dind in 0..d_n {
-                let src = ci.dt_idx[dind] as usize;
+        outcome.clear();
+        outcome.resize(d_n * t_n, IGNORED);
+        for dind in 0..d_n {
+            let src = ci.dt_idx[dind] as usize;
+            let a = self.dt.areas[src];
+            let unmatched_ignored = a < a_rng[0] || a > a_rng[1] || self.dt.lvis_mark[src];
+            for tind in 0..t_n {
                 let m = dt_match[tind * d_n + dind];
-                dt_ignore[tind * d_n + dind] = if m >= 0 {
+                let ignored = if m >= 0 {
                     gt_ignore[m as usize]
                 } else {
-                    let a = self.dt.areas[src];
-                    a < a_rng[0] || a > a_rng[1] || self.dt.lvis_mark[src]
+                    unmatched_ignored
+                };
+                outcome[dind * t_n + tind] = if ignored {
+                    IGNORED
+                } else if m >= 0 {
+                    TRUE_POSITIVE
+                } else {
+                    FALSE_POSITIVE
                 };
             }
         }
@@ -930,7 +948,7 @@ impl Evaluator {
                         .for_each_init(MatchScratch::default, |scratch, (slot, ci)| {
                             let mut buf = slot.take().unwrap_or_default();
                             *slot = self
-                                .evaluate_img_into(ci, a, &mut buf, scratch)
+                                .evaluate_img_into(ci, a, &mut buf, scratch, collect_eval_imgs)
                                 .then_some(buf);
                         });
                     Timings::add(&self.timings.match_ns, t);
@@ -1041,7 +1059,9 @@ impl Evaluator {
                 gt_ignore: mm.gt_ignore.clone(),
                 dt_matches,
                 gt_matches,
-                dt_ignore: mm.dt_ignore.clone(),
+                dt_ignore: (0..t_n * d_n)
+                    .map(|i| mm.outcome[(i % d_n) * t_n + i / d_n] == IGNORED)
+                    .collect(),
             });
         }
         out
@@ -1073,13 +1093,13 @@ impl Evaluator {
         order.sort_by(|x, y| cmp_desc_score(x.0, y.0));
     }
 
-    /// Look up every ranked detection's outcome at every IoU threshold once per
-    /// area range, into `outcomes[t * order.len() + n]`.
+    /// Transpose every ranked detection's outcomes into
+    /// `outcomes[t * order.len() + n]`, once per area range.
     ///
     /// The curves for each maxDets limit then read these bytes in order, instead
-    /// of fetching `dt_ignore`/`dt_match` from a different per-image vector for
-    /// every (maxDets, threshold, detection). The values are the same, so the
-    /// tp/fp counts and every division are unchanged.
+    /// of fetching them from a different per-image vector for every (maxDets,
+    /// threshold, detection). The values are the same, so the tp/fp counts and
+    /// every division are unchanged.
     fn gather_outcomes(
         matches: &[Option<ImgMatch>],
         order: &[(f64, u32, u32)],
@@ -1091,16 +1111,9 @@ impl Evaluator {
         outcomes.resize(t_n * nd, IGNORED);
         for (n, &(_, i, d)) in order.iter().enumerate() {
             let mm = matches[i as usize].as_ref().unwrap();
-            let d_full = mm.dt_scores.len();
-            for t in 0..t_n {
-                let idx = t * d_full + d as usize;
-                outcomes[t * nd + n] = if mm.dt_ignore[idx] {
-                    IGNORED
-                } else if mm.dt_match[idx] >= 0 {
-                    TRUE_POSITIVE
-                } else {
-                    FALSE_POSITIVE
-                };
+            let row = &mm.outcome[d as usize * t_n..(d as usize + 1) * t_n];
+            for (t, &outcome) in row.iter().enumerate() {
+                outcomes[t * nd + n] = outcome;
             }
         }
     }
@@ -1303,7 +1316,7 @@ impl Evaluator {
                             score: self.dt.scores[di],
                             gt_id,
                             iou,
-                            ignore: mm.dt_ignore[t_idx * d_full + d],
+                            ignore: mm.outcome[d * p.iou_thrs.len() + t_idx] == IGNORED,
                         });
                     }
                     for (slot, &perm) in mm.gt_perm.iter().enumerate() {
@@ -1335,6 +1348,8 @@ impl Evaluator {
 struct MatchScratch {
     ignore: Vec<bool>,
     gt_matched: Vec<bool>,
+    /// `dt_match` when the caller does not keep it.
+    dt_match: Vec<i32>,
 }
 
 #[derive(Default)]
