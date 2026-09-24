@@ -7,7 +7,10 @@ number is attributed rather than deduced.
 
 Two kinds of number come back and they are not comparable:
 
-* **extraction** is wall-clock on two threads that run concurrently (reading
+* **extraction** (dictionary inputs and boundary evaluation; compact file
+  segmentation parses spans in parallel and reports that as ``gt_read`` /
+  ``dt_read`` with ``rasterise`` at 0) is wall-clock on two threads that run
+  concurrently (reading
   annotations out of Python needs the GIL, rasterising them does not), so
   ``read`` and ``rasterise`` overlap and do not sum. ``read_blocked`` is the
   slice of reading spent waiting for the rasteriser — large means the

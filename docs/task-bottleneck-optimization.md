@@ -1,4 +1,4 @@
-# Per-task bottleneck optimization (unreleased, main)
+# Per-task bottleneck optimization (unreleased)
 
 Each task was profiled on the headline workload, then its three largest
 operations were optimized for time and memory together. The complete
@@ -56,8 +56,17 @@ summed over workers.
 
 The IoU sub-phase got heavier (0.602 → 1.042 CPU s) because mask decoding
 moved into it; it replaced the extraction-time decode (`dt_read` 0.528 →
-0.172 s), and matching and accumulation fell. Detection loading grew 3.4 MB
-from the parallel parser's chunk columns.
+0.172 s), and matching and accumulation fell. With compact segmentation
+inputs this relocation is not free for the diagnostic APIs: `matches()`,
+`confusion_matrix()` and `per_instance` re-run `compute_iou`, so each call now
+decodes the detection masks again (about 0.4 CPU s per call here) instead of
+reusing masks decoded at extraction. `profile_engine.py`'s `rasterise` timer is
+0 for this route, and `gt_read`/`dt_read` include the parallel span work.
+
+Detection loading grew 3.4 MB from the parallel parser's chunk columns. It
+also makes one small allocation per segmentation record (725,047 versus 83
+sequentially): each record gets a fresh `serde_json` deserializer, whose scratch
+stack allocates when skipping the nested `segmentation` object.
 
 ### keypoints
 
