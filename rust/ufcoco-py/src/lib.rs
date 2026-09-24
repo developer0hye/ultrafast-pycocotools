@@ -769,22 +769,23 @@ impl Evaluator {
             boundary_dilation,
         )?;
         let mask_geometry = matches!(it, IouType::Segm | IouType::Boundary);
-        let gt_slots = compact_gt
-            .as_ref()
-            .map(|source| source.slots(&img_map, &cat_map));
-        let dt_slots = compact_dt
-            .as_ref()
-            .map(|source| source.slots(&img_map, &cat_map));
+        // Geometry extraction reads each row's slots again; bbox needs them once.
+        let slot_column = |source: &compact::CompactBbox| {
+            (it != IouType::Bbox).then(|| source.slots(&img_map, &cat_map))
+        };
+        let gt_slots = compact_gt.as_deref().and_then(slot_column);
+        let dt_slots = compact_dt.as_deref().and_then(slot_column);
         let dt_groups = (mask_geometry && compact_gt.is_some()).then(|| {
             dt_slots.as_deref().map_or_else(
                 || instance_groups(&dt, use_cats),
                 |slots| compact::CompactBbox::groups(slots, use_cats),
             )
         });
-        if let (Some(source), Some(slots)) = (compact_gt, gt_slots.as_deref()) {
+        if let Some(source) = compact_gt {
             gt = if it == IouType::Bbox {
-                source.instances(true, slots)
+                source.instances(true, |index| source.slot(index, &img_map, &cat_map))
             } else {
+                let slots = gt_slots.as_deref().expect("slots for geometry extraction");
                 let source = &*source;
                 py.detach(|| {
                     source.geometry_instances(
@@ -806,10 +807,11 @@ impl Evaluator {
         let gt_groups =
             (mask_geometry && compact_dt.is_some()).then(|| instance_groups(&gt, use_cats));
         drop(gt_slots);
-        if let (Some(source), Some(slots)) = (compact_dt, dt_slots.as_deref()) {
+        if let Some(source) = compact_dt {
             dt = if it == IouType::Bbox {
-                source.instances(false, slots)
+                source.instances(false, |index| source.slot(index, &img_map, &cat_map))
             } else {
+                let slots = dt_slots.as_deref().expect("slots for geometry extraction");
                 let source = &*source;
                 py.detach(|| {
                     source.geometry_instances(

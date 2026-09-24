@@ -307,6 +307,20 @@ impl ColumnBuilder {
         Ok(())
     }
 
+    fn reserve(&mut self, records: usize) {
+        self.rows.reserve(records);
+        self.boxes.reserve(records);
+        if let Some(ids) = &mut self.wide {
+            ids.reserve(records);
+        }
+        if !self.pose.is_empty() {
+            self.pose.reserve(records);
+        }
+        if !self.segm.is_empty() {
+            self.segm.reserve(records);
+        }
+    }
+
     fn finish(mut self) -> Columns {
         self.rows.shrink_to_fit();
         if let Some(ids) = &mut self.wide {
@@ -419,6 +433,13 @@ fn parse_result_chunk(
         let record = stream.next()?.ok()?;
         position += stream.byte_offset();
         columns.push(record).ok()?;
+        if columns.rows.len() == 1 {
+            // Reserve for the chunk's estimated record count, so the columns
+            // do not reallocate (and briefly double) while growing.
+            let chunk = end.unwrap_or(raw.len()) - start;
+            let first = (position - start).max(1);
+            columns.reserve(chunk / first + chunk / first / 8 + 16);
+        }
         position = skip_whitespace(raw, position);
         match raw.get(position) {
             Some(b',') => {
@@ -558,14 +579,17 @@ impl CompactBbox {
     /// this column instead of repeating two map lookups per row.
     pub(super) fn slots(&self, images: &IdMap<u32>, categories: &IdMap<u32>) -> Vec<Slot> {
         (0..self.rows.len())
-            .map(|index| {
-                let (image, category) = self.ids(index);
-                match (images.get(&image), categories.get(&category)) {
-                    (Some(&image), Some(&category)) => (image, category),
-                    _ => UNSELECTED,
-                }
-            })
+            .map(|index| self.slot(index, images, categories))
             .collect()
+    }
+
+    /// The slots of one row; see [`CompactBbox::slots`].
+    pub(super) fn slot(&self, index: usize, images: &IdMap<u32>, categories: &IdMap<u32>) -> Slot {
+        let (image, category) = self.ids(index);
+        match (images.get(&image), categories.get(&category)) {
+            (Some(&image), Some(&category)) => (image, category),
+            _ => UNSELECTED,
+        }
     }
 
     /// `(image_id, category_id)` of row `index`.
@@ -581,8 +605,12 @@ impl CompactBbox {
             .collect()
     }
 
-    pub fn instances(&self, is_gt: bool, slots: &[Slot]) -> Instances {
-        let n = slots.iter().filter(|&&slot| slot != UNSELECTED).count();
+    /// Scalar instances of the selected rows; `slot` gives each row's slots.
+    /// Bbox evaluation passes map lookups, which need no per-row slot column.
+    pub fn instances(&self, is_gt: bool, slot: impl Fn(usize) -> Slot) -> Instances {
+        let n = (0..self.rows.len())
+            .filter(|&index| slot(index) != UNSELECTED)
+            .count();
         let geom = if n == self.rows.len() {
             GeomStore::SharedBboxes(Arc::clone(&self.boxes))
         } else {
@@ -594,7 +622,8 @@ impl CompactBbox {
             out.iscrowd = Vec::new();
             out.ignore = Vec::new();
         }
-        for (index, (row, &(image, category))) in self.rows.iter().zip(slots).enumerate() {
+        for (index, row) in self.rows.iter().enumerate() {
+            let (image, category) = slot(index);
             if (image, category) == UNSELECTED {
                 continue;
             }
@@ -915,7 +944,7 @@ impl CompactBbox {
         use_cats: bool,
         max_det: usize,
     ) -> PyResult<Instances> {
-        let mut out = self.instances(is_gt, slots);
+        let mut out = self.instances(is_gt, |index| slots[index]);
         out.geom = super::new_geometry(out.len(), kind);
         if kind == IouType::Keypoints {
             let start = Instant::now();
