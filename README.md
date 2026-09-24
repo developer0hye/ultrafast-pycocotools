@@ -1,365 +1,168 @@
 # ultrafast-pycocotools
 
-[![Library CI](https://github.com/developer0hye/ultrafast-pycocotools/actions/workflows/ci.yml/badge.svg)](https://github.com/developer0hye/ultrafast-pycocotools/actions/workflows/ci.yml)
+[![CI](https://github.com/developer0hye/ultrafast-pycocotools/actions/workflows/ci.yml/badge.svg)](https://github.com/developer0hye/ultrafast-pycocotools/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/ultrafast-pycocotools)](https://pypi.org/project/ultrafast-pycocotools/)
+[![Python](https://img.shields.io/pypi/pyversions/ultrafast-pycocotools)](https://pypi.org/project/ultrafast-pycocotools/)
+[![License](https://img.shields.io/pypi/l/ultrafast-pycocotools)](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/LICENSE)
 
-COCO evaluation in Rust, with a Python API compatible with `pycocotools`.
+A drop-in replacement for `pycocotools` that computes COCO-style AP/AR for
+object detection, instance segmentation and keypoint detection. Ground-truth
+indexing, IoU/OKS matching and precision–recall accumulation run in a
+multithreaded Rust core (Rayon), exposed to Python through PyO3.
 
-Use it to reduce evaluation time while keeping the reference metrics. The test
-suite compares the complete `precision`, `recall`, and `scores` arrays and the
-summary statistics **byte for byte**, including score ties, crowd annotations,
-custom evaluation parameters, and real COCO fixtures.
+- **Bit-exact metrics.** The complete `precision`, `recall` and `scores`
+  arrays are **bit-identical** to pycocotools on every tested input, not only
+  the rounded AP/AR summary.
+- **Fast.** On COCO val2017, **18–54× lower wall-clock time than pycocotools**,
+  7–9× lower than faster-coco-eval and 1.8–2.6× lower than hotcoco.
+- **Memory-efficient.** **58–86% lower peak RSS** than pycocotools, and the
+  lowest of all four evaluators on every task.
+- **Drop-in.** The same `COCO` / `COCOeval` API for `bbox`, `segm` and
+  `keypoints`, plus the LVIS federated protocol. Prebuilt wheels for Linux,
+  macOS and Windows (CPython 3.8–3.14).
 
-Benchmarks cover public pretrained detector outputs on COCO and a separate
-synthetic scalability workload on the public Objects365 dataset. Both compare
-complete evaluation arrays against pycocotools.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/developer0hye/ultrafast-pycocotools/main/docs/assets/readme-benchmark-dark.svg">
+  <img alt="COCO val2017 evaluation time and peak memory for pycocotools, faster-coco-eval, hotcoco and ultrafast-pycocotools" src="https://raw.githubusercontent.com/developer0hye/ultrafast-pycocotools/main/docs/assets/readme-benchmark-light.svg">
+</picture>
 
-**Status:** alpha. Validate your application's
-parameters and subclass behavior before replacing its reference evaluator.
+**Status:** alpha. Before replacing the reference evaluator in your pipeline,
+check parity on your own evaluation parameters and `COCOeval` subclasses.
 
 ## Installation
 
-Install from [PyPI](https://pypi.org/project/ultrafast-pycocotools/):
-
 ```bash
-python -m pip install ultrafast-pycocotools
+pip install ultrafast-pycocotools
 ```
 
-Prebuilt wheels cover CPython 3.8–3.14 on Linux x86-64/ARM64 (glibc 2.17+), Windows
-x86-64, and macOS Intel/Apple Silicon. Compatible wheels require no Rust compiler.
-Apple Silicon wheels include Python 3.8. NumPy is installed automatically.
-Other platforms build from source.
-
-The [release workflow and maintainer guide](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/publishing.md)
-describe wheel testing and Trusted Publishing.
-
-### Build from source
-
-Requirements: Python 3.8+, a recent stable [Rust toolchain](https://rustup.rs/),
-and a working native compiler toolchain. NumPy is installed as a dependency.
-
-Clone the repository and build the package:
-
-```bash
-git clone https://github.com/developer0hye/ultrafast-pycocotools.git
-cd ultrafast-pycocotools
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install .
-```
-
-On Windows PowerShell, activate with `.\.venv\Scripts\Activate.ps1` instead.
-The source build uses Maturin and compiles the Rust extension; Rust is needed at
-build time, not when importing an already built wheel.
-
-## Reproduce without downloads
-
-After installing the test/reference dependencies, run the complete synthetic
-check with one command:
-
-```bash
-python -m pip install ".[test]"
-python bench/reproduce.py quick --out bench/out/quick --verify-published quick
-```
-
-It generates data, runs both scorers, and verifies input hashes and every
-evaluation-array byte. No images, model weights, or GPU are needed.
-See [the reproduction guide](docs/reproducibility.md) for Objects365 and public
-detector predictions, expected hashes, resource requirements, and output files.
-
-[Apple M2 desktop](docs/benchmark-apple-m2.md) and
-[i5-10400 / RTX 3070 server measurements](docs/benchmark-rtx3070.md) use the same
-5,000-image synthetic inputs, with repeated runs and CPU/memory telemetry.
-The server report includes both machines and their different background loads.
+Prebuilt wheels need no Rust compiler; NumPy is installed as a dependency.
+Other platforms build from source with a stable [Rust toolchain](https://rustup.rs/):
+`pip install git+https://github.com/developer0hye/ultrafast-pycocotools`.
 
 ## Quick start
-
-This example uses the small COCO fixture included in the repository. Replace
-the two paths with your annotation and prediction JSON files for a real run.
 
 ```python
 from ultrafast_pycocotools import COCO, COCOeval
 
-gt = COCO("tests/data/coco_subset_gt.json")
-dt = gt.loadRes("tests/data/coco_subset_dt.json")
-evaluator = COCOeval(gt, dt, "bbox")
+gt = COCO("instances_val2017.json")    # ground-truth annotations
+dt = gt.loadRes("detections.json")     # detection results in COCO format
+evaluator = COCOeval(gt, dt, "bbox")   # or "segm", "keypoints"
+evaluator.run()                        # evaluate() + accumulate() + summarize()
 
-evaluator.evaluate()
-evaluator.accumulate()
-evaluator.summarize()
-
-print("AP:", evaluator.stats[0])
+print(evaluator.stats_as_dict)         # AP, AP50, AP75, APs, APm, APl, AR@1, ...
 ```
 
-`evaluator.run()` is a convenience method for the last three calls. Standard
-COCO evaluation modes are `"bbox"`, `"segm"`, and `"keypoints"`.
+For LVIS, pass `lvis_style=True` to apply the federated annotation protocol
+(negative and not-exhaustive category lists, 300 detections per image) and the
+official metric names (`AP`, `APr`, `APc`, `APf`, `AR@300`, ...). See the
+[LVIS guide](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/lvis.md).
 
-### Faster loading and lower memory by default
+### Use inside an existing framework
 
-Version 0.1.1 avoids allocating and retaining redundant polygons for box-only
-predictions. Ordinary `gt.loadRes(predictions)` gets both improvements; no
-performance flag is needed. Bbox/segmentation metrics and public mask/plot
-helpers remain covered by reference comparisons. Direct annotation dictionaries
-omit the derived `segmentation` field unless `derive_segmentation=True` is requested.
-[Measurements against 0.1.0](docs/efficiency.md).
-
-Version 0.1.2 further improves the COCO case by **8.9% in time and 1.9% in peak
-RSS** relative to 0.1.1, using native index/metadata loops and releasing completed
-category buffers earlier. [Repeated measurements and limits](docs/efficiency-v012.md).
-
-Version 0.1.3 adds compact bbox file loading: **2.6–2.9× faster and 56–62% less
-peak RSS than 0.1.2** on three tested workloads, including JSON parsing in both
-versions. Annotation dictionaries materialize only when accessed; evaluation
-shares immutable bbox coordinates. Existing dict/list inputs retain their
-previous representation and show no demonstrated speed/memory improvement.
-[Measurements, API behavior and lower bounds](docs/efficiency-v013.md).
-
-![YOLO26n file evaluation time and peak memory versus pycocotools and faster-coco-eval](docs/assets/compact-yolo26n.svg)
-
-Version 0.1.4 further reduces Rust allocations with borrowed index/coordinate
-slices, smaller detection records and a smaller recall workspace.
-[Repeated measurements and implementation details](docs/efficiency-v014.md).
-
-### LVIS and metric names
-
-```python
-gt = COCO("lvis_val.json")
-dt = gt.loadRes("predictions.json")
-evaluator = COCOeval(gt, dt, "bbox", lvis_style=True)  # also supports "segm"
-evaluator.run()
-print(evaluator.stats_as_dict["APr"])
-```
-
-LVIS uses its federated annotation protocol, global 300-detection image limit,
-and rare/common/frequent category metrics. Dictionary names follow the official
-LVIS API (`AP`, `AP50`, `APr`, `AR@300`, etc.); framework aliases such as `AP_all`
-and `AP_50` are also available. Standard COCO `stats` positions are unchanged.
-[LVIS verification and integration guide](docs/lvis.md).
-
-### Use with an existing framework
-
-Prefer direct imports when you own the evaluation code. If a framework imports
-`pycocotools` internally, register the replacement **before importing that
-framework**:
+If a training or validation framework imports `pycocotools` internally,
+register the replacement **before importing that framework**:
 
 ```python
 from ultrafast_pycocotools import init_as_pycocotools
 
-init_as_pycocotools()
-
-from pycocotools.coco import COCO
-from pycocotools.cocoeval import COCOeval
+init_as_pycocotools()  # `import pycocotools` now resolves to ultrafast
 ```
 
-This changes the import mapping for the entire Python process. Use separate
-processes when comparing the reference package and the replacement.
+This patches `sys.modules` for the whole Python process.
 
-## Scaling with input size (0.1.0 measurements)
+## Benchmarks
 
-**41.9× faster evaluation · 89.5% lower peak memory than pycocotools** at the
-largest measured input (80,000 images). Also 8.1× faster with 92.2% lower peak
-memory than faster-coco-eval. These callouts use the recorded 0.1.0 runs below.
+COCO val2017 (all 5,000 images) with cached YOLO26n, YOLO26n-seg and
+YOLO26n-pose detections: 733,070 boxes, 724,953 instance masks and 134,663
+pose instances. Model inference is excluded; the timed region covers JSON
+parsing, ground-truth indexing, matching, accumulation and summarization.
 
-![Evaluation time and peak memory versus GT plus prediction count](docs/assets/scaling.png)
+| Task | pycocotools 2.0.11 | faster-coco-eval 1.8.0 | hotcoco 1.0.1 | **ultrafast 0.1.11** |
+| --- | ---: | ---: | ---: | ---: |
+| bbox | 47.55 s · 1,925 MB | 7.51 s · 1,781 MB | 2.33 s · 2,307 MB | **0.89 s · 272 MB** |
+| segm | 49.38 s · 2,191 MB | 15.94 s · 2,629 MB | 5.30 s · 3,403 MB | **2.33 s · 838 MB** |
+| keypoints | 9.83 s · 603 MB | 4.54 s · 603 MB | 0.99 s · 642 MB | **0.54 s · 256 MB** |
+| Bit-identical to pycocotools | reference | ✗ (`precision` ≤ 2.2e-16 off on bbox/segm) | ✗ (`scores` differ on bbox/segm) | **✓ all tasks** |
 
-Measured on nested Objects365 subsets with identical inputs for both scorers.
-Ultrafast matches pycocotools byte for byte at every point. Faster-coco-eval
-passes a separate numerical tolerance check; its arrays are not byte-identical.
-[Method, counts and reproduction](docs/scaling.md) ·
-[SVG](docs/assets/scaling.svg) · [PDF](docs/assets/scaling.pdf) ·
-[Raw measurements](bench/results/scaling.json).
+Wall-clock time · peak RSS; median of 6 runs, each in a fresh process, on an
+Intel Core i5-10400 with a 2-thread pool (pycocotools is single-threaded),
+measured 2026-09-24.
+[Full report, method and raw data](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/benchmarks/i5-10400-v0111.md)
+· [All benchmarks, other hosts and historical results](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/benchmarks/README.md)
 
-## RF-DETR integration
+## Used by
 
-The optional adapter connects ultrafast to RF-DETR's actual one-pass training
-metric, which otherwise uses faster-coco-eval. Tests cover bbox/segmentation,
-per-class metrics, reset/pickle and two-rank CPU state merging. A separate
-RF-DETR Nano benchmark uses all 5,000 COCO validation images and 1.5 million
-real predictions. In the actual RF-DETR metric replay, it is **2.09× faster with
-37.2% less peak RSS** than the existing faster-coco-eval backend, with identical
-aggregate and per-class metric tensors.
-[Measurements and opt-in integration](docs/rfdetr.md).
+- [**RF-DETR**](https://github.com/roboflow/rf-detr): optional `ufcoco`
+  backend for bbox and mask mAP during training and validation, merged in
+  [roboflow/rf-detr#1449](https://github.com/roboflow/rf-detr/pull/1449).
+  [Benchmark](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/rfdetr.md)
 
-![RF-DETR metric replay speed and memory](docs/assets/rfdetr-metric.svg)
+Proposed integrations under review:
+[Ultralytics](https://github.com/ultralytics/ultralytics/pull/26101) ([validation](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/ultralytics-pr26101-validation.md)) ·
+[torchvision](https://github.com/pytorch/vision/pull/9666) ·
+[TorchMetrics](https://github.com/Lightning-AI/torchmetrics/pull/3500) ·
+[SAHI](https://github.com/obss/sahi/pull/1452) ·
+[SAM 3](https://github.com/facebookresearch/sam3/pull/620) ·
+[RT-DETR](https://github.com/lyuwenyu/RT-DETR/pull/689) ·
+[DEIMv2](https://github.com/Intellindust-AI-Lab/DEIMv2/pull/170)
 
-## D-FINE-seg integration
+## Compatibility
 
-A [tested D-FINE-seg integration patch](docs/dfine-seg.md) adds an optional
-ultrafast backend to its TorchMetrics bbox and instance-segmentation mAP paths.
-It includes full-array parity, Validator lifecycle and pretrained-model checks.
-With the **0.1.7 mask-encoder optimization**, actual COCO500 bbox +
-segmentation validation is **17.8% faster on M2** and **23.4% faster on the
-i5-10400 server** than faster-coco-eval. All outputs are unchanged.
-[Published release and measurements](docs/mask-encoding-optimization.md).
-The [published-0.1.6 baseline](docs/benchmark-dfine-seg.md) retains the original
-measurements, including its mask-encoding regression.
+The public `COCO`, `COCOeval` and `mask` (RLE) APIs are tested against
+pycocotools, covering annotation query order, `loadRes`, compressed and
+uncompressed RLE, custom `Params` (IoU thresholds, area ranges, `maxDets`),
+`iscrowd` handling, score ties and subclass overrides. A few internals
+intentionally differ:
 
-## Ultralytics real-task validation (0.1.7)
+- Per-image matching records (`evalImgs`) are not stored by default; pass
+  `store_eval_imgs=True` if your code reads them.
+- Box-only detections omit the polygon `segmentation` derived from each box;
+  pass `derive_segmentation=True` if you read that field.
+- `COCO(annotation_dict)` borrows the dictionary instead of deep-copying it, and
+  ground-truth annotations are not rewritten in place.
 
-On the RTX 3070 / i5-10400 server, complete COCO val2017 validation is
-16.3% faster for detection, 9.1% for segmentation and 10.0% for pose than
-faster-coco-eval 1.8.0. All returned metrics and fitness are identical.
-Peak process memory decreases for detection and segmentation; pose full-validation
-RSS increases 0.9%, while pose evaluator-only RSS decreases. The report also
-includes cold/cached replay, complete arrays, LVIS compatibility and background load.
-[Measurements and reproducible evidence](docs/ultralytics-pr26101-validation.md) ·
-[Reviewer checklist](docs/ultralytics-review-checklist.md).
+Bit-exactness claims cover the tested inputs and configurations. See the
+[compatibility notes](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/implementation-notes.md#drop-in-compatibility).
 
-## hotcoco comparison (0.1.10)
+## Extras
 
-Against **hotcoco 1.0.0**, using identical saved predictions for all 5,000 COCO
-val2017 images, released ultrafast 0.1.10 has the following results for file
-input with Rayon/OpenMP pool size 2 (six-run medians):
-
-| Host | Task | Wall-time speed ratio (hotcoco / ultrafast) | Peak RSS reduction |
-| --- | --- | ---: | ---: |
-| Apple M2 | bbox | 2.18× | 89.3% |
-| Apple M2 | segmentation | 2.42× | 74.7% |
-| Apple M2 | keypoints | 0.79× (hotcoco faster) | 72.5% |
-| i5-10400 / RTX 3070 server | bbox | 2.73× | 88.1% |
-| i5-10400 / RTX 3070 server | segmentation | 2.34× | 75.3% |
-| i5-10400 / RTX 3070 server | keypoints | 1.27× | 54.8% |
-
-Times include input loading and CPU metric computation; inference is excluded.
-Pool size is not a process-wide CPU quota. M2 measurements include concurrent
-load and paging. AP/AR agree within 1e-12, but hotcoco differs from pycocotools
-in some bbox/mask sampled `scores` entries; ultrafast's full arrays are
-byte-identical for these inputs. The report includes this reproduction, all
-file/list and pool-size-1/2 measurements, CPU time, hardware and raw evidence.
-[Detailed comparison and reproduction](docs/benchmark-hotcoco.md).
-
-The pose optimizations included in 0.1.11 showed lower median wall time and peak
-RSS than hotcoco in **all 24 measured configurations** in the
-[source-build comparison](docs/hotcoco-performance-goal.md) across both hosts,
-three tasks, file/list inputs and pool sizes 1/2. All 144 matched timing pairs favor the candidate. M2 pose file input
-at pool size 1 is now 0.506 → 0.490 seconds; pool size 2 is 0.457 → 0.378 seconds.
-These are source-build measurements; the released-wheel table above is unchanged.
-
-## YOLO26n benchmark (0.1.2)
-
-
-**19.1× faster · 53.4% lower peak RSS than pycocotools**, using identical
-YOLO26n predictions on all 5,000 COCO val2017 images.
-
-| Scorer | Evaluation time | Peak RSS |
-|---|---:|---:|
-| pycocotools 2.0.11 | 37.073 s | 1,599.2 MiB |
-| faster-coco-eval 1.8.0 | 7.257 s | 1,651.6 MiB |
-| ultrafast-pycocotools 0.1.2 | **1.942 s** | **745.9 MiB** |
-
-All four ultrafast evaluation arrays match pycocotools byte for byte. The
-additional backend is within absolute 1e-12 tolerance but not byte-identical.
-The 596,202 predictions were generated on CPU in about four minutes; inference
-is excluded from evaluation times. One fresh process per scorer on a shared
-host, two CPU cores each. [Settings, hashes and reproduction](docs/yolo26.md).
-
-## Public benchmarks (0.1.0 measurements)
-
-The same saved inputs are scored by pycocotools 2.0.11, faster-coco-eval 1.8.0
-and ultrafast-pycocotools 0.1.0. Ultrafast matches the reference arrays **byte for
-byte**. Faster-coco-eval agrees within absolute tolerance 1e-12 (rtol=0), with
-small floating-point differences reported explicitly.
-
-| Workload | pycocotools | faster-coco-eval | ultrafast | Ultrafast speedup vs faster-coco-eval |
-|---|---:|---:|---:|---:|
-| COCO val2017 / public YOLO11m | 29.87 s | 4.88 s | 2.61 s | 1.87× |
-| Objects365 v2 / synthetic predictions | 520.26 s | 100.51 s | 12.43 s | 8.09× |
-
-| Workload | pycocotools RSS | faster-coco-eval RSS | ultrafast RSS |
-|---|---:|---:|---:|
-| COCO val2017 / public YOLO11m | 1.28 GiB | 1.34 GiB | 0.70 GiB |
-| Objects365 v2 / synthetic predictions | 22.62 GiB | 30.46 GiB | 2.37 GiB |
-
-Measured with Python 3.12.3 and NumPy 2.4.4 on an AMD EPYC 9554 host, with two
-CPU cores available to each scorer, two Rayon/OpenMP threads and one OpenBLAS
-thread. One run per case; prior reference/ultrafast results are reused and the
-additional backend is measured afterward. These are shared-host observations.
-
-Time includes GT indexing, result loading, evaluation, accumulation and
-summarization. It excludes JSON parsing, inference and output serialization.
-Memory is whole-process peak RSS, including parsed inputs and serialization.
-Objects365 predictions are synthetic: this is evaluator scalability, not
-trained detector accuracy or end-to-end Ultralytics validation speed.
-
-[Three-backend comparison and reproduction](docs/faster-coco-eval.md) ·
-[Raw results and hashes](bench/results/public_benchmarks.json) ·
-[General reproduction guide](docs/reproducibility.md).
-
-## Compatibility and intentional differences
-
-The public COCO, COCOeval, and mask APIs are checked against pycocotools.
-Compatibility tests cover query ordering, result loading, RLE formats,
-evaluation parameters, and subclass overrides. Full-array comparison matters:
-rounded AP can hide differences in individual precision cells.
-
-Some implementation details intentionally differ:
-
-- `evaluate()` performs matching and accumulation internally; `accumulate()`
-  exposes the result through the standard API.
-- Per-image `evalImgs` records are not stored by default. Use
-  `COCOeval(gt, dt, "bbox", store_eval_imgs=True)` if your integration reads them.
-- IoU and annotation lookup structures are built lazily when accessed.
-- Ground-truth annotation dictionaries are not rewritten in place.
-- `COCO(path, verbose=False)` suppresses loader progress output.
-- Box-only results omit redundant derived polygons by default; use
-  `derive_segmentation=True` when reading that field directly.
-- `COCO(annotation_dict)` borrows the dictionary without a deep copy.
-
-The evaluator follows pycocotools' treatment of `iscrowd`, including its handling
-of the annotation `ignore` field. Applications that rely on mutation side
-effects or unusual evaluation parameters should run their own parity checks.
-See [the detailed compatibility notes](docs/implementation-notes.md#drop-in-compatibility).
-
-## Additional diagnostics
-
-After evaluation, the same matching results support per-category statistics,
-precision–recall curves, match inspection, and a confusion matrix:
+The same matching results provide per-category AP, precision–recall curves,
+per-detection TP/FP matches and a confusion matrix. Boundary IoU is available
+as an additional evaluation mode (an extension, not a pycocotools metric):
 
 ```python
-print(evaluator.stats_as_dict)
-print(evaluator.per_category_stats())
-curve = evaluator.pr_curve(cat_id=1, iou_thr=0.5)
-matches = evaluator.matches(iou_thr=0.5)
-matrix = evaluator.confusion_matrix()
+evaluator.per_category_stats()
+evaluator.pr_curve(cat_id=1, iou_thr=0.5)
+evaluator.matches(iou_thr=0.5)
+evaluator.confusion_matrix()
 ```
 
-Boundary IoU is available as an additional evaluation mode. It is an extension,
-not a standard pycocotools metric. See the [implementation notes](docs/implementation-notes.md#extensions)
-for custom thresholds, area ranges, and diagnostic output formats.
+See the [implementation notes](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/implementation-notes.md#extensions).
 
-## Development and verification
-
-Write documentation, code comments, docstrings and examples in English.
-
-[Automated CI](docs/ci.md) builds and tests Linux, macOS and Windows, checks
-NumPy 1/2 and multiple Python versions, and runs Rust tests in debug and release.
-The required `CI` status blocks `main` updates when any test job fails.
-
-Install the test dependencies and run the reference-comparison suite:
+## Development
 
 ```bash
-python -m pip install -e ".[test,lvis-test]"
+git clone https://github.com/developer0hye/ultrafast-pycocotools.git
+cd ultrafast-pycocotools
+pip install -e ".[test,lvis-test]"
 python bench/fetch_lvis_fixture.py
 python -m pytest -q
 cargo test -p ufcoco-core
 ```
 
-The repository includes synthetic inputs and a small real COCO fixture. Tests
-requiring the complete dataset skip when those local files are absent; see
-[fixture documentation](tests/data/README.md). Exact parity claims refer to
-the tested inputs and configurations, not a proof over every possible input.
-
-Use [bench/compare_saved_predictions.py](bench/compare_saved_predictions.py) to
-save full evaluation arrays and compare your own predictions. For changes to
-matching or accumulation, retain byte-level parity tests rather than checking
-only the rounded summary.
+`python bench/reproduce.py quick --out bench/out/quick --verify-published quick`
+runs an end-to-end parity check on synthetic data, with no dataset download
+or model weights. See the
+[reproduction guide](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/reproducibility.md),
+[CI](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/ci.md) and
+[release process](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/publishing.md).
+Documentation, comments and examples are written in English.
 
 ## License and credits
 
-[BSD-2-Clause](LICENSE). COCO evaluation algorithms and API compatibility are
-based on [pycocotools](https://github.com/cocodataset/cocoapi), by Piotr Dollár
-and Tsung-Yi Lin, under BSD-2-Clause. Implementation design and numerical
-compatibility decisions are described in [DESIGN.md](DESIGN.md). LVIS protocol
-verification uses the official [LVIS API](https://github.com/lvis-dataset/lvis-api)
-and its public example annotations/predictions; source revisions and hashes
-are recorded in the repository.
+[BSD-2-Clause](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/LICENSE).
+The evaluation protocol and API follow
+[pycocotools](https://github.com/cocodataset/cocoapi) by Piotr Dollár and
+Tsung-Yi Lin (BSD-2-Clause). LVIS verification uses the official
+[LVIS API](https://github.com/lvis-dataset/lvis-api). Design decisions are in
+[DESIGN.md](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/DESIGN.md).
