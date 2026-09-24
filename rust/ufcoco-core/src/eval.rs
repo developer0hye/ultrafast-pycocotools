@@ -428,6 +428,9 @@ struct CatImage<'a> {
     /// Row-major `D x G`; empty when either side is empty, which is the `[]`
     /// pycocotools' `computeIoU` returns.
     ious: Vec<f64>,
+    /// Per detection, the largest IoU over all ground truths, or NaN if any is
+    /// NaN; empty with `ious`. See `evaluate_img_into`.
+    best_iou: Vec<f64>,
 }
 
 /// Per-image match result for one area range, in the compact form
@@ -549,11 +552,27 @@ impl Evaluator {
                     dt_idx.truncate(max_det);
                 }
                 let ious = self.compute_iou(&dt_idx, gt_idx);
+                let best_iou = if ious.is_empty() {
+                    Vec::new()
+                } else {
+                    ious.chunks_exact(gt_idx.len())
+                        .map(|row| {
+                            row.iter().fold(f64::NEG_INFINITY, |best, &v| {
+                                if best.is_nan() || v.is_nan() || v > best {
+                                    v
+                                } else {
+                                    best
+                                }
+                            })
+                        })
+                        .collect()
+                };
                 CatImage {
                     img_slot,
                     gt_idx,
                     dt_idx,
                     ious,
+                    best_iou,
                 }
             })
             .collect()
@@ -788,6 +807,11 @@ impl Evaluator {
                     // pycocotools clamps the floor so a threshold of exactly
                     // 1.0 can still match a pair whose IoU rounds just below.
                     let mut best = f64::min(thr, 1.0 - 1e-10);
+                    // No ground truth can pass `v >= best`: the scan below would
+                    // leave `m` at -1 and change nothing. NaN never skips.
+                    if ci.best_iou[dind] < best {
+                        continue;
+                    }
                     let mut m: i32 = -1;
                     for gind in 0..g_n {
                         let gsrc = gt_perm[gind] as usize;
