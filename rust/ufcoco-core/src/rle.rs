@@ -229,43 +229,64 @@ impl Rle {
 
     /// `rleFrString`: inverse of [`Rle::to_string`].
     pub fn from_str(s: &[u8], h: u32, w: u32) -> Rle {
-        let mut cnts: Vec<u32> = Vec::with_capacity(s.len() / 2 + 1);
-        let mut p = 0usize;
-        while p < s.len() {
-            let mut x: i64 = 0;
-            let mut k = 0u32;
-            let mut more = true;
-            while more && p < s.len() {
-                let c = s[p].wrapping_sub(48);
-                let shift = 5 * k;
-                if shift < 64 {
-                    x |= ((c & 0x1f) as i64) << shift;
-                }
-                more = (c & 0x20) != 0;
-                p += 1;
-                k += 1;
-                if !more && (c & 0x10) != 0 {
-                    // Sign-extend. C would invoke UB once the shift reaches the
-                    // width of `long`; we simply stop, which keeps the value
-                    // already accumulated.
-                    let shift = 5 * k;
-                    if shift < 64 {
-                        x |= -1i64 << shift;
-                    }
-                }
-            }
-            let m = cnts.len();
-            if m > 2 {
-                x += cnts[m - 2] as i64;
-            }
-            cnts.push(x as u32);
-        }
         Rle {
             h,
             w,
-            cnts: tight(cnts),
+            cnts: tight(decode_counts(s, false)),
         }
     }
+
+    /// [`Rle::from_str`] on `counts` text as it appears inside a JSON string,
+    /// for a mask that is used once and dropped: when `escaped`, each `\\`
+    /// pair stands for one backslash (the caller has checked that no other
+    /// escape occurs), and the run array keeps its capacity slack.
+    pub fn from_json_counts(text: &[u8], escaped: bool, h: u32, w: u32) -> Rle {
+        Rle {
+            h,
+            w,
+            cnts: decode_counts(text, escaped),
+        }
+    }
+}
+
+/// The `rleFrString` decoder shared by [`Rle::from_str`] and
+/// [`Rle::from_json_counts`].
+fn decode_counts(s: &[u8], escaped: bool) -> Vec<u32> {
+    let mut cnts: Vec<u32> = Vec::with_capacity(s.len() / 2 + 1);
+    let mut p = 0usize;
+    while p < s.len() {
+        let mut x: i64 = 0;
+        let mut k = 0u32;
+        let mut more = true;
+        while more && p < s.len() {
+            if escaped && s[p] == b'\\' {
+                p += 1;
+            }
+            let c = s[p].wrapping_sub(48);
+            let shift = 5 * k;
+            if shift < 64 {
+                x |= ((c & 0x1f) as i64) << shift;
+            }
+            more = (c & 0x20) != 0;
+            p += 1;
+            k += 1;
+            if !more && (c & 0x10) != 0 {
+                // Sign-extend. C would invoke UB once the shift reaches the
+                // width of `long`; we simply stop, which keeps the value
+                // already accumulated.
+                let shift = 5 * k;
+                if shift < 64 {
+                    x |= -1i64 << shift;
+                }
+            }
+        }
+        let m = cnts.len();
+        if m > 2 {
+            x += cnts[m - 2] as i64;
+        }
+        cnts.push(x as u32);
+    }
+    cnts
 }
 
 /// `rleMerge`: union (`intersect == false`) or intersection of `n` masks.
@@ -1005,6 +1026,35 @@ mod tests {
             cases.push((xy, h, w));
         }
         cases
+    }
+
+    #[test]
+    fn json_counts_decode_like_the_unescaped_string() {
+        let mut state = 0x1234_5678_9abc_def1u64;
+        for _ in 0..2000 {
+            let len = (state % 400) as usize;
+            let text: Vec<u8> = (0..len)
+                .map(|_| {
+                    state ^= state << 13;
+                    state ^= state >> 7;
+                    state ^= state << 17;
+                    48 + (state % 64) as u8
+                })
+                .collect();
+            let json: Vec<u8> = text
+                .iter()
+                .flat_map(|&b| {
+                    if b == b'\\' {
+                        vec![b'\\', b'\\']
+                    } else {
+                        vec![b]
+                    }
+                })
+                .collect();
+            let expected = Rle::from_str(&text, 7, 9);
+            assert_eq!(Rle::from_json_counts(&json, true, 7, 9), expected);
+            assert_eq!(Rle::from_json_counts(&text, false, 7, 9), expected);
+        }
     }
 
     #[test]

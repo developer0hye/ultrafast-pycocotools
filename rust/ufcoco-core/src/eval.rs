@@ -158,19 +158,7 @@ impl MaskRef {
                 escaped,
             } => {
                 let text = &raw[start..start + len as usize];
-                std::borrow::Cow::Owned(if escaped {
-                    let mut plain = Vec::with_capacity(text.len());
-                    let mut bytes = text.iter();
-                    while let Some(&byte) = bytes.next() {
-                        plain.push(byte);
-                        if byte == b'\\' {
-                            bytes.next();
-                        }
-                    }
-                    Rle::from_str(&plain, h, w)
-                } else {
-                    Rle::from_str(text, h, w)
-                })
+                std::borrow::Cow::Owned(Rle::from_json_counts(text, escaped, h, w))
             }
         }
     }
