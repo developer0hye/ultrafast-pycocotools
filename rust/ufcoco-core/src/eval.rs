@@ -1081,16 +1081,20 @@ impl Evaluator {
         }
     }
 
-    /// For each recall threshold `r`, the fewest true positives `tp` for which
-    /// `!(tp as f64 / npig as f64 < r)` holds, or `npig + 1` if none does.
+    /// For each recall sample `i`, the true-positive count at which the curve
+    /// is sampled: the fewest `tp` for which `!(tp as f64 / npig as f64 < r)`
+    /// holds for `r = rec_thrs[i]` and every earlier threshold, or `npig + 1`
+    /// if none does.
     ///
-    /// The test is the one pycocotools' `searchsorted` makes on each recall
-    /// value, and it is monotone in `tp` because correctly rounded division is,
-    /// so the accumulation loop can compare integers instead of dividing for
-    /// every detection. NaN thresholds give 0, as `!(x < NaN)` is always true.
+    /// The comparison is the one made on each recall value, and it is monotone
+    /// in `tp` because correctly rounded division is. Samples are assigned in
+    /// threshold order, so a sample never precedes an earlier one; the running
+    /// maximum keeps that for unsorted custom grids. NaN thresholds give 0, as
+    /// `!(x < NaN)` is always true.
     fn recall_sample_counts(rec_thrs: &[f64], npig: usize, out: &mut Vec<usize>) {
         let npig_f = npig as f64;
         out.clear();
+        let mut previous = 0;
         out.extend(rec_thrs.iter().map(|&r| {
             let (mut lo, mut hi) = (0usize, npig + 1);
             while lo < hi {
@@ -1101,7 +1105,8 @@ impl Evaluator {
                     lo = mid + 1;
                 }
             }
-            lo
+            previous = previous.max(lo);
+            previous
         }));
     }
 
@@ -1142,10 +1147,8 @@ impl Evaluator {
             );
         }
         let nd = if full { nd_all } else { buf.selected.len() };
-        buf.pr.clear();
-        buf.pr.resize(nd, 0.0);
-
         let npig_f = npig as f64;
+        let need = &buf.sample_tp;
 
         for t in 0..t_n {
             let row = &outcomes[t * nd_all..(t + 1) * nd_all];
@@ -1157,54 +1160,70 @@ impl Evaluator {
                     .extend(buf.selected.iter().map(|&n| row[n as usize]));
                 &buf.row
             };
-            let (mut tp, mut fp) = (0usize, 0usize);
-            // tp / (fp + tp + EPS) at tp = fp = 0; an ignored detection leaves
-            // both counts, and therefore this value, unchanged.
-            let mut value = 0.0 / EPS;
-            let mut next_sample = 0;
-            buf.rec_indices.clear();
-            buf.rec_indices.resize(r_n, nd);
-            for (n, (precision, &outcome)) in buf.pr.iter_mut().zip(row).enumerate() {
-                if outcome != IGNORED {
-                    if outcome == TRUE_POSITIVE {
-                        tp += 1;
-                    } else {
-                        fp += 1;
-                    }
-                    // `+ EPS` is np.spacing(1) in the reference. Dropping it
-                    // changes the first point of every curve by one ULP.
-                    value = tp as f64 / (fp as f64 + tp as f64 + EPS);
+            let sample = |ri: usize| (t * r_n + ri) * a_n * m_n + a * m_n + m;
+            // `(false positives so far, position)` at each true positive.
+            buf.hits.clear();
+            let mut fp = 0usize;
+            for (n, &outcome) in row.iter().enumerate() {
+                if outcome == TRUE_POSITIVE {
+                    buf.hits.push((fp as u32, n as u32));
                 }
-                // Record searchsorted's first eligible index while recall is
-                // produced: `!(tp / npig < rec_thrs[i])`, via `sample_tp`.
-                while next_sample < r_n && tp >= buf.sample_tp[next_sample] {
-                    buf.rec_indices[next_sample] = n;
-                    next_sample += 1;
-                }
-                *precision = value;
+                fp += usize::from(outcome == FALSE_POSITIVE);
             }
-
+            let tp = buf.hits.len();
             out.recall[(t * a_n + a) * m_n + m] = if nd == 0 { 0.0 } else { tp as f64 / npig_f };
 
-            // Make precision monotonically non-increasing in recall.
-            for i in (1..nd).rev() {
-                if buf.pr[i] > buf.pr[i - 1] {
-                    buf.pr[i - 1] = buf.pr[i];
-                }
+            // Samples beyond the final recall read zero, as in pycocotools.
+            let mut pending = r_n;
+            while pending > 0 && (nd == 0 || need[pending - 1] > tp) {
+                pending -= 1;
+                out.precision[sample(pending)] = 0.0;
+                out.scores[sample(pending)] = 0.0;
+            }
+            if nd == 0 {
+                continue;
             }
 
-            // Apply the recorded indices after the backward precision envelope.
-            // This needs O(R) index storage instead of O(D) recall values.
-            for (ri, &pi) in buf.rec_indices.iter().enumerate() {
-                let dst = (t * r_n + ri) * a_n * m_n + a * m_n + m;
-                if pi < nd {
-                    out.precision[dst] = buf.pr[pi];
-                    let position = if full { pi } else { buf.selected[pi] as usize };
-                    out.scores[dst] = order[position].0;
-                } else {
-                    out.precision[dst] = 0.0;
-                    out.scores[dst] = 0.0;
+            // pycocotools' envelope is the suffix maximum of the precision
+            // `tp / (fp + tp + EPS)` over detections. Between true positives
+            // `tp` is fixed and the denominator never decreases, so precision
+            // never rises there: every suffix maximum is attained at a true
+            // positive. Walking the true positives from the last one therefore
+            // yields the envelope at each of them. Sample `i` sits on the
+            // `need[i]`-th true positive, or on the first detection when
+            // `need[i]` is 0, where the envelope is the maximum overall (all
+            // zeros when there is no true positive).
+            // `+ EPS` is np.spacing(1) in the reference. Dropping it changes
+            // the first point of every curve by one ULP.
+            let mut envelope = if tp == 0 {
+                0.0 / (fp as f64 + 0.0 + EPS)
+            } else {
+                f64::NEG_INFINITY
+            };
+            for k in (1..=tp).rev() {
+                let (fp_k, n) = buf.hits[k - 1];
+                let value = k as f64 / (fp_k as f64 + k as f64 + EPS);
+                if value > envelope {
+                    envelope = value;
                 }
+                if pending > 0 && need[pending - 1] == k {
+                    let position = if full {
+                        n as usize
+                    } else {
+                        buf.selected[n as usize] as usize
+                    };
+                    while pending > 0 && need[pending - 1] == k {
+                        pending -= 1;
+                        out.precision[sample(pending)] = envelope;
+                        out.scores[sample(pending)] = order[position].0;
+                    }
+                }
+            }
+            let first = if full { 0 } else { buf.selected[0] as usize };
+            while pending > 0 {
+                pending -= 1;
+                out.precision[sample(pending)] = envelope;
+                out.scores[sample(pending)] = order[first].0;
             }
         }
     }
@@ -1300,8 +1319,8 @@ struct AccumBuf {
     selected: Vec<u32>,
     /// One threshold's outcomes for `selected`.
     row: Vec<u8>,
-    pr: Vec<f64>,
-    rec_indices: Vec<usize>,
+    /// `(false positives before it, position)` for each true positive.
+    hits: Vec<(u32, u32)>,
     /// `Evaluator::recall_sample_counts` for the current category and area.
     sample_tp: Vec<usize>,
 }
