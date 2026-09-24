@@ -12,7 +12,7 @@ use std::sync::Arc;
 use std::time::Instant;
 use ufcoco_core::eval::{GeomStore, Instances, IouType};
 
-use super::{ExtractTimings, RawSegm, CHUNK};
+use super::{ExtractTimings, GroupSet, IdMap, RawSegm, CHUNK};
 
 #[derive(Deserialize)]
 #[serde(untagged)]
@@ -250,46 +250,46 @@ pub struct CompactBbox {
     pose: Vec<PoseRanges>,
 }
 
+/// `(image slot, category slot)` for one file row, or [`UNSELECTED`] when
+/// either ID is outside the evaluation.
+type Slot = (u32, u32);
+const UNSELECTED: Slot = (u32::MAX, u32::MAX);
+
 impl CompactBbox {
-    pub(super) fn groups(
-        &self,
-        images: &HashMap<i64, u32>,
-        categories: &HashMap<i64, u32>,
-        use_cats: bool,
-    ) -> HashSet<(u32, u32)> {
+    /// Resolve every row's image and category slot once. Each later pass reads
+    /// this column instead of repeating two map lookups per row.
+    pub(super) fn slots(&self, images: &IdMap<u32>, categories: &IdMap<u32>) -> Vec<Slot> {
         self.rows
             .iter()
-            .filter_map(|row| {
-                let image = *images.get(&row.image)?;
-                let category = *categories.get(&row.category)?;
-                Some((image, if use_cats { category } else { 0 }))
-            })
+            .map(
+                |row| match (images.get(&row.image), categories.get(&row.category)) {
+                    (Some(&image), Some(&category)) => (image, category),
+                    _ => UNSELECTED,
+                },
+            )
             .collect()
     }
 
-    pub fn instances(
-        &self,
-        is_gt: bool,
-        images: &HashMap<i64, u32>,
-        categories: &HashMap<i64, u32>,
-    ) -> Instances {
-        let n = self
-            .rows
+    pub(super) fn groups(slots: &[Slot], use_cats: bool) -> GroupSet {
+        slots
             .iter()
-            .filter(|r| images.contains_key(&r.image) && categories.contains_key(&r.category))
-            .count();
+            .filter(|&&slot| slot != UNSELECTED)
+            .map(|&(image, category)| (image, if use_cats { category } else { 0 }))
+            .collect()
+    }
+
+    pub fn instances(&self, is_gt: bool, slots: &[Slot]) -> Instances {
+        let n = slots.iter().filter(|&&slot| slot != UNSELECTED).count();
         let geom = if n == self.rows.len() {
             GeomStore::SharedBboxes(Arc::clone(&self.boxes))
         } else {
             GeomStore::Bboxes(Vec::with_capacity(n))
         };
         let mut out = super::new_instances_with_geom(n, geom);
-        for (index, row) in self.rows.iter().enumerate() {
-            let (Some(&image), Some(&category)) =
-                (images.get(&row.image), categories.get(&row.category))
-            else {
+        for (index, (row, &(image, category))) in self.rows.iter().zip(slots).enumerate() {
+            if (image, category) == UNSELECTED {
                 continue;
-            };
+            }
             let (id, area, crowd) = match &self.ground_truth {
                 Some(fields) => {
                     let gt = &fields[index];
@@ -321,18 +321,13 @@ impl CompactBbox {
     fn parallel_pose_detections(
         &self,
         out: &mut Instances,
-        images: &HashMap<i64, u32>,
-        categories: &HashMap<i64, u32>,
+        slots: &[Slot],
         keep: &[bool],
     ) -> PyResult<bool> {
-        let rows: Vec<_> = self
-            .rows
+        let rows: Vec<_> = slots
             .iter()
             .enumerate()
-            .filter_map(|(index, row)| {
-                (images.contains_key(&row.image) && categories.contains_key(&row.category))
-                    .then_some(index)
-            })
+            .filter_map(|(index, &slot)| (slot != UNSELECTED).then_some(index))
             .collect();
         // Preserve the existing handling of absent/null geometry and empty inputs.
         if rows.is_empty()
@@ -427,11 +422,10 @@ impl CompactBbox {
         &self,
         out: &mut Instances,
         is_gt: bool,
-        images: &HashMap<i64, u32>,
-        categories: &HashMap<i64, u32>,
+        slots: &[Slot],
         keep: Option<&[bool]>,
     ) -> PyResult<()> {
-        if !is_gt && self.parallel_pose_detections(out, images, categories, keep.unwrap())? {
+        if !is_gt && self.parallel_pose_detections(out, slots, keep.unwrap())? {
             return Ok(());
         }
         let GeomStore::Keypoints {
@@ -451,8 +445,8 @@ impl CompactBbox {
             offsets.reserve_exact(out.ids.len());
         }
         let mut selected = 0;
-        for (index, row) in self.rows.iter().enumerate() {
-            if !images.contains_key(&row.image) || !categories.contains_key(&row.category) {
+        for (index, &slot) in slots.iter().enumerate() {
+            if slot == UNSELECTED {
                 continue;
             }
             if is_gt {
@@ -514,28 +508,24 @@ impl CompactBbox {
         &self,
         is_gt: bool,
         kind: IouType,
-        sizes: &HashMap<i64, (u32, u32)>,
-        images: &HashMap<i64, u32>,
-        categories: &HashMap<i64, u32>,
+        sizes: &IdMap<(u32, u32)>,
+        image_ids: &[i64],
+        slots: &[Slot],
+        categories: usize,
         boundary_dilation: f64,
         timings: &ExtractTimings,
-        opposing_groups: Option<&HashSet<(u32, u32)>>,
+        opposing_groups: Option<&GroupSet>,
         use_cats: bool,
         max_det: usize,
     ) -> PyResult<Instances> {
-        let mut out = self.instances(is_gt, images, categories);
+        let mut out = self.instances(is_gt, slots);
         out.geom = super::new_geometry(out.len(), kind);
         if kind == IouType::Keypoints {
             let start = Instant::now();
             let keep = (!is_gt).then(|| {
-                ufcoco_core::eval::detection_geometry_keep(
-                    &out,
-                    categories.len(),
-                    use_cats,
-                    max_det,
-                )
+                ufcoco_core::eval::detection_geometry_keep(&out, categories, use_cats, max_det)
             });
-            self.pose_instances(&mut out, is_gt, images, categories, keep.as_deref())?;
+            self.pose_instances(&mut out, is_gt, slots, keep.as_deref())?;
             let counter = if is_gt {
                 &timings.gt_read_ns
             } else {
@@ -546,8 +536,11 @@ impl CompactBbox {
         }
         let mask_count = out.len();
         let detection_keep = (!is_gt && kind != IouType::Keypoints).then(|| {
-            ufcoco_core::eval::detection_geometry_keep(&out, categories.len(), use_cats, max_det)
+            ufcoco_core::eval::detection_geometry_keep(&out, categories, use_cats, max_det)
         });
+        // Image sizes by slot, so the per-row geometry pass needs no hashing.
+        let sizes: Vec<Option<(u32, u32)>> =
+            image_ids.iter().map(|id| sizes.get(id).copied()).collect();
         std::thread::scope(|scope| -> PyResult<()> {
             let (tx, rx) = std::sync::mpsc::sync_channel(2);
             let worker = scope.spawn(|| {
@@ -562,9 +555,8 @@ impl CompactBbox {
             let start = Instant::now();
             let mut geometry = GeometryRows {
                 source: self,
-                sizes,
-                images,
-                categories,
+                sizes: &sizes,
+                slots,
                 chunk: Vec::with_capacity(if kind == IouType::Keypoints { 0 } else { CHUNK }),
                 sender: &tx,
                 timings,
@@ -826,13 +818,13 @@ impl<'de> Visitor<'de> for Counts {
 
 struct GeometryRows<'a> {
     source: &'a CompactBbox,
-    sizes: &'a HashMap<i64, (u32, u32)>,
-    images: &'a HashMap<i64, u32>,
-    categories: &'a HashMap<i64, u32>,
+    /// Image `(height, width)` by image slot; `None` when the image has no entry.
+    sizes: &'a [Option<(u32, u32)>],
+    slots: &'a [Slot],
     chunk: Vec<(RawSegm, u32, u32)>,
     sender: &'a std::sync::mpsc::SyncSender<Vec<(RawSegm, u32, u32)>>,
     timings: &'a ExtractTimings,
-    opposing_groups: Option<&'a HashSet<(u32, u32)>>,
+    opposing_groups: Option<&'a GroupSet>,
     use_cats: bool,
     detection_keep: Option<&'a [bool]>,
 }
@@ -863,16 +855,17 @@ impl<'de> Visitor<'de> for &mut GeometryRows<'_> {
 
     fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<(), A::Error> {
         let mut selected = 0;
-        for (index, row) in self.source.rows.iter().enumerate() {
-            if !self.images.contains_key(&row.image) || !self.categories.contains_key(&row.category)
-            {
+        for (index, (row, &(image, category))) in
+            self.source.rows.iter().zip(self.slots).enumerate()
+        {
+            if (image, category) == UNSELECTED {
                 seq.next_element::<serde::de::IgnoredAny>()?;
                 continue;
             }
             let record = seq
                 .next_element::<MaskGeometry>()?
                 .ok_or_else(|| serde::de::Error::custom("missing mask annotation"))?;
-            let (h, w) = self.sizes.get(&row.image).copied().ok_or_else(|| {
+            let (h, w) = self.sizes[image as usize].ok_or_else(|| {
                 serde::de::Error::custom(format!("no image entry for image_id {}", row.image))
             })?;
             let mut raw = record
@@ -881,14 +874,7 @@ impl<'de> Visitor<'de> for &mut GeometryRows<'_> {
             // Parse geometry and check image metadata even for unused masks.
             // Only the expensive rasterisation/storage is omitted. Crowds
             // and ignored annotations remain in the opposing group set.
-            let group = (
-                self.images[&row.image],
-                if self.use_cats {
-                    self.categories[&row.category]
-                } else {
-                    0
-                },
-            );
+            let group = (image, if self.use_cats { category } else { 0 });
             if self
                 .opposing_groups
                 .is_some_and(|groups| !groups.contains(&group))

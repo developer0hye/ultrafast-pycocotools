@@ -40,6 +40,58 @@ use ufcoco_core::rle::{self, Rle};
 /// the raw polygon buffer stays bounded on million-annotation datasets.
 const CHUNK: usize = 4096;
 
+/// Multiply-rotate hasher for integer annotation IDs and slot pairs.
+///
+/// Image/category slot maps and group sets are probed at least once per
+/// annotation. SipHash's collision resistance buys nothing for keys taken from
+/// the caller's own annotation files and showed up as the largest hashing cost
+/// when building compact instances. These maps are only probed, never
+/// iterated, so no output order depends on the hash function.
+#[derive(Default, Clone, Copy)]
+pub(crate) struct IdHasher(u64);
+
+impl IdHasher {
+    #[inline]
+    fn add(&mut self, value: u64) {
+        self.0 = (self.0.rotate_left(5) ^ value).wrapping_mul(0x517c_c1b7_2722_0a95);
+    }
+}
+
+impl std::hash::Hasher for IdHasher {
+    #[inline]
+    fn write(&mut self, bytes: &[u8]) {
+        for &byte in bytes {
+            self.add(u64::from(byte));
+        }
+    }
+    #[inline]
+    fn write_u32(&mut self, value: u32) {
+        self.add(u64::from(value));
+    }
+    #[inline]
+    fn write_u64(&mut self, value: u64) {
+        self.add(value);
+    }
+    #[inline]
+    fn write_i64(&mut self, value: i64) {
+        self.add(value as u64);
+    }
+    #[inline]
+    fn write_usize(&mut self, value: usize) {
+        self.add(value as u64);
+    }
+    #[inline]
+    fn finish(&self) -> u64 {
+        self.0
+    }
+}
+
+type IdBuild = std::hash::BuildHasherDefault<IdHasher>;
+/// Integer-ID keyed map; see [`IdHasher`].
+pub(crate) type IdMap<V> = HashMap<i64, V, IdBuild>;
+/// `(image slot, category slot)` pairs; see [`IdHasher`].
+pub(crate) type GroupSet = HashSet<(u32, u32), IdBuild>;
+
 #[cfg(feature = "alloc-stats")]
 #[global_allocator]
 static GLOBAL: alloc::Counting = alloc::Counting;
@@ -318,7 +370,7 @@ fn new_instances_with_geom(n: usize, geom: GeomStore) -> Instances {
     }
 }
 
-fn instance_groups(instances: &Instances, use_cats: bool) -> HashSet<(u32, u32)> {
+fn instance_groups(instances: &Instances, use_cats: bool) -> GroupSet {
     instances
         .img_slot
         .iter()
@@ -415,9 +467,9 @@ fn extract_both(
     gt_anns: &Bound<'_, PyList>,
     dt_anns: &Bound<'_, PyList>,
     iou_type: IouType,
-    img_sizes: &HashMap<i64, (u32, u32)>,
-    img_slot: &HashMap<i64, u32>,
-    cat_slot: &HashMap<i64, u32>,
+    img_sizes: &IdMap<(u32, u32)>,
+    img_slot: &IdMap<u32>,
+    cat_slot: &IdMap<u32>,
     boundary_dilation: f64,
 ) -> PyResult<(Instances, Instances, ExtractTimings)> {
     let keys = Keys::new(py);
@@ -520,9 +572,9 @@ fn read_annotations(
     anns: &Bound<'_, PyList>,
     is_gt: bool,
     iou_type: IouType,
-    img_sizes: &HashMap<i64, (u32, u32)>,
-    img_slot: &HashMap<i64, u32>,
-    cat_slot: &HashMap<i64, u32>,
+    img_sizes: &IdMap<(u32, u32)>,
+    img_slot: &IdMap<u32>,
+    cat_slot: &IdMap<u32>,
     keys: &Keys<'_>,
     needs_mask: bool,
     inst: &mut Instances,
@@ -668,7 +720,7 @@ impl Evaluator {
         py: Python<'_>,
         gt_anns: &Bound<'_, PyAny>,
         dt_anns: &Bound<'_, PyAny>,
-        img_sizes: HashMap<i64, (u32, u32)>,
+        img_sizes: IdMap<(u32, u32)>,
         img_ids: Vec<i64>,
         cat_ids: Vec<i64>,
         iou_thrs: Vec<f64>,
@@ -682,12 +734,12 @@ impl Evaluator {
         boundary_dilation: f64,
     ) -> PyResult<Self> {
         let it = iou_type_from_str(iou_type)?;
-        let img_map: HashMap<i64, u32> = img_ids
+        let img_map: IdMap<u32> = img_ids
             .iter()
             .enumerate()
             .map(|(i, &v)| (v, i as u32))
             .collect();
-        let cat_map: HashMap<i64, u32> = cat_ids
+        let cat_map: IdMap<u32> = cat_ids
             .iter()
             .enumerate()
             .map(|(i, &v)| (v, i as u32))
@@ -717,15 +769,21 @@ impl Evaluator {
             boundary_dilation,
         )?;
         let mask_geometry = matches!(it, IouType::Segm | IouType::Boundary);
+        let gt_slots = compact_gt
+            .as_ref()
+            .map(|source| source.slots(&img_map, &cat_map));
+        let dt_slots = compact_dt
+            .as_ref()
+            .map(|source| source.slots(&img_map, &cat_map));
         let dt_groups = (mask_geometry && compact_gt.is_some()).then(|| {
-            compact_dt.as_ref().map_or_else(
+            dt_slots.as_deref().map_or_else(
                 || instance_groups(&dt, use_cats),
-                |source| source.groups(&img_map, &cat_map, use_cats),
+                |slots| compact::CompactBbox::groups(slots, use_cats),
             )
         });
-        if let Some(source) = compact_gt {
+        if let (Some(source), Some(slots)) = (compact_gt, gt_slots.as_deref()) {
             gt = if it == IouType::Bbox {
-                source.instances(true, &img_map, &cat_map)
+                source.instances(true, slots)
             } else {
                 let source = &*source;
                 py.detach(|| {
@@ -733,8 +791,9 @@ impl Evaluator {
                         true,
                         it,
                         &img_sizes,
-                        &img_map,
-                        &cat_map,
+                        &img_ids,
+                        slots,
+                        cat_map.len(),
                         boundary_dilation,
                         &extract,
                         dt_groups.as_ref(),
@@ -746,9 +805,10 @@ impl Evaluator {
         }
         let gt_groups =
             (mask_geometry && compact_dt.is_some()).then(|| instance_groups(&gt, use_cats));
-        if let Some(source) = compact_dt {
+        drop(gt_slots);
+        if let (Some(source), Some(slots)) = (compact_dt, dt_slots.as_deref()) {
             dt = if it == IouType::Bbox {
-                source.instances(false, &img_map, &cat_map)
+                source.instances(false, slots)
             } else {
                 let source = &*source;
                 py.detach(|| {
@@ -756,8 +816,9 @@ impl Evaluator {
                         false,
                         it,
                         &img_sizes,
-                        &img_map,
-                        &cat_map,
+                        &img_ids,
+                        slots,
+                        cat_map.len(),
                         boundary_dilation,
                         &extract,
                         gt_groups.as_ref(),
