@@ -540,7 +540,7 @@ pub fn rle_fr_poly(xy: &[f64], h: u32, w: u32) -> Rle {
 
 /// Reusable working buffers for [`rle_fr_poly_into`].
 ///
-/// Rasterising a polygon needs seven temporary vectors. A COCO-scale
+/// Rasterising a polygon needs five temporary vectors. A COCO-scale
 /// segmentation run does that ~70k times, and the allocator traffic was 80% of
 /// the segm setup cost before these were hoisted out; hand one of these per
 /// worker thread (`rayon`'s `map_init`) and the allocations disappear.
@@ -548,8 +548,6 @@ pub fn rle_fr_poly(xy: &[f64], h: u32, w: u32) -> Rle {
 pub struct PolyScratch {
     x: Vec<i32>,
     y: Vec<i32>,
-    u: Vec<i32>,
-    v: Vec<i32>,
     px: Vec<i32>,
     py: Vec<i32>,
     a: Vec<u32>,
@@ -557,6 +555,16 @@ pub struct PolyScratch {
 }
 
 /// `rleFrPoly`, reusing caller-owned scratch buffers.
+///
+/// This streams the upstream three-pass algorithm: each traced edge point is
+/// compared with the previous one as it is produced, so the upsampled trace is
+/// never stored. Where upstream computes `xd = (u + 0.5) / 5 - 0.5` for every
+/// column change and keeps it only when `floor(xd) == xd`, this tests
+/// `u mod 5 == 2` first. For every `i32` `u` the two tests agree: the quotient
+/// is exactly `k + 0.5` when `u = 5k + 2`, and otherwise lies at least 0.2 from
+/// an integer, far beyond one rounding error at this magnitude. The kept
+/// crossings use the unchanged floating-point expressions, and
+/// `rle_fr_poly_reference` in the tests checks the result bit for bit.
 pub fn rle_fr_poly_into(xy: &[f64], h: u32, w: u32, s: &mut PolyScratch) -> Rle {
     let k = xy.len() / 2;
     if k == 0 {
@@ -578,13 +586,43 @@ pub fn rle_fr_poly_into(xy: &[f64], h: u32, w: u32, s: &mut PolyScratch) -> Rle 
     }
     y.push(y[0]);
 
+    let px = &mut s.px;
+    let py = &mut s.py;
+    px.clear();
+    py.clear();
+    // `w - 1` on C's unsigned `siz`: for w == 0 it wraps to a huge value
+    // rather than -1, which changes the comparison. Reproduce it.
+    let x_max = (w as u64).wrapping_sub(1) as f64;
+    let mut previous: Option<(i32, i32)> = None;
+    // Keep the points where the trace crosses a column boundary, downsampled
+    // back to pixel coordinates.
+    let mut point = |u: i32, v: i32| {
+        if let Some((pu, pv)) = previous {
+            if u != pu {
+                let column = if u < pu { u } else { u.wrapping_sub(1) };
+                if column.rem_euclid(5) == 2 {
+                    let xd = (column as f64 + 0.5) / scale - 0.5;
+                    if !(xd < 0.0 || xd > x_max) {
+                        let mut yd = (if v < pv { v } else { pv }) as f64;
+                        yd = (yd + 0.5) / scale - 0.5;
+                        if yd < 0.0 {
+                            yd = 0.0;
+                        } else if yd > h as f64 {
+                            yd = h as f64;
+                        }
+                        yd = yd.ceil();
+                        px.push(c_i32(xd));
+                        py.push(c_i32(yd));
+                    }
+                }
+            }
+        }
+        previous = Some((u, v));
+    };
+
     // Walk each edge with a Bresenham-ish trace. `s` is deliberately left to
     // divide by zero on a degenerate edge (NaN/inf), because c_i32 then
     // reproduces the C result; see c_i32.
-    let u = &mut s.u;
-    let v = &mut s.v;
-    u.clear();
-    v.clear();
     for j in 0..k {
         let (mut xs, mut xe) = (x[j], x[j + 1]);
         let (mut ys, mut ye) = (y[j], y[j + 1]);
@@ -599,51 +637,15 @@ pub fn rle_fr_poly_into(xy: &[f64], h: u32, w: u32, s: &mut PolyScratch) -> Rle 
             let s = (ye - ys) as f64 / dx as f64;
             for d in 0..=dx {
                 let t = if flip { dx - d } else { d };
-                u.push(t.wrapping_add(xs));
-                v.push(c_i32(ys as f64 + s * t as f64 + 0.5));
+                point(t.wrapping_add(xs), c_i32(ys as f64 + s * t as f64 + 0.5));
             }
         } else {
             let s = (xe - xs) as f64 / dy as f64;
             for d in 0..=dy {
                 let t = if flip { dy - d } else { d };
-                v.push(t.wrapping_add(ys));
-                u.push(c_i32(xs as f64 + s * t as f64 + 0.5));
+                point(c_i32(xs as f64 + s * t as f64 + 0.5), t.wrapping_add(ys));
             }
         }
-    }
-
-    // Keep the points where the trace crosses a column boundary, downsampled
-    // back to pixel coordinates.
-    let kk = u.len();
-    let px = &mut s.px;
-    let py = &mut s.py;
-    px.clear();
-    py.clear();
-    for j in 1..kk {
-        if u[j] == u[j - 1] {
-            continue;
-        }
-        let mut xd = (if u[j] < u[j - 1] {
-            u[j]
-        } else {
-            u[j].wrapping_sub(1)
-        }) as f64;
-        xd = (xd + 0.5) / scale - 0.5;
-        // `w - 1` on C's unsigned `siz`: for w == 0 it wraps to a huge value
-        // rather than -1, which changes the comparison. Reproduce it.
-        if xd.floor() != xd || xd < 0.0 || xd > (w as u64).wrapping_sub(1) as f64 {
-            continue;
-        }
-        let mut yd = (if v[j] < v[j - 1] { v[j] } else { v[j - 1] }) as f64;
-        yd = (yd + 0.5) / scale - 0.5;
-        if yd < 0.0 {
-            yd = 0.0;
-        } else if yd > h as f64 {
-            yd = h as f64;
-        }
-        yd = yd.ceil();
-        px.push(c_i32(xd));
-        py.push(c_i32(yd));
     }
 
     // Column-major linear indices of the crossings, plus a sentinel at h*w.
@@ -820,6 +822,213 @@ pub fn rle_to_boundary(rle: &Rle, dilation_ratio: f64) -> Rle {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[derive(Default)]
+    struct ReferenceScratch {
+        x: Vec<i32>,
+        y: Vec<i32>,
+        u: Vec<i32>,
+        v: Vec<i32>,
+        px: Vec<i32>,
+        py: Vec<i32>,
+        a: Vec<u32>,
+    }
+
+    /// The original two-pass `rleFrPoly` port, kept as the bit-exact reference
+    /// for the streaming rasteriser.
+    fn rle_fr_poly_reference(xy: &[f64], h: u32, w: u32) -> Rle {
+        let s = &mut ReferenceScratch::default();
+        let k = xy.len() / 2;
+        if k == 0 {
+            return Rle::new(h, w, vec![(h as u64 * w as u64) as u32]);
+        }
+        let scale = 5.0f64;
+
+        // Upsample and close the polygon.
+        let x = &mut s.x;
+        let y = &mut s.y;
+        x.clear();
+        y.clear();
+        for j in 0..k {
+            x.push(c_i32(scale * xy[j * 2] + 0.5));
+        }
+        x.push(x[0]);
+        for j in 0..k {
+            y.push(c_i32(scale * xy[j * 2 + 1] + 0.5));
+        }
+        y.push(y[0]);
+
+        // Walk each edge with a Bresenham-ish trace. `s` is deliberately left to
+        // divide by zero on a degenerate edge (NaN/inf), because c_i32 then
+        // reproduces the C result; see c_i32.
+        let u = &mut s.u;
+        let v = &mut s.v;
+        u.clear();
+        v.clear();
+        for j in 0..k {
+            let (mut xs, mut xe) = (x[j], x[j + 1]);
+            let (mut ys, mut ye) = (y[j], y[j + 1]);
+            let dx = xe.wrapping_sub(xs).wrapping_abs();
+            let dy = ys.wrapping_sub(ye).wrapping_abs();
+            let flip = (dx >= dy && xs > xe) || (dx < dy && ys > ye);
+            if flip {
+                std::mem::swap(&mut xs, &mut xe);
+                std::mem::swap(&mut ys, &mut ye);
+            }
+            if dx >= dy {
+                let s = (ye - ys) as f64 / dx as f64;
+                for d in 0..=dx {
+                    let t = if flip { dx - d } else { d };
+                    u.push(t.wrapping_add(xs));
+                    v.push(c_i32(ys as f64 + s * t as f64 + 0.5));
+                }
+            } else {
+                let s = (xe - xs) as f64 / dy as f64;
+                for d in 0..=dy {
+                    let t = if flip { dy - d } else { d };
+                    v.push(t.wrapping_add(ys));
+                    u.push(c_i32(xs as f64 + s * t as f64 + 0.5));
+                }
+            }
+        }
+
+        // Keep the points where the trace crosses a column boundary, downsampled
+        // back to pixel coordinates.
+        let kk = u.len();
+        let px = &mut s.px;
+        let py = &mut s.py;
+        px.clear();
+        py.clear();
+        for j in 1..kk {
+            if u[j] == u[j - 1] {
+                continue;
+            }
+            let mut xd = (if u[j] < u[j - 1] {
+                u[j]
+            } else {
+                u[j].wrapping_sub(1)
+            }) as f64;
+            xd = (xd + 0.5) / scale - 0.5;
+            // `w - 1` on C's unsigned `siz`: for w == 0 it wraps to a huge value
+            // rather than -1, which changes the comparison. Reproduce it.
+            if xd.floor() != xd || xd < 0.0 || xd > (w as u64).wrapping_sub(1) as f64 {
+                continue;
+            }
+            let mut yd = (if v[j] < v[j - 1] { v[j] } else { v[j - 1] }) as f64;
+            yd = (yd + 0.5) / scale - 0.5;
+            if yd < 0.0 {
+                yd = 0.0;
+            } else if yd > h as f64 {
+                yd = h as f64;
+            }
+            yd = yd.ceil();
+            px.push(c_i32(xd));
+            py.push(c_i32(yd));
+        }
+
+        // Column-major linear indices of the crossings, plus a sentinel at h*w.
+        let m = px.len();
+        let a = &mut s.a;
+        a.clear();
+        for j in 0..m {
+            // C does the multiply in `int` and then casts to `uint`; wrapping
+            // keeps us identical on the (pathological) overflow path.
+            a.push((px[j].wrapping_mul(h as i32).wrapping_add(py[j])) as u32);
+        }
+        a.push((h as u64 * w as u64) as u32);
+        a.sort_unstable();
+
+        // Delta-encode, then collapse zero-length runs.
+        let mut p: u32 = 0;
+        for v in a.iter_mut() {
+            let t = *v;
+            *v = v.wrapping_sub(p);
+            p = t;
+        }
+        let k2 = a.len();
+        let mut b: Vec<u32> = Vec::with_capacity(k2);
+        let mut j = 0usize;
+        b.push(a[j]);
+        j += 1;
+        while j < k2 {
+            if a[j] > 0 {
+                b.push(a[j]);
+                j += 1;
+            } else {
+                j += 1;
+                if j < k2 {
+                    let last = b.len() - 1;
+                    b[last] = b[last].wrapping_add(a[j]);
+                    j += 1;
+                }
+            }
+        }
+        Rle {
+            h,
+            w,
+            cnts: tight(b),
+        }
+    }
+
+    /// Deterministic polygons covering in-image, clipped, negative, sub-pixel,
+    /// degenerate and far-out-of-image coordinates. Non-finite coordinates
+    /// trace ~2^31 points on both implementations, as in the C original.
+    fn polygon_cases() -> Vec<(Vec<f64>, u32, u32)> {
+        let mut state = 0x9e37_79b9_7f4a_7c15u64;
+        let mut next = move || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+        let mut cases = vec![
+            (vec![], 5, 5),
+            (vec![1.0, 1.0], 5, 5),
+            (vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 4, 4),
+            (vec![0.0, 0.0, 10.0, 0.0, 10.0, 10.0], 0, 0),
+            (vec![-3.0, -2.0, 40.0, 1.5, 12.25, 50.0], 32, 24),
+            (vec![-900.5, 1.0, 3.0, 2400.25, 5.0, -1.0], 8, 8),
+            (vec![0.1, 0.1, 0.3, 0.1, 0.3, 0.3, 0.1, 0.3], 2, 2),
+        ];
+        for _ in 0..4000 {
+            let (h, w) = (1 + (next() % 300) as u32, 1 + (next() % 300) as u32);
+            let n = 3 + (next() % 30) as usize;
+            // Full-image, small and far-out-of-image polygons.
+            let scale: f64 = [1.0, 0.37, 11.0][(next() % 3) as usize];
+            let xy = (0..n * 2)
+                .map(|i| {
+                    let limit = if i % 2 == 0 { w } else { h } as f64;
+                    let r = (next() >> 11) as f64 / (1u64 << 53) as f64;
+                    (r * 1.4 - 0.2) * limit * scale
+                })
+                .collect();
+            cases.push((xy, h, w));
+        }
+        cases
+    }
+
+    #[test]
+    fn streaming_rasteriser_matches_the_reference_bit_for_bit() {
+        let mut scratch = PolyScratch::default();
+        for (xy, h, w) in polygon_cases() {
+            let expected = rle_fr_poly_reference(&xy, h, w);
+            assert_eq!(
+                rle_fr_poly_into(&xy, h, w, &mut scratch),
+                expected,
+                "{xy:?} {h}x{w}"
+            );
+        }
+    }
+
+    #[test]
+    fn column_residue_test_matches_the_floor_check_for_every_residue() {
+        for column in
+            (-1_000_000..1_000_000).chain([i32::MIN, i32::MIN + 1, i32::MAX - 1, i32::MAX])
+        {
+            let xd = (column as f64 + 0.5) / 5.0 - 0.5;
+            assert_eq!(xd.floor() == xd, column.rem_euclid(5) == 2, "{column}");
+        }
+    }
 
     #[test]
     fn encode_decode_roundtrip() {

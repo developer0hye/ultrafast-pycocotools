@@ -10,7 +10,8 @@ use std::fmt;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Instant;
-use ufcoco_core::eval::{GeomStore, Instances, IouType};
+use ufcoco_core::eval::{GeomStore, Instances, IouType, MaskRef};
+use ufcoco_core::rle;
 
 use super::{ExtractTimings, GroupSet, IdMap, RawSegm, CHUNK};
 
@@ -69,8 +70,8 @@ struct Record<'a> {
     iscrowd: Option<Crowd>,
     // Presence tracking makes duplicate geometry fields take the ordinary JSON
     // loader's last-value path, just like duplicate scalar fields already do.
-    #[serde(default, rename = "segmentation")]
-    _segmentation: Option<serde::de::IgnoredAny>,
+    #[serde(default, borrow)]
+    segmentation: Option<&'a serde_json::value::RawValue>,
     #[serde(default, borrow, rename = "keypoints")]
     keypoints: Option<&'a serde_json::value::RawValue>,
     #[serde(default, borrow)]
@@ -103,14 +104,22 @@ struct PoseRanges {
     count: Option<std::ops::Range<usize>>,
 }
 
+/// `(offset, length)` of a row's `segmentation` value in the snapshot, or
+/// [`NO_SEGMENTATION`] when the field is absent or null.
+type SegmSpan = (u32, u32);
+const NO_SEGMENTATION: SegmSpan = (u32::MAX, 0);
+
 type Columns = (
     Vec<Row>,
     Option<Vec<GroundTruth>>,
     Vec<[f64; 4]>,
     Vec<PoseRanges>,
+    Vec<SegmSpan>,
 );
 
-struct Rows(bool, usize);
+/// `(results file, snapshot base address, record segmentation spans)`.
+/// Spans use 32-bit offsets and are skipped for snapshots of 4 GiB or more.
+struct Rows(bool, usize, bool);
 impl<'de> DeserializeSeed<'de> for Rows {
     type Value = Columns;
     fn deserialize<D: serde::Deserializer<'de>>(self, d: D) -> Result<Self::Value, D::Error> {
@@ -127,6 +136,7 @@ impl<'de> Visitor<'de> for Rows {
         let mut ground_truth = if self.0 { None } else { Some(Vec::new()) };
         let mut boxes = Vec::new();
         let mut pose = Vec::new();
+        let mut segm = Vec::new();
         let mut ids = HashSet::new();
         while let Some(record) = seq.next_element::<Record>()? {
             if self.0 && record.caption {
@@ -160,6 +170,14 @@ impl<'de> Visitor<'de> for Rows {
             } else if !pose.is_empty() {
                 pose.push(PoseRanges::default());
             }
+            if let (true, Some(value)) = (self.2, record.segmentation) {
+                // Offsets fit: the caller enables spans only below 4 GiB.
+                let text = value.get();
+                segm.resize(rows.len(), NO_SEGMENTATION);
+                segm.push(((text.as_ptr() as usize - self.1) as u32, text.len() as u32));
+            } else if !segm.is_empty() {
+                segm.push(NO_SEGMENTATION);
+            }
             let bbox = record.bbox.map(|x| x.0);
             let area = if self.0 {
                 bbox[2] * bbox[3]
@@ -188,13 +206,15 @@ impl<'de> Visitor<'de> for Rows {
             fields.shrink_to_fit();
         }
         pose.shrink_to_fit();
-        Ok((rows, ground_truth, boxes, pose))
+        segm.shrink_to_fit();
+        Ok((rows, ground_truth, boxes, pose, segm))
     }
 }
 
 struct Dataset<'py> {
     py: Python<'py>,
     raw_base: usize,
+    segm_spans: bool,
 }
 impl<'de, 'py> DeserializeSeed<'de> for Dataset<'py> {
     type Value = (Py<PyDict>, Columns);
@@ -218,7 +238,7 @@ impl<'de, 'py> Visitor<'de> for Dataset<'py> {
                         "duplicate annotation arrays require ordinary JSON loading",
                     ));
                 }
-                rows = Some(map.next_value_seed(Rows(false, self.raw_base))?);
+                rows = Some(map.next_value_seed(Rows(false, self.raw_base, self.segm_spans))?);
                 metadata
                     .set_item("annotations", self.py.None())
                     .map_err(serde::de::Error::custom)?;
@@ -242,12 +262,16 @@ impl<'de, 'py> Visitor<'de> for Dataset<'py> {
 #[pyclass(module = "ultrafast_pycocotools._ufcoco")]
 pub struct CompactBbox {
     // Keep an owned snapshot: changing or deleting the input file cannot change later API reads.
-    raw: Vec<u8>,
+    // Shared with evaluators that decode masks from it lazily.
+    raw: Arc<Vec<u8>>,
     rows: Vec<Row>,
     ground_truth: Option<Vec<GroundTruth>>,
     boxes: Arc<Vec<[f64; 4]>>,
     results: bool,
     pose: Vec<PoseRanges>,
+    /// Segmentation value spans by row (shorter when trailing rows have none),
+    /// or `None` when the snapshot is too large for 32-bit offsets.
+    segm: Option<Vec<SegmSpan>>,
 }
 
 /// `(image slot, category slot)` for one file row, or [`UNSELECTED`] when
@@ -501,6 +525,93 @@ impl CompactBbox {
         Ok(())
     }
 
+    /// Segmentation masks from the spans recorded at load time.
+    ///
+    /// Each selected row's `segmentation` value is parsed on its own, in
+    /// parallel, instead of re-parsing the whole file. Unused rows are still
+    /// parsed so malformed geometry is rejected exactly as before. A plain
+    /// compressed `counts` string is kept as a reference into the snapshot and
+    /// decoded by the engine when an IoU needs it; every other form is
+    /// rasterised here with the same routine as the pipelined path.
+    fn span_masks(
+        &self,
+        spans: &[SegmSpan],
+        sizes: &[Option<(u32, u32)>],
+        slots: &[Slot],
+        opposing_groups: Option<&GroupSet>,
+        use_cats: bool,
+        detection_keep: Option<&[bool]>,
+    ) -> PyResult<Vec<MaskRef>> {
+        let rows: Vec<u32> = (0..slots.len() as u32)
+            .filter(|&i| slots[i as usize] != UNSELECTED)
+            .collect();
+        let base = self.raw.as_ptr() as usize;
+        let mask = |selected: usize, scratch: &mut rle::PolyScratch| -> Result<MaskRef, String> {
+            let index = rows[selected] as usize;
+            let (image, category) = slots[index];
+            let (offset, length) = spans.get(index).copied().unwrap_or(NO_SEGMENTATION);
+            let parsed = if (offset, length) == NO_SEGMENTATION {
+                None
+            } else if let Some((coords, ends)) = super::pose_numbers::decode_polygons(
+                &self.raw[offset as usize..offset as usize + length as usize],
+            ) {
+                Some(SpanSegm::Raw(RawSegm::Poly { coords, ends }))
+            } else {
+                let value = &self.raw[offset as usize..offset as usize + length as usize];
+                let mut de = serde_json::Deserializer::from_slice(value);
+                let parsed = SpanGeometry(base)
+                    .deserialize(&mut de)
+                    .and_then(|parsed| de.end().map(|()| parsed))
+                    .map_err(|e| e.to_string())?;
+                Some(parsed)
+            };
+            let (h, w) = sizes[image as usize]
+                .ok_or_else(|| format!("no image entry for image_id {}", self.rows[index].image))?;
+            let group = (image, if use_cats { category } else { 0 });
+            if opposing_groups.is_some_and(|groups| !groups.contains(&group))
+                || detection_keep.is_some_and(|keep| !keep[selected])
+            {
+                return Ok(MaskRef::Ready(Default::default()));
+            }
+            Ok(match parsed {
+                Some(SpanSegm::Encoded {
+                    start,
+                    len,
+                    escaped,
+                }) => MaskRef::Encoded {
+                    start,
+                    len,
+                    h,
+                    w,
+                    escaped,
+                },
+                Some(SpanSegm::Raw(raw)) => MaskRef::Ready(super::raw_to_rle(&raw, h, w, scratch)),
+                None => MaskRef::Ready(super::raw_to_rle(
+                    &RawSegm::FromBbox(self.boxes[index]),
+                    h,
+                    w,
+                    scratch,
+                )),
+            })
+        };
+        let parallel: Result<Vec<MaskRef>, String> = (0..rows.len())
+            .into_par_iter()
+            .map_init(rle::PolyScratch::default, |scratch, selected| {
+                mask(selected, scratch)
+            })
+            .collect();
+        parallel
+            .or_else(|_| -> Result<Vec<MaskRef>, String> {
+                // Report the first failing row in file order, as the sequential path does.
+                let mut scratch = rle::PolyScratch::default();
+                for selected in 0..rows.len() {
+                    mask(selected, &mut scratch)?;
+                }
+                unreachable!("a parallel mask failure must fail sequentially")
+            })
+            .map_err(PyValueError::new_err)
+    }
+
     /// Read only the requested geometry from the immutable JSON snapshot.
     /// No Python annotation dictionaries or indexes are needed for evaluation.
     #[allow(clippy::too_many_arguments)]
@@ -541,6 +652,28 @@ impl CompactBbox {
         // Image sizes by slot, so the per-row geometry pass needs no hashing.
         let sizes: Vec<Option<(u32, u32)>> =
             image_ids.iter().map(|id| sizes.get(id).copied()).collect();
+        if let (IouType::Segm, Some(spans)) = (kind, &self.segm) {
+            let start = Instant::now();
+            let masks = self.span_masks(
+                spans,
+                &sizes,
+                slots,
+                opposing_groups,
+                use_cats,
+                detection_keep.as_deref(),
+            )?;
+            out.geom = GeomStore::EncodedMasks {
+                raw: Arc::clone(&self.raw),
+                masks,
+            };
+            let counter = if is_gt {
+                &timings.gt_read_ns
+            } else {
+                &timings.dt_read_ns
+            };
+            counter.fetch_add(start.elapsed().as_nanos() as u64, Ordering::Relaxed);
+            return Ok(out);
+        }
         std::thread::scope(|scope| -> PyResult<()> {
             let (tx, rx) = std::sync::mpsc::sync_channel(2);
             let worker = scope.spawn(|| {
@@ -596,6 +729,90 @@ impl CompactBbox {
 struct MaskGeometry {
     #[serde(default)]
     segmentation: Option<RawSegm>,
+}
+
+/// A `segmentation` value parsed from its own span.
+enum SpanSegm {
+    /// A compressed `counts` string at `raw[start..start + len]`; see
+    /// [`MaskRef::Encoded`] for `escaped`.
+    Encoded {
+        start: usize,
+        len: u32,
+        escaped: bool,
+    },
+    Raw(RawSegm),
+}
+
+/// Parse one `segmentation` value like [`RawSegm`], but keep an unescaped
+/// compressed `counts` string as a snapshot offset. The field is the address
+/// of the snapshot start.
+struct SpanGeometry(usize);
+impl<'de> DeserializeSeed<'de> for SpanGeometry {
+    type Value = SpanSegm;
+    fn deserialize<D: Deserializer<'de>>(self, d: D) -> Result<SpanSegm, D::Error> {
+        d.deserialize_any(self)
+    }
+}
+impl<'de> Visitor<'de> for SpanGeometry {
+    type Value = SpanSegm;
+    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("polygon rings or an RLE object")
+    }
+    fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<SpanSegm, A::Error> {
+        let mut coords = Vec::new();
+        let mut ends = Vec::new();
+        while let Some(ring) = seq.next_element::<Vec<Coordinate>>()? {
+            coords.extend(ring.into_iter().map(|value| value.0));
+            ends.push(coords.len() as u32);
+        }
+        Ok(SpanSegm::Raw(RawSegm::Poly { coords, ends }))
+    }
+    // Callers try `pose_numbers::decode_polygons` on the span first.
+    fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<SpanSegm, A::Error> {
+        let mut counts = None;
+        while let Some(key) = map.next_key::<MaskField>()? {
+            match key {
+                MaskField::Counts => {
+                    let value: &'de serde_json::value::RawValue = map.next_value()?;
+                    counts = Some(span_counts(value, self.0).map_err(serde::de::Error::custom)?);
+                }
+                MaskField::Other => {
+                    map.next_value::<serde::de::IgnoredAny>()?;
+                }
+            }
+        }
+        counts.ok_or_else(|| serde::de::Error::custom("RLE segmentation is missing counts"))
+    }
+}
+
+/// Classify a `counts` value from its validated JSON text. A string whose only
+/// escapes are `\\` pairs stays in the snapshot; any other form is decoded
+/// with the same [`Counts`] visitor as the whole-file path.
+fn span_counts(value: &serde_json::value::RawValue, base: usize) -> Result<SpanSegm, String> {
+    let text = value.get().as_bytes();
+    if let [b'"', inner @ .., b'"'] = text {
+        let mut escaped = false;
+        let mut plain_pairs_only = true;
+        let mut bytes = inner.iter();
+        while let Some(&byte) = bytes.next() {
+            if byte == b'\\' {
+                escaped = true;
+                plain_pairs_only &= bytes.next() == Some(&b'\\');
+            }
+        }
+        if plain_pairs_only {
+            return Ok(SpanSegm::Encoded {
+                start: inner.as_ptr() as usize - base,
+                len: inner.len() as u32,
+                escaped,
+            });
+        }
+    }
+    let mut de = serde_json::Deserializer::from_str(value.get());
+    Counts
+        .deserialize(&mut de)
+        .map(SpanSegm::Raw)
+        .map_err(|e| e.to_string())
 }
 
 // Stream coordinates straight into evaluator storage; validate skipped rows too.
@@ -1039,30 +1256,33 @@ pub fn load_compact_bbox(
     results: bool,
 ) -> PyResult<(Py<PyDict>, CompactBbox)> {
     let raw = std::fs::read(path).map_err(|e| PyIOError::new_err(e.to_string()))?;
+    let segm_spans = u32::try_from(raw.len()).is_ok_and(|n| n < u32::MAX);
     let mut de = serde_json::Deserializer::from_slice(&raw);
     let parsed = if results {
-        Rows(true, raw.as_ptr() as usize)
+        Rows(true, raw.as_ptr() as usize, segm_spans)
             .deserialize(&mut de)
             .map(|rows| (PyDict::new(py).unbind(), rows))
     } else {
         Dataset {
             py,
             raw_base: raw.as_ptr() as usize,
+            segm_spans,
         }
         .deserialize(&mut de)
     };
-    let (metadata, (rows, ground_truth, boxes, pose)) =
+    let (metadata, (rows, ground_truth, boxes, pose, segm)) =
         parsed.map_err(|e| PyValueError::new_err(e.to_string()))?;
     de.end().map_err(|e| PyValueError::new_err(e.to_string()))?;
     Ok((
         metadata,
         CompactBbox {
-            raw,
+            raw: Arc::new(raw),
             rows,
             ground_truth,
             boxes: Arc::new(boxes),
             results,
             pose,
+            segm: segm_spans.then_some(segm),
         },
     ))
 }

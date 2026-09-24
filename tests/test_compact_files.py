@@ -378,3 +378,56 @@ def test_mask_cap_preserves_ties_and_reloads_geometry_when_limit_grows(tmp_path,
                 for key in ('dtIds', 'gtIds', 'dtMatches', 'gtMatches', 'dtIgnore', 'gtIgnore'):
                     np.testing.assert_array_equal(actual[key], expected[key])
         assert gt._compact is not None and dt._compact is not None
+
+
+@pytest.mark.parametrize('use_cats', [0, 1])
+def test_segmentation_spans_keep_escaped_counts_exact(tmp_path, use_cats):
+    # The RLE alphabet contains a backslash, which JSON escapes. Compact files
+    # keep such strings in the snapshot and decode them lazily; strings with any
+    # other escape take the ordinary decoder. Both must match pycocotools.
+    import numpy as np
+    from pycocotools import mask as ref_mask
+    rng = np.random.default_rng(7)
+    h, w = 96, 128
+    images = [{'id': i, 'height': h, 'width': w} for i in (1, 2, 3)]
+    annotations, dets = [], []
+    for i in range(90):
+        image, category = 1 + i % 3, 1 + i % 2
+        x, y = int(rng.integers(0, w - 40)), int(rng.integers(0, h - 40))
+        bw, bh = int(rng.integers(6, 40)), int(rng.integers(6, 40))
+        annotations.append({'id': i + 1, 'image_id': image, 'category_id': category,
+                            'bbox': [x, y, bw, bh], 'area': bw * bh, 'iscrowd': 0,
+                            'segmentation': [[x, y, x + bw, y, x + bw, y + bh, x, y + bh]]})
+        for _ in range(2):
+            m = np.zeros((h, w), np.uint8)
+            dx, dy = int(rng.integers(-4, 5)), int(rng.integers(-4, 5))
+            m[max(y + dy, 0):y + dy + bh, max(x + dx, 0):x + dx + bw] = 1
+            m[rng.integers(0, h, 25), rng.integers(0, w, 25)] = 1
+            rle = ref_mask.encode(np.asfortranarray(m))
+            # A file bbox, as detectors write it; its area differs from the mask area.
+            dets.append({'image_id': image, 'category_id': category, 'score': float(rng.random()),
+                         'bbox': [x + dx, y + dy, bw, bh],
+                         'segmentation': {'size': [h, w], 'counts': rle['counts'].decode()}})
+    data = {'images': images, 'annotations': annotations, 'categories': [{'id': 1}, {'id': 2}]}
+    escaped = [i for i, d in enumerate(dets) if '\\' in d['segmentation']['counts']]
+    assert len(escaped) > 10
+    gp, dp = tmp_path / 'gt.json', tmp_path / 'dt.json'
+    gp.write_text(json.dumps(data))
+    text = json.dumps(dets)
+    # One string uses a unicode escape for its backslash instead of a pair.
+    first = json.dumps(dets[escaped[0]]['segmentation']['counts'])
+    text = text.replace(first, first.replace('\\\\', '\\u005c'), 1)
+    assert '\\u005c' in text
+    dp.write_text(text)
+
+    def tweak(params):
+        params.useCats = use_cats
+
+    reference = run_reference(gp, dp, 'segm', tweak)
+    gt = ufc.COCO(gp, verbose=False)
+    dt = gt.loadRes(dp)
+    actual = ufc.COCOeval(gt, dt, 'segm', print_function=lambda *_: None)
+    tweak(actual.params)
+    actual.run()
+    assert gt._compact is not None and dt._compact is not None
+    assert_bit_identical(reference, actual, f'escaped counts useCats={use_cats}')

@@ -101,6 +101,12 @@ pub enum GeomStore {
     /// Immutable file geometry shared with the input handle.
     SharedBboxes(Arc<Vec<[f64; 4]>>),
     Masks(Vec<Rle>),
+    /// Masks whose compressed COCO `counts` strings stay in the immutable
+    /// input snapshot until an IoU needs them. See [`MaskRef`].
+    EncodedMasks {
+        raw: Arc<Vec<u8>>,
+        masks: Vec<MaskRef>,
+    },
     Boundaries {
         masks: Vec<Rle>,
         boundaries: Vec<Rle>,
@@ -116,7 +122,78 @@ pub enum GeomStore {
     },
 }
 
+/// One mask of [`GeomStore::EncodedMasks`].
+///
+/// Every annotation lies in exactly one `(image, category)` cell (one image
+/// cell with `useCats = 0`), and `compute_iou` runs once per cell, so an
+/// encoded mask is decoded at most once per evaluation: the same work as
+/// decoding every mask up front, without holding all decoded runs at once.
+/// Decoding uses the same `Rle::from_str` as the eager path.
+#[derive(Clone, Debug)]
+pub enum MaskRef {
+    /// Already decoded or rasterised (polygons, run lists, escaped strings,
+    /// box fallbacks, and unused placeholders).
+    Ready(Rle),
+    /// `counts` bytes at `raw[start..start + len]` for an `h x w` image.
+    /// `escaped` marks JSON text whose only escapes are `\\` pairs (the RLE
+    /// alphabet includes a backslash); each pair stands for one backslash.
+    Encoded {
+        start: usize,
+        len: u32,
+        h: u32,
+        w: u32,
+        escaped: bool,
+    },
+}
+
+impl MaskRef {
+    fn resolve<'a>(&'a self, raw: &[u8]) -> std::borrow::Cow<'a, Rle> {
+        match self {
+            Self::Ready(rle) => std::borrow::Cow::Borrowed(rle),
+            &Self::Encoded {
+                start,
+                len,
+                h,
+                w,
+                escaped,
+            } => {
+                let text = &raw[start..start + len as usize];
+                std::borrow::Cow::Owned(if escaped {
+                    let mut plain = Vec::with_capacity(text.len());
+                    let mut bytes = text.iter();
+                    while let Some(&byte) = bytes.next() {
+                        plain.push(byte);
+                        if byte == b'\\' {
+                            bytes.next();
+                        }
+                    }
+                    Rle::from_str(&plain, h, w)
+                } else {
+                    Rle::from_str(text, h, w)
+                })
+            }
+        }
+    }
+}
+
 impl GeomStore {
+    /// Plain masks for the selected annotations, decoding encoded ones.
+    fn mask_refs(&self, idx: &[u32]) -> Option<Vec<std::borrow::Cow<'_, Rle>>> {
+        match self {
+            Self::Masks(masks) => Some(
+                idx.iter()
+                    .map(|&i| std::borrow::Cow::Borrowed(&masks[i as usize]))
+                    .collect(),
+            ),
+            Self::EncodedMasks { raw, masks } => Some(
+                idx.iter()
+                    .map(|&i| masks[i as usize].resolve(raw))
+                    .collect(),
+            ),
+            _ => None,
+        }
+    }
+
     fn bbox_slice(&self) -> Option<&[[f64; 4]]> {
         match self {
             Self::Bboxes(v) => Some(v),
@@ -521,12 +598,16 @@ impl Evaluator {
         };
         let floor = self.match_floor();
 
+        if let (Some(dv), Some(gv)) = (
+            self.dt.geom.mask_refs(dt_idx),
+            self.gt.geom.mask_refs(gt_idx),
+        ) {
+            let d: Vec<&Rle> = dv.iter().map(|m| m.as_ref()).collect();
+            let g: Vec<&Rle> = gv.iter().map(|m| m.as_ref()).collect();
+            rle::rle_iou_refs_above(&d, &g, &iscrowd, floor, &mut out);
+            return out;
+        }
         match (&self.dt.geom, &self.gt.geom) {
-            (GeomStore::Masks(dv), GeomStore::Masks(gv)) => {
-                let d: Vec<&Rle> = dt_idx.iter().map(|&i| &dv[i as usize]).collect();
-                let g: Vec<&Rle> = gt_idx.iter().map(|&i| &gv[i as usize]).collect();
-                rle::rle_iou_refs_above(&d, &g, &iscrowd, floor, &mut out);
-            }
             (
                 GeomStore::Boundaries {
                     masks: dm,
