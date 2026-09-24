@@ -8,7 +8,9 @@ operations were optimized for time and memory together. The complete
 - Baseline: `main` at `f03c4ca064f34fe06162e8b6ff0d0517adc9162f`
   (the 0.1.11 code; the baseline wheel was rebuilt locally).
 - Optimized: branch `perf/task-bottlenecks` at
-  `152f936936ba9c1d1b2cd4fe26a28fbd51d72ec0`.
+  `79253f525941323594513ee65c9c45b66eeeeddb` (headline table). The per-phase
+  tables were measured at `152f936936ba9c1d1b2cd4fe26a28fbd51d72ec0`, before
+  the last change (item 7 below), which affects only the segm IoU phase.
 - Both wheels were built on the same host with `maturin build --release` and
   identical flags. Per-phase memory attribution uses separate
   `--features alloc-stats` builds of the same two commits.
@@ -16,16 +18,24 @@ operations were optimized for time and memory together. The complete
 ## Results
 
 COCO val2017 (5,000 images) from files, median of 6 fresh processes per build.
-Wall and CPU time cover loading, evaluation, accumulation and summary.
+[`bench/ab_builds.py`](../bench/ab_builds.py) alternates the two builds and the
+thread order every round, so host drift affects both alike; the output digests
+of every run were identical. Wall and CPU time cover loading, evaluation,
+accumulation and summary.
 
-| Task | Threads | Wall s (main → branch) | CPU s | Peak RSS MB | Arrays |
-| --- | ---: | ---: | ---: | ---: | --- |
-| bbox | 2 | 0.837 → 0.487 (-41.8%) | 1.215 → 0.769 | 273.1 → 262.2 (-4.0%) | bit-identical |
-| bbox | 1 | 1.178 → 0.731 (-38.0%) | 1.178 → 0.731 | 266.2 → 256.5 (-3.6%) | bit-identical |
-| segm | 2 | 2.296 → 1.681 (-26.8%) | 3.889 → 2.987 | 838.3 → 555.4 (-33.7%) | bit-identical |
-| segm | 1 | 3.251 → 2.872 (-11.7%) | 3.782 → 2.872 | 833.0 → 548.8 (-34.1%) | bit-identical |
-| keypoints | 2 | 0.528 → 0.413 (-21.7%) | 0.694 → 0.676 | 256.7 → 248.8 (-3.1%) | bit-identical |
-| keypoints | 1 | 0.685 → 0.657 (-4.1%) | 0.685 → 0.657 | 256.9 → 248.8 (-3.1%) | bit-identical |
+| Task | Threads | Wall s (main → branch) | CPU s | Peak RSS MB |
+| --- | ---: | ---: | ---: | ---: |
+| bbox | 2 | 0.850 → 0.495 (-41.7%) | 1.233 → 0.780 | 273.4 → 262.4 (-4.0%) |
+| bbox | 1 | 1.211 → 0.751 (-38.0%) | 1.211 → 0.751 | 266.3 → 256.7 (-3.6%) |
+| segm | 2 | 2.316 → 1.616 (-30.2%) | 3.923 → 2.843 | 838.2 → 555.8 (-33.7%) |
+| segm | 1 | 3.344 → 2.770 (-17.2%) | 3.897 → 2.769 | 833.1 → 549.0 (-34.1%) |
+| keypoints | 2 | 0.541 → 0.421 (-22.1%) | 0.708 → 0.685 | 257.1 → 249.1 (-3.1%) |
+| keypoints | 1 | 0.707 → 0.674 (-4.6%) | 0.706 → 0.674 | 257.1 → 249.0 (-3.2%) |
+
+The run is in [ab-summary.json](../bench/results/task-bottlenecks-20260924/ab-summary.json)
+(2026-09-24, median host CPU 8.3%). The earlier measurement of `152f936` with
+`hotcoco_benchmark.py`, one build after the other, gave the same picture
+(segm -26.8% / -11.7%); it is in [summary.json](../bench/results/task-bottlenecks-20260924/summary.json).
 
 With one thread, file parsing stays sequential and segmentation masks are
 decoded on the evaluation thread instead of a separate rasteriser thread, so
@@ -54,9 +64,11 @@ summed over workers.
 | Engine: IoU, matching, accumulation | 0.701 → 0.673 | 33.9 → 17.4 |
 | Load detections (`loadRes`) | 0.499 → 0.394 | 363.1 → 366.5 |
 
-The IoU sub-phase got heavier (0.602 → 1.042 CPU s) because mask decoding
-moved into it; it replaced the extraction-time decode (`dt_read` 0.528 →
-0.172 s), and matching and accumulation fell. With compact segmentation
+The IoU sub-phase got heavier (0.602 → 1.042 CPU s at `152f936`) because mask
+decoding moved into it; it replaced the extraction-time decode (`dt_read`
+0.528 → 0.172 s), and matching and accumulation fell. Item 7 then reduced the
+IoU sub-phase to 0.87 CPU s (three `profile_engine.py` runs): of the 1.04 s,
+0.46 s was decoding, 0.35 s mask boxes and areas, and the rest run merging. With compact segmentation
 inputs this relocation is not free for the diagnostic APIs: `matches()`,
 `confusion_matrix()` and `per_instance` re-run `compute_iou`, so each call now
 decodes the detection masks again (about 0.4 CPU s per call here) instead of
@@ -115,9 +127,26 @@ that annotation views stay exact after the file changes.
    column when needed), pose spans as 32-bit pairs, and detection instances
    omit crowd/ignore columns that only ground truth uses.
 
+7. **Mask boxes and areas.** The IoU kernel computes each mask's box and area
+   in one pass, splitting run indices with an exact reciprocal division
+   (`floor(t * floor(2^32 / h) / 2^32)` is the quotient or one less; one
+   remainder check corrects it). The counts decoder is specialized for plain
+   and escaped text and reserves one slot per character, so it never
+   reallocates.
+
 Tried and reverted: parsing bbox/score numbers from raw tokens (slower than
 serde's parser), an incremental `rleToBbox` (no measurable change), and a
 custom decimal fast path for keypoints (slower than the standard library).
+
+Measured and not adopted:
+- `fast-float2` 0.2.4 and `lexical-parse-float` 1.0.6 for keypoint coordinates:
+  bit-identical to the standard library on all 2.04M tokens of 40,000 real
+  spans, but only 27 → 23 ns per token, about 0.02 s of keypoint evaluation.
+  Under the dependency checklist in [AGENTS.md](../AGENTS.md) that does not
+  justify a new crate.
+- A strict hand-written result-record parser: 270 versus 280–340 ns per record
+  for serde on real detections. Number conversion dominates both, and the gain
+  does not justify a second JSON validator.
 
 ## Agreement and tests
 
