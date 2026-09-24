@@ -62,6 +62,22 @@ def load_json(path: str | os.PathLike) -> Any:
             return json.load(f)
 
 
+def _numpy_annotations(data: np.ndarray, progress: bool) -> list:
+    """The annotation dictionaries of an ``Nx7`` result array."""
+    n = data.shape[0]
+    ann = []
+    for i in range(n):
+        if progress and i % 1000000 == 0:
+            print(f"{i}/{n}")
+        ann.append({
+            "image_id": int(data[i, 0]),
+            "bbox": [data[i, 1], data[i, 2], data[i, 3], data[i, 4]],
+            "score": data[i, 5],
+            "category_id": int(data[i, 6]),
+        })
+    return ann
+
+
 class COCO:
     def __init__(self, annotation_file: str | os.PathLike | dict | None = None, *, verbose: bool = True):
         """
@@ -117,7 +133,14 @@ class COCO:
         compact = getattr(self, "_compact", None)
         if compact is not None:
             # Once a mutable view escapes, always evaluate from those public objects.
-            annotations = compact.annotations()
+            if compact.from_array:
+                # Rebuild the rows in their original dtype; the stored values
+                # are exact, so this equals converting the array at loadRes.
+                rows = compact.array_rows().astype(np.float32 if compact.float32 else np.float64)
+                annotations = _numpy_annotations(rows, progress=False)
+                _ufcoco.prepare_bbox_results(annotations)
+            else:
+                annotations = compact.annotations()
             self._compact = None
             self._dataset["annotations"] = annotations
             # Public metadata indexes may already have been edited independently.
@@ -441,6 +464,26 @@ class COCO:
                     return res
             anns = load_json(resFile)
         elif isinstance(resFile, np.ndarray):
+            if (type(self) is COCO and not derive_segmentation and resFile.ndim == 2
+                    and resFile.shape[1] == 7 and resFile.dtype in (np.float64, np.float32)):
+                try:
+                    compact = _ufcoco.load_compact_array(resFile)
+                except ValueError:
+                    pass  # Non-finite or out-of-range IDs keep the ordinary errors.
+                else:
+                    # The messages loadNumpyAnnotations prints for the same input.
+                    print("Converting ndarray to lists...")
+                    for i in range(0, resFile.shape[0], 1000000):
+                        print(f"{i}/{resFile.shape[0]}")
+                    if compact.annotation_count:
+                        assert compact.valid_images(self.getImgIds()), "Results do not correspond to current coco set"
+                    res._dataset["categories"] = copy.deepcopy(
+                        dataset["categories"] if compact.annotation_count else dataset.get("categories", []))
+                    res._dataset["annotations"] = None  # Materialized before any public dataset access.
+                    res._derive_segmentation = False
+                    res._install_compact(res._dataset, compact)
+                    self._log(f"DONE (t={time.time() - tic:0.2f}s)")
+                    return res
             anns = self.loadNumpyAnnotations(resFile)
         else:
             anns = resFile
@@ -532,18 +575,7 @@ class COCO:
         print("Converting ndarray to lists...")
         assert isinstance(data, np.ndarray)
         assert data.shape[1] == 7
-        n = data.shape[0]
-        ann = []
-        for i in range(n):
-            if i % 1000000 == 0:
-                print(f"{i}/{n}")
-            ann.append({
-                "image_id": int(data[i, 0]),
-                "bbox": [data[i, 1], data[i, 2], data[i, 3], data[i, 4]],
-                "score": data[i, 5],
-                "category_id": int(data[i, 6]),
-            })
-        return ann
+        return _numpy_annotations(data, progress=True)
 
     def _annotation_segmentation(self, ann: dict):
         if "segmentation" not in ann and not getattr(self, "_derive_segmentation", True):

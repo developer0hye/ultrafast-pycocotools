@@ -1084,6 +1084,7 @@ fn _ufcoco(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Evaluator>()?;
     m.add_class::<compact::CompactBbox>()?;
     m.add_function(wrap_pyfunction!(compact::load_compact_bbox, m)?)?;
+    m.add_function(wrap_pyfunction!(compact::load_compact_array, m)?)?;
     m.add_function(wrap_pyfunction!(index_annotations, m)?)?;
     m.add_function(wrap_pyfunction!(prepare_bbox_results, m)?)?;
     m.add_function(wrap_pyfunction!(summary::summary_values, m)?)?;
