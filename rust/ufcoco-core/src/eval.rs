@@ -889,6 +889,8 @@ impl Evaluator {
                 // on a dense detector is most of the accumulate cost.
                 let mut order: Vec<(f64, u32, u32)> = Vec::new();
                 let mut order_ready = false;
+                // Per-area outcomes of `order`, threshold-major; see `gather_outcomes`.
+                let mut outcomes: Vec<u8> = Vec::new();
                 for a in 0..a_n {
                     let t = Instant::now();
                     if matches.is_empty() {
@@ -913,10 +915,20 @@ impl Evaluator {
                         Self::build_order(&matches, max_det_all, &mut order);
                         order_ready = true;
                     }
-                    for (m, &max_det) in p.max_dets.iter().enumerate() {
-                        self.accumulate_slice(
-                            &matches, &order, max_det, a, m, t_n, r_n, a_n, m_n, &mut buf, &mut out,
-                        );
+                    let npig: usize = matches
+                        .iter()
+                        .flatten()
+                        .map(|mm| mm.gt_ignore.iter().filter(|&&ig| !ig).count())
+                        .sum();
+                    if npig > 0 {
+                        Self::gather_outcomes(&matches, &order, t_n, &mut outcomes);
+                        Self::recall_sample_counts(&p.rec_thrs, npig, &mut buf.sample_tp);
+                        for (m, &max_det) in p.max_dets.iter().enumerate() {
+                            self.accumulate_slice(
+                                &order, &outcomes, npig, max_det, a, m, t_n, r_n, a_n, m_n,
+                                &mut buf, &mut out,
+                            );
+                        }
                     }
                     Timings::add(&self.timings.accumulate_ns, t);
                     if collect_eval_imgs {
@@ -1037,12 +1049,72 @@ impl Evaluator {
         order.sort_by(|x, y| cmp_desc_score(x.0, y.0));
     }
 
+    /// Look up every ranked detection's outcome at every IoU threshold once per
+    /// area range, into `outcomes[t * order.len() + n]`.
+    ///
+    /// The curves for each maxDets limit then read these bytes in order, instead
+    /// of fetching `dt_ignore`/`dt_match` from a different per-image vector for
+    /// every (maxDets, threshold, detection). The values are the same, so the
+    /// tp/fp counts and every division are unchanged.
+    fn gather_outcomes(
+        matches: &[Option<ImgMatch>],
+        order: &[(f64, u32, u32)],
+        t_n: usize,
+        outcomes: &mut Vec<u8>,
+    ) {
+        let nd = order.len();
+        outcomes.clear();
+        outcomes.resize(t_n * nd, IGNORED);
+        for (n, &(_, i, d)) in order.iter().enumerate() {
+            let mm = matches[i as usize].as_ref().unwrap();
+            let d_full = mm.dt_scores.len();
+            for t in 0..t_n {
+                let idx = t * d_full + d as usize;
+                outcomes[t * nd + n] = if mm.dt_ignore[idx] {
+                    IGNORED
+                } else if mm.dt_match[idx] >= 0 {
+                    TRUE_POSITIVE
+                } else {
+                    FALSE_POSITIVE
+                };
+            }
+        }
+    }
+
+    /// For each recall threshold `r`, the fewest true positives `tp` for which
+    /// `!(tp as f64 / npig as f64 < r)` holds, or `npig + 1` if none does.
+    ///
+    /// The test is the one pycocotools' `searchsorted` makes on each recall
+    /// value, and it is monotone in `tp` because correctly rounded division is,
+    /// so the accumulation loop can compare integers instead of dividing for
+    /// every detection. NaN thresholds give 0, as `!(x < NaN)` is always true.
+    fn recall_sample_counts(rec_thrs: &[f64], npig: usize, out: &mut Vec<usize>) {
+        let npig_f = npig as f64;
+        out.clear();
+        out.extend(rec_thrs.iter().map(|&r| {
+            let (mut lo, mut hi) = (0usize, npig + 1);
+            while lo < hi {
+                let mid = lo + (hi - lo) / 2;
+                if !((mid as f64 / npig_f) < r) {
+                    hi = mid;
+                } else {
+                    lo = mid + 1;
+                }
+            }
+            lo
+        }));
+    }
+
     /// The body of pycocotools' `accumulate` for one (category, area, maxDet).
+    ///
+    /// `npig` is the number of non-ignored ground truths, which must be
+    /// positive; the caller skips the slice otherwise, as pycocotools does.
     #[allow(clippy::too_many_arguments)]
     fn accumulate_slice(
         &self,
-        matches: &[Option<ImgMatch>],
         order: &[(f64, u32, u32)],
+        outcomes: &[u8],
+        npig: usize,
         max_det: usize,
         a: usize,
         m: usize,
@@ -1053,71 +1125,66 @@ impl Evaluator {
         buf: &mut AccumBuf,
         out: &mut CatOut,
     ) {
-        let mut npig = 0usize;
-        let mut any = false;
-        for mm in matches.iter() {
-            let Some(mm) = mm else { continue };
-            any = true;
-            npig += mm.gt_ignore.iter().filter(|&&ig| !ig).count();
-        }
-        if !any || npig == 0 {
-            return;
-        }
         // `d` is the detection's rank inside its own image, so keeping
         // `d < max_det` is exactly pycocotools' per-image `[0:maxDet]` cut.
-        // The largest limit uses the existing sorted slice directly. Only smaller
-        // per-image prefixes need a filtered buffer, whose capacity stays small.
-        let flat = if max_det >= self.params.max_dets.last().copied().unwrap_or(0) {
-            order
-        } else {
-            buf.flat.clear();
-            buf.flat.extend(
+        // The largest limit uses the gathered outcomes directly. Smaller
+        // per-image prefixes keep the positions of their detections in `order`.
+        let nd_all = order.len();
+        let full = max_det >= self.params.max_dets.last().copied().unwrap_or(0);
+        if !full {
+            buf.selected.clear();
+            buf.selected.extend(
                 order
                     .iter()
-                    .copied()
-                    .filter(|&(_, _, d)| (d as usize) < max_det),
+                    .enumerate()
+                    .filter(|(_, &(_, _, d))| (d as usize) < max_det)
+                    .map(|(n, _)| n as u32),
             );
-            &buf.flat
-        };
-        let nd = flat.len();
+        }
+        let nd = if full { nd_all } else { buf.selected.len() };
         buf.pr.clear();
         buf.pr.resize(nd, 0.0);
 
-        let rec_thrs = &self.params.rec_thrs;
         let npig_f = npig as f64;
 
         for t in 0..t_n {
-            let (mut tp, mut fp) = (0i64, 0i64);
-            let mut recall = 0.0;
+            let row = &outcomes[t * nd_all..(t + 1) * nd_all];
+            let row = if full {
+                row
+            } else {
+                buf.row.clear();
+                buf.row
+                    .extend(buf.selected.iter().map(|&n| row[n as usize]));
+                &buf.row
+            };
+            let (mut tp, mut fp) = (0usize, 0usize);
+            // tp / (fp + tp + EPS) at tp = fp = 0; an ignored detection leaves
+            // both counts, and therefore this value, unchanged.
+            let mut value = 0.0 / EPS;
             let mut next_sample = 0;
             buf.rec_indices.clear();
             buf.rec_indices.resize(r_n, nd);
-            for (n, (precision, &(_, i, d))) in buf.pr.iter_mut().zip(flat).enumerate() {
-                let mm = matches[i as usize].as_ref().unwrap();
-                let d_full = mm.dt_scores.len();
-                let idx = t * d_full + d as usize;
-                if !mm.dt_ignore[idx] {
-                    if mm.dt_match[idx] >= 0 {
+            for (n, (precision, &outcome)) in buf.pr.iter_mut().zip(row).enumerate() {
+                if outcome != IGNORED {
+                    if outcome == TRUE_POSITIVE {
                         tp += 1;
                     } else {
                         fp += 1;
                     }
+                    // `+ EPS` is np.spacing(1) in the reference. Dropping it
+                    // changes the first point of every curve by one ULP.
+                    value = tp as f64 / (fp as f64 + tp as f64 + EPS);
                 }
-                let tpf = tp as f64;
-                let fpf = fp as f64;
-                recall = tpf / npig_f;
-                // Record searchsorted's first eligible index while recall is produced.
-                // Keep the original comparison, including unusual threshold values.
-                while next_sample < r_n && !(recall < rec_thrs[next_sample]) {
+                // Record searchsorted's first eligible index while recall is
+                // produced: `!(tp / npig < rec_thrs[i])`, via `sample_tp`.
+                while next_sample < r_n && tp >= buf.sample_tp[next_sample] {
                     buf.rec_indices[next_sample] = n;
                     next_sample += 1;
                 }
-                // `+ EPS` is np.spacing(1) in the reference. Dropping it
-                // changes the first point of every curve by one ULP.
-                *precision = tpf / (fpf + tpf + EPS);
+                *precision = value;
             }
 
-            out.recall[(t * a_n + a) * m_n + m] = recall;
+            out.recall[(t * a_n + a) * m_n + m] = if nd == 0 { 0.0 } else { tp as f64 / npig_f };
 
             // Make precision monotonically non-increasing in recall.
             for i in (1..nd).rev() {
@@ -1132,7 +1199,8 @@ impl Evaluator {
                 let dst = (t * r_n + ri) * a_n * m_n + a * m_n + m;
                 if pi < nd {
                     out.precision[dst] = buf.pr[pi];
-                    out.scores[dst] = flat[pi].0;
+                    let position = if full { pi } else { buf.selected[pi] as usize };
+                    out.scores[dst] = order[position].0;
                 } else {
                     out.precision[dst] = 0.0;
                     out.scores[dst] = 0.0;
@@ -1228,10 +1296,20 @@ struct MatchScratch {
 
 #[derive(Default)]
 struct AccumBuf {
-    flat: Vec<(f64, u32, u32)>,
+    /// Positions in `order` kept by a maxDets limit below the largest.
+    selected: Vec<u32>,
+    /// One threshold's outcomes for `selected`.
+    row: Vec<u8>,
     pr: Vec<f64>,
     rec_indices: Vec<usize>,
+    /// `Evaluator::recall_sample_counts` for the current category and area.
+    sample_tp: Vec<usize>,
 }
+
+/// Outcomes gathered by `Evaluator::gather_outcomes`.
+const IGNORED: u8 = 0;
+const TRUE_POSITIVE: u8 = 1;
+const FALSE_POSITIVE: u8 = 2;
 
 struct CatOut {
     precision: Vec<f64>,
