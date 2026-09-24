@@ -1,0 +1,4194 @@
+{
+  "started_utc": "2026-09-24T00:00:08.082385+00:00",
+  "command": [
+    "bench/hotcoco_benchmark.py",
+    "--build-description",
+    "Released PyPI wheels (README headline)",
+    "--inputs",
+    "INPUT_DIRECTORY",
+    "--out",
+    "OUTPUT_DIRECTORY",
+    "--modes",
+    "files",
+    "--threads",
+    "2",
+    "--rounds",
+    "6",
+    "--backends",
+    "pycocotools",
+    "faster",
+    "hotcoco",
+    "ufcoco"
+  ],
+  "cpu": "Intel(R) Core(TM) i5-10400 CPU @ 2.90GHz",
+  "physical_cores": 6,
+  "logical_cpus": 12,
+  "ram_bytes": 33547964416,
+  "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.39",
+  "python": "3.12.4 | packaged by Anaconda, Inc. | (main, Jun 18 2024, 15:12:24) [GCC 11.2.0]",
+  "packages": {
+    "hotcoco": "1.0.1",
+    "ultrafast-pycocotools": "0.1.11",
+    "pycocotools": "2.0.11",
+    "faster-coco-eval": "1.8.0",
+    "numpy": "2.4.4",
+    "psutil": "7.2.2"
+  },
+  "backends": [
+    "pycocotools",
+    "faster",
+    "hotcoco",
+    "ufcoco"
+  ],
+  "input_sha256": {
+    "instances_val2017.json": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+    "detect-predictions.json": "950756817cbaf3442e766a787852729cbb5dd6781a242117c36d6a9dbac7c4be",
+    "segment-predictions.json": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+    "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+    "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+  },
+  "script_sha256": {
+    "hotcoco_benchmark.py": "925c0fe007584f45dbb9aeae9fe50568f539ba8cf11fc03026bcbff425b127d6",
+    "run_impl.py": "73a9e3064fed9a7cfdff478881ed93eeffdc39aa529bc41aec79407c66b2fa6a"
+  },
+  "threads": [
+    2
+  ],
+  "rounds": 6,
+  "modes": [
+    "files"
+  ],
+  "tasks": [
+    "bbox",
+    "segm",
+    "keypoints"
+  ],
+  "method": "Released PyPI wheels (README headline); 1 excluded array-export warmup per backend/task/mode/thread; alternating backend order and reversed thread order each round; fresh process each run. Wall/CPU include GT and DT loading, construction, evaluation and summary; imports and post-timing hashes excluded. RSS captured before output conversion/hash/export. List route includes Python JSON parsing of DT; GT is a file in both routes. No timing-based exclusions; host telemetry includes child startup and verification.",
+  "parity": {
+    "bbox-files": {
+      "pycocotools-t2": {
+        "arrays": {
+          "precision": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "recall": {
+            "reference_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "scores": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          }
+        },
+        "stats_max_abs_diff": 0.0,
+        "same_params": true
+      },
+      "faster-t2": {
+        "arrays": {
+          "precision": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": false,
+            "unequal_values": 3650,
+            "within_1e_12": true,
+            "max_abs_diff": 2.220446049250313e-16
+          },
+          "recall": {
+            "reference_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "scores": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          }
+        },
+        "stats_max_abs_diff": 0.0,
+        "same_params": true
+      },
+      "hotcoco-t2": {
+        "arrays": {
+          "precision": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": false,
+            "unequal_values": 3650,
+            "within_1e_12": true,
+            "max_abs_diff": 2.220446049250313e-16
+          },
+          "recall": {
+            "reference_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "scores": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": false,
+            "unequal_values": 180,
+            "within_1e_12": false,
+            "max_abs_diff": 0.09508
+          }
+        },
+        "stats_max_abs_diff": 7.13318293321663e-15,
+        "same_params": true
+      },
+      "ufcoco-t2": {
+        "arrays": {
+          "precision": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "recall": {
+            "reference_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "scores": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          }
+        },
+        "stats_max_abs_diff": 0.0,
+        "same_params": true
+      }
+    },
+    "segm-files": {
+      "pycocotools-t2": {
+        "arrays": {
+          "precision": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "recall": {
+            "reference_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "scores": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          }
+        },
+        "stats_max_abs_diff": 0.0,
+        "same_params": true
+      },
+      "faster-t2": {
+        "arrays": {
+          "precision": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": false,
+            "unequal_values": 6714,
+            "within_1e_12": true,
+            "max_abs_diff": 2.220446049250313e-16
+          },
+          "recall": {
+            "reference_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "scores": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          }
+        },
+        "stats_max_abs_diff": 0.0,
+        "same_params": true
+      },
+      "hotcoco-t2": {
+        "arrays": {
+          "precision": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": false,
+            "unequal_values": 6714,
+            "within_1e_12": true,
+            "max_abs_diff": 2.220446049250313e-16
+          },
+          "recall": {
+            "reference_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "scores": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": false,
+            "unequal_values": 60,
+            "within_1e_12": false,
+            "max_abs_diff": 0.03574
+          }
+        },
+        "stats_max_abs_diff": 1.609823385706477e-14,
+        "same_params": true
+      },
+      "ufcoco-t2": {
+        "arrays": {
+          "precision": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "recall": {
+            "reference_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "scores": {
+            "reference_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              80,
+              4,
+              3
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          }
+        },
+        "stats_max_abs_diff": 0.0,
+        "same_params": true
+      }
+    },
+    "keypoints-files": {
+      "pycocotools-t2": {
+        "arrays": {
+          "precision": {
+            "reference_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "recall": {
+            "reference_shape": [
+              10,
+              1,
+              3,
+              1
+            ],
+            "candidate_shape": [
+              10,
+              1,
+              3,
+              1
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "scores": {
+            "reference_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          }
+        },
+        "stats_max_abs_diff": 0.0,
+        "same_params": true
+      },
+      "faster-t2": {
+        "arrays": {
+          "precision": {
+            "reference_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "recall": {
+            "reference_shape": [
+              10,
+              1,
+              3,
+              1
+            ],
+            "candidate_shape": [
+              10,
+              1,
+              3,
+              1
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "scores": {
+            "reference_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          }
+        },
+        "stats_max_abs_diff": 0.0,
+        "same_params": true
+      },
+      "hotcoco-t2": {
+        "arrays": {
+          "precision": {
+            "reference_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "recall": {
+            "reference_shape": [
+              10,
+              1,
+              3,
+              1
+            ],
+            "candidate_shape": [
+              10,
+              1,
+              3,
+              1
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "scores": {
+            "reference_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          }
+        },
+        "stats_max_abs_diff": 4.440892098500626e-16,
+        "same_params": true
+      },
+      "ufcoco-t2": {
+        "arrays": {
+          "precision": {
+            "reference_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "recall": {
+            "reference_shape": [
+              10,
+              1,
+              3,
+              1
+            ],
+            "candidate_shape": [
+              10,
+              1,
+              3,
+              1
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          },
+          "scores": {
+            "reference_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "candidate_shape": [
+              10,
+              101,
+              1,
+              3,
+              1
+            ],
+            "byte_identical": true,
+            "unequal_values": 0,
+            "within_1e_12": true,
+            "max_abs_diff": 0.0
+          }
+        },
+        "stats_max_abs_diff": 0.0,
+        "same_params": true
+      }
+    }
+  },
+  "summary": {
+    "bbox-files-t2-pycocotools": {
+      "wall_total": {
+        "median": 47.54517512549978,
+        "min": 44.82900388799908,
+        "max": 48.632264876000136
+      },
+      "cpu_total": {
+        "median": 47.520996664500004,
+        "min": 44.825383328,
+        "max": 48.624394298999995
+      },
+      "eval_total": {
+        "median": 43.76348834699979,
+        "min": 41.2140541029994,
+        "max": 44.77060140899994
+      },
+      "peak_rss_mb": {
+        "median": 1924.976,
+        "min": 1924.812,
+        "max": 1925.352
+      }
+    },
+    "bbox-files-t2-faster": {
+      "wall_total": {
+        "median": 7.510496256000579,
+        "min": 7.182280072000594,
+        "max": 7.898749823999424
+      },
+      "cpu_total": {
+        "median": 11.899108622499998,
+        "min": 11.427496008,
+        "max": 12.265468515
+      },
+      "eval_total": {
+        "median": 3.8299358225003743,
+        "min": 3.637549852000575,
+        "max": 4.0635653429999365
+      },
+      "peak_rss_mb": {
+        "median": 1780.578,
+        "min": 1779.872,
+        "max": 1781.016
+      }
+    },
+    "bbox-files-t2-hotcoco": {
+      "wall_total": {
+        "median": 2.327307747000077,
+        "min": 2.1951803349998045,
+        "max": 2.5829978689998825
+      },
+      "cpu_total": {
+        "median": 3.0176200075,
+        "min": 2.8606718360000003,
+        "max": 3.33177234
+      },
+      "eval_total": {
+        "median": 1.236159359000112,
+        "min": 1.1750979950002147,
+        "max": 1.410441100999833
+      },
+      "peak_rss_mb": {
+        "median": 2306.694,
+        "min": 2306.552,
+        "max": 2306.9
+      }
+    },
+    "bbox-files-t2-ufcoco": {
+      "wall_total": {
+        "median": 0.8867449629999555,
+        "min": 0.8490239379998457,
+        "max": 0.9308837850003329
+      },
+      "cpu_total": {
+        "median": 1.276417956,
+        "min": 1.2200726629999998,
+        "max": 1.34610235
+      },
+      "eval_total": {
+        "median": 0.5309530839997478,
+        "min": 0.5047497040000053,
+        "max": 0.5624928229999568
+      },
+      "peak_rss_mb": {
+        "median": 272.286,
+        "min": 271.988,
+        "max": 272.528
+      }
+    },
+    "segm-files-t2-pycocotools": {
+      "wall_total": {
+        "median": 49.382855840000275,
+        "min": 49.1533665500001,
+        "max": 50.56559841999979
+      },
+      "cpu_total": {
+        "median": 49.378125241,
+        "min": 49.148294724,
+        "max": 50.560207583
+      },
+      "eval_total": {
+        "median": 45.43149390700023,
+        "min": 45.21669285999997,
+        "max": 46.647485842999686
+      },
+      "peak_rss_mb": {
+        "median": 2191.152,
+        "min": 2190.776,
+        "max": 2191.328
+      }
+    },
+    "segm-files-t2-faster": {
+      "wall_total": {
+        "median": 15.944209080499604,
+        "min": 15.86011203399903,
+        "max": 15.991412019000109
+      },
+      "cpu_total": {
+        "median": 21.9436062595,
+        "min": 21.841793648,
+        "max": 22.035498505
+      },
+      "eval_total": {
+        "median": 12.008646489000057,
+        "min": 11.959963341999355,
+        "max": 12.054089250999823
+      },
+      "peak_rss_mb": {
+        "median": 2629.468,
+        "min": 2628.788,
+        "max": 2631.044
+      }
+    },
+    "segm-files-t2-hotcoco": {
+      "wall_total": {
+        "median": 5.296463598999935,
+        "min": 5.279142982999019,
+        "max": 5.361397069999839
+      },
+      "cpu_total": {
+        "median": 7.910222566,
+        "min": 7.885806938,
+        "max": 7.964586533000001
+      },
+      "eval_total": {
+        "median": 3.4088359304998903,
+        "min": 3.391268461999516,
+        "max": 3.4551379439999437
+      },
+      "peak_rss_mb": {
+        "median": 3403.326,
+        "min": 3402.348,
+        "max": 3403.592
+      }
+    },
+    "segm-files-t2-ufcoco": {
+      "wall_total": {
+        "median": 2.3331553005004935,
+        "min": 2.326885447999757,
+        "max": 2.338674638000157
+      },
+      "cpu_total": {
+        "median": 3.922695259,
+        "min": 3.909385244,
+        "max": 3.9483278889999998
+      },
+      "eval_total": {
+        "median": 1.7580608075002147,
+        "min": 1.7497773780000898,
+        "max": 1.7626883970001472
+      },
+      "peak_rss_mb": {
+        "median": 837.9559999999999,
+        "min": 837.472,
+        "max": 838.996
+      }
+    },
+    "keypoints-files-t2-pycocotools": {
+      "wall_total": {
+        "median": 9.832238762500538,
+        "min": 9.660595697999725,
+        "max": 9.964569987999766
+      },
+      "cpu_total": {
+        "median": 9.831355399,
+        "min": 9.659627288000001,
+        "max": 9.963152287
+      },
+      "eval_total": {
+        "median": 6.670879198500415,
+        "min": 6.519340214999829,
+        "max": 6.82130682099978
+      },
+      "peak_rss_mb": {
+        "median": 603.16,
+        "min": 602.944,
+        "max": 603.296
+      }
+    },
+    "keypoints-files-t2-faster": {
+      "wall_total": {
+        "median": 4.536797381000042,
+        "min": 4.503513729000588,
+        "max": 4.796036544999879
+      },
+      "cpu_total": {
+        "median": 4.7076717565,
+        "min": 4.673951571,
+        "max": 4.966120716000001
+      },
+      "eval_total": {
+        "median": 1.3861754560000463,
+        "min": 1.365616503000183,
+        "max": 1.476293171999714
+      },
+      "peak_rss_mb": {
+        "median": 602.5740000000001,
+        "min": 602.504,
+        "max": 602.672
+      }
+    },
+    "keypoints-files-t2-hotcoco": {
+      "wall_total": {
+        "median": 0.9869828190007865,
+        "min": 0.9711096169994562,
+        "max": 1.0059235189996798
+      },
+      "cpu_total": {
+        "median": 1.0968792745,
+        "min": 1.085362898,
+        "max": 1.117556053
+      },
+      "eval_total": {
+        "median": 0.23553655850014366,
+        "min": 0.2334832220003591,
+        "max": 0.23688166099964292
+      },
+      "peak_rss_mb": {
+        "median": 642.454,
+        "min": 642.384,
+        "max": 642.592
+      }
+    },
+    "keypoints-files-t2-ufcoco": {
+      "wall_total": {
+        "median": 0.5358901619995322,
+        "min": 0.5320832230004271,
+        "max": 0.5453335269994568
+      },
+      "cpu_total": {
+        "median": 0.6972407279999999,
+        "min": 0.694778034,
+        "max": 0.710359724
+      },
+      "eval_total": {
+        "median": 0.25865791599972,
+        "min": 0.2562115000000631,
+        "max": 0.2630668919996424
+      },
+      "peak_rss_mb": {
+        "median": 255.998,
+        "min": 255.96,
+        "max": 256.056
+      }
+    }
+  },
+  "baseline_load": {
+    "utc": "2026-09-24T00:00:10.351175+00:00",
+    "cpu_percent": 2.5,
+    "available_ram": 28121579520,
+    "swap_used": 0,
+    "swap_in": 0,
+    "swap_out": 0
+  },
+  "completed_utc": "2026-09-24T00:20:47.264478+00:00",
+  "runs": [
+    {
+      "name": "bbox-files-t1-pycocotools-oracle",
+      "task": "bbox",
+      "impl": "pycocotools",
+      "label": "oracle",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 49.483731778999754,
+      "cpu_total": 49.479328105,
+      "eval_total": 45.76405672299961,
+      "peak_rss_mb": 1924.764,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 15.6,
+      "min_available_ram": 26164195328,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-pycocotools-warmup",
+      "task": "bbox",
+      "impl": "pycocotools",
+      "label": "warmup",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 49.16065818700008,
+      "cpu_total": 49.120866806,
+      "eval_total": 45.2739602380002,
+      "peak_rss_mb": 1924.944,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 15.1,
+      "min_available_ram": 26197270528,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-faster-warmup",
+      "task": "bbox",
+      "impl": "faster",
+      "label": "warmup",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 7.988708666000093,
+      "cpu_total": 12.284656398,
+      "eval_total": 4.051627005999762,
+      "peak_rss_mb": 1779.608,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 16.7,
+      "min_available_ram": 26395123712,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-hotcoco-warmup",
+      "task": "bbox",
+      "impl": "hotcoco",
+      "label": "warmup",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 2.357818216999931,
+      "cpu_total": 3.0874256019999997,
+      "eval_total": 1.2721541290002278,
+      "peak_rss_mb": 2306.896,
+      "stats": [
+        0.4081073391795149,
+        0.5687592778263555,
+        0.4432395142763253,
+        0.21191366551251778,
+        0.44836754939820306,
+        0.5886222761338118,
+        0.33090511760206204,
+        0.5501953212167452,
+        0.6048265484847883,
+        0.37167468367725137,
+        0.671684675710995,
+        0.7903349948597261
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "003d7d8c17d290a3"
+      },
+      "host_cpu_percent_median": 14.2,
+      "min_available_ram": 25781579776,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-ufcoco-warmup",
+      "task": "bbox",
+      "impl": "ufcoco",
+      "label": "warmup",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 0.9306410289996165,
+      "cpu_total": 1.341993929,
+      "eval_total": 0.5599213529994813,
+      "peak_rss_mb": 272.244,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 17.3,
+      "min_available_ram": 27427618816,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-pycocotools-round0",
+      "task": "bbox",
+      "impl": "pycocotools",
+      "label": "round0",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 48.632264876000136,
+      "cpu_total": 48.624394298999995,
+      "eval_total": 44.77060140899994,
+      "peak_rss_mb": 1924.812,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 12.95,
+      "min_available_ram": 26338648064,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-faster-round0",
+      "task": "bbox",
+      "impl": "faster",
+      "label": "round0",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 7.898749823999424,
+      "cpu_total": 12.265468515,
+      "eval_total": 4.0228439279994745,
+      "peak_rss_mb": 1780.796,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 15.8,
+      "min_available_ram": 26481057792,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-hotcoco-round0",
+      "task": "bbox",
+      "impl": "hotcoco",
+      "label": "round0",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 2.4082216159999916,
+      "cpu_total": 3.127752145,
+      "eval_total": 1.2832971439997891,
+      "peak_rss_mb": 2306.9,
+      "stats": [
+        0.4081073391795149,
+        0.5687592778263555,
+        0.4432395142763253,
+        0.21191366551251778,
+        0.44836754939820306,
+        0.5886222761338118,
+        0.33090511760206204,
+        0.5501953212167452,
+        0.6048265484847883,
+        0.37167468367725137,
+        0.671684675710995,
+        0.7903349948597261
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "003d7d8c17d290a3"
+      },
+      "host_cpu_percent_median": 17.2,
+      "min_available_ram": 25770172416,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-ufcoco-round0",
+      "task": "bbox",
+      "impl": "ufcoco",
+      "label": "round0",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.9308837850003329,
+      "cpu_total": 1.34610235,
+      "eval_total": 0.5624928229999568,
+      "peak_rss_mb": 272.116,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 16.8,
+      "min_available_ram": 27358003200,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-ufcoco-round1",
+      "task": "bbox",
+      "impl": "ufcoco",
+      "label": "round1",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.8928148350005358,
+      "cpu_total": 1.289209404,
+      "eval_total": 0.5363495420001527,
+      "peak_rss_mb": 272.528,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 13.2,
+      "min_available_ram": 27309182976,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-hotcoco-round1",
+      "task": "bbox",
+      "impl": "hotcoco",
+      "label": "round1",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 2.3585375319999002,
+      "cpu_total": 3.0579469980000002,
+      "eval_total": 1.260608492999836,
+      "peak_rss_mb": 2306.74,
+      "stats": [
+        0.4081073391795149,
+        0.5687592778263555,
+        0.4432395142763253,
+        0.21191366551251778,
+        0.44836754939820306,
+        0.5886222761338118,
+        0.33090511760206204,
+        0.5501953212167452,
+        0.6048265484847883,
+        0.37167468367725137,
+        0.671684675710995,
+        0.7903349948597261
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "003d7d8c17d290a3"
+      },
+      "host_cpu_percent_median": 17.4,
+      "min_available_ram": 25628368896,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-faster-round1",
+      "task": "bbox",
+      "impl": "faster",
+      "label": "round1",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 7.506368894000843,
+      "cpu_total": 11.860801539999999,
+      "eval_total": 3.832713142000557,
+      "peak_rss_mb": 1779.872,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 10.0,
+      "min_available_ram": 26424999936,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-pycocotools-round1",
+      "task": "bbox",
+      "impl": "pycocotools",
+      "label": "round1",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 47.9932461999997,
+      "cpu_total": 47.948452698000004,
+      "eval_total": 44.177549327999714,
+      "peak_rss_mb": 1924.944,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 11.7,
+      "min_available_ram": 26331205632,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-pycocotools-round2",
+      "task": "bbox",
+      "impl": "pycocotools",
+      "label": "round2",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 48.223098854999535,
+      "cpu_total": 48.185550528,
+      "eval_total": 44.45236134699962,
+      "peak_rss_mb": 1924.964,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 15.1,
+      "min_available_ram": 26463408128,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-faster-round2",
+      "task": "bbox",
+      "impl": "faster",
+      "label": "round2",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 7.861649405999742,
+      "cpu_total": 12.238102842,
+      "eval_total": 4.0635653429999365,
+      "peak_rss_mb": 1780.768,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 16.65,
+      "min_available_ram": 26526789632,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-hotcoco-round2",
+      "task": "bbox",
+      "impl": "hotcoco",
+      "label": "round2",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 2.5829978689998825,
+      "cpu_total": 3.33177234,
+      "eval_total": 1.410441100999833,
+      "peak_rss_mb": 2306.552,
+      "stats": [
+        0.4081073391795149,
+        0.5687592778263555,
+        0.4432395142763253,
+        0.21191366551251778,
+        0.44836754939820306,
+        0.5886222761338118,
+        0.33090511760206204,
+        0.5501953212167452,
+        0.6048265484847883,
+        0.37167468367725137,
+        0.671684675710995,
+        0.7903349948597261
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "003d7d8c17d290a3"
+      },
+      "host_cpu_percent_median": 24.2,
+      "min_available_ram": 25623937024,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-ufcoco-round2",
+      "task": "bbox",
+      "impl": "ufcoco",
+      "label": "round2",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.8978286100000332,
+      "cpu_total": 1.298120764,
+      "eval_total": 0.5432620550000138,
+      "peak_rss_mb": 271.988,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 10.5,
+      "min_available_ram": 27422797824,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-ufcoco-round3",
+      "task": "bbox",
+      "impl": "ufcoco",
+      "label": "round3",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.8806750909993752,
+      "cpu_total": 1.263626508,
+      "eval_total": 0.5255566259993429,
+      "peak_rss_mb": 272.36,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 12.5,
+      "min_available_ram": 27278098432,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-hotcoco-round3",
+      "task": "bbox",
+      "impl": "hotcoco",
+      "label": "round3",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 2.296077962000254,
+      "cpu_total": 2.977293017,
+      "eval_total": 1.2117102250003882,
+      "peak_rss_mb": 2306.592,
+      "stats": [
+        0.4081073391795149,
+        0.5687592778263555,
+        0.4432395142763253,
+        0.21191366551251778,
+        0.44836754939820306,
+        0.5886222761338118,
+        0.33090511760206204,
+        0.5501953212167452,
+        0.6048265484847883,
+        0.37167468367725137,
+        0.671684675710995,
+        0.7903349948597261
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "003d7d8c17d290a3"
+      },
+      "host_cpu_percent_median": 12.55,
+      "min_available_ram": 25387626496,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-faster-round3",
+      "task": "bbox",
+      "impl": "faster",
+      "label": "round3",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 7.514623618000314,
+      "cpu_total": 11.937415705,
+      "eval_total": 3.8271585030001916,
+      "peak_rss_mb": 1781.016,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 11.5,
+      "min_available_ram": 25969225728,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-pycocotools-round3",
+      "task": "bbox",
+      "impl": "pycocotools",
+      "label": "round3",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 47.09710405099986,
+      "cpu_total": 47.093540631,
+      "eval_total": 43.34942736599987,
+      "peak_rss_mb": 1924.988,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 10.8,
+      "min_available_ram": 26130788352,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-pycocotools-round4",
+      "task": "bbox",
+      "impl": "pycocotools",
+      "label": "round4",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 45.96728970099957,
+      "cpu_total": 45.963648502000005,
+      "eval_total": 42.16261178299965,
+      "peak_rss_mb": 1925.236,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 25808199680,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-faster-round4",
+      "task": "bbox",
+      "impl": "faster",
+      "label": "round4",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 7.230817057999957,
+      "cpu_total": 11.508773793,
+      "eval_total": 3.6411588570003914,
+      "peak_rss_mb": 1780.056,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 26453143552,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-hotcoco-round4",
+      "task": "bbox",
+      "impl": "hotcoco",
+      "label": "round4",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 2.2010792050004966,
+      "cpu_total": 2.8638608629999998,
+      "eval_total": 1.1750979950002147,
+      "peak_rss_mb": 2306.648,
+      "stats": [
+        0.4081073391795149,
+        0.5687592778263555,
+        0.4432395142763253,
+        0.21191366551251778,
+        0.44836754939820306,
+        0.5886222761338118,
+        0.33090511760206204,
+        0.5501953212167452,
+        0.6048265484847883,
+        0.37167468367725137,
+        0.671684675710995,
+        0.7903349948597261
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "003d7d8c17d290a3"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 25648586752,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-ufcoco-round4",
+      "task": "bbox",
+      "impl": "ufcoco",
+      "label": "round4",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.8490239379998457,
+      "cpu_total": 1.224984101,
+      "eval_total": 0.5100737809998463,
+      "peak_rss_mb": 272.376,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27523948544,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-ufcoco-round5",
+      "task": "bbox",
+      "impl": "ufcoco",
+      "label": "round5",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.851411606000056,
+      "cpu_total": 1.2200726629999998,
+      "eval_total": 0.5047497040000053,
+      "peak_rss_mb": 272.212,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 8.350000000000001,
+      "min_available_ram": 27313217536,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-hotcoco-round5",
+      "task": "bbox",
+      "impl": "hotcoco",
+      "label": "round5",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 2.1951803349998045,
+      "cpu_total": 2.8606718360000003,
+      "eval_total": 1.1764115709997895,
+      "peak_rss_mb": 2306.752,
+      "stats": [
+        0.4081073391795149,
+        0.5687592778263555,
+        0.4432395142763253,
+        0.21191366551251778,
+        0.44836754939820306,
+        0.5886222761338118,
+        0.33090511760206204,
+        0.5501953212167452,
+        0.6048265484847883,
+        0.37167468367725137,
+        0.671684675710995,
+        0.7903349948597261
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "003d7d8c17d290a3"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 25037037568,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-faster-round5",
+      "task": "bbox",
+      "impl": "faster",
+      "label": "round5",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 7.182280072000594,
+      "cpu_total": 11.427496008,
+      "eval_total": 3.637549852000575,
+      "peak_rss_mb": 1780.388,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "21fd0e2de4544746",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 25735184384,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "bbox-files-t2-pycocotools-round5",
+      "task": "bbox",
+      "impl": "pycocotools",
+      "label": "round5",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 44.82900388799908,
+      "cpu_total": 44.825383328,
+      "eval_total": 41.2140541029994,
+      "peak_rss_mb": 1925.352,
+      "stats": [
+        0.4081073391795104,
+        0.5687592778263509,
+        0.44323951427632285,
+        0.2119136655125249,
+        0.44836754939820017,
+        0.5886222761338143,
+        0.33090511760206226,
+        0.5501953212167455,
+        0.6048265484847889,
+        0.3716746836772515,
+        0.6716846757109951,
+        0.7903349948597258
+      ],
+      "digests": {
+        "precision": "3301119865a9510a",
+        "recall": "fbcb1dc9f009839e",
+        "scores": "d7f0942b19ce28a3"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 26322337792,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t1-pycocotools-oracle",
+      "task": "segm",
+      "impl": "pycocotools",
+      "label": "oracle",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 48.99148136599979,
+      "cpu_total": 48.987352761,
+      "eval_total": 45.078458980999585,
+      "peak_rss_mb": 2191.304,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 26073067520,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-pycocotools-warmup",
+      "task": "segm",
+      "impl": "pycocotools",
+      "label": "warmup",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 49.07835992800028,
+      "cpu_total": 49.073716636,
+      "eval_total": 45.19089723500019,
+      "peak_rss_mb": 2191.08,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 26058162176,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-faster-warmup",
+      "task": "segm",
+      "impl": "faster",
+      "label": "warmup",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 15.950407551999888,
+      "cpu_total": 21.974336371,
+      "eval_total": 12.02429043300026,
+      "peak_rss_mb": 2628.408,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 25647329280,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-hotcoco-warmup",
+      "task": "segm",
+      "impl": "hotcoco",
+      "label": "warmup",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 5.310778579000271,
+      "cpu_total": 7.964404354999999,
+      "eval_total": 3.4232078280001588,
+      "peak_rss_mb": 3403.244,
+      "stats": [
+        0.34365953809320504,
+        0.5385525392988467,
+        0.3644561943722223,
+        0.14920930726509232,
+        0.3823300117612489,
+        0.5217235966750724,
+        0.29347661900258926,
+        0.4642012251982559,
+        0.49898527290264366,
+        0.27380449504653454,
+        0.5608445107429889,
+        0.7023580220248347
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "1f33b31245a56729"
+      },
+      "host_cpu_percent_median": 9.9,
+      "min_available_ram": 24591740928,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-ufcoco-warmup",
+      "task": "segm",
+      "impl": "ufcoco",
+      "label": "warmup",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 2.3261271150004177,
+      "cpu_total": 3.9152966530000004,
+      "eval_total": 1.7542246670004715,
+      "peak_rss_mb": 836.704,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 12.7,
+      "min_available_ram": 26940588032,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-pycocotools-round0",
+      "task": "segm",
+      "impl": "pycocotools",
+      "label": "round0",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 49.19288525699994,
+      "cpu_total": 49.188102945,
+      "eval_total": 45.241711831999964,
+      "peak_rss_mb": 2191.328,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 26054836224,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-faster-round0",
+      "task": "segm",
+      "impl": "faster",
+      "label": "round0",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 15.955907871999898,
+      "cpu_total": 21.96682871,
+      "eval_total": 12.054089250999823,
+      "peak_rss_mb": 2629.212,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 25557319680,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-hotcoco-round0",
+      "task": "segm",
+      "impl": "hotcoco",
+      "label": "round0",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 5.279142982999019,
+      "cpu_total": 7.885806938,
+      "eval_total": 3.391268461999516,
+      "peak_rss_mb": 3403.476,
+      "stats": [
+        0.34365953809320504,
+        0.5385525392988467,
+        0.3644561943722223,
+        0.14920930726509232,
+        0.3823300117612489,
+        0.5217235966750724,
+        0.29347661900258926,
+        0.4642012251982559,
+        0.49898527290264366,
+        0.27380449504653454,
+        0.5608445107429889,
+        0.7023580220248347
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "1f33b31245a56729"
+      },
+      "host_cpu_percent_median": 10.0,
+      "min_available_ram": 24521691136,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-ufcoco-round0",
+      "task": "segm",
+      "impl": "ufcoco",
+      "label": "round0",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 2.338674638000157,
+      "cpu_total": 3.931407728,
+      "eval_total": 1.7584629409998342,
+      "peak_rss_mb": 837.704,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 15.3,
+      "min_available_ram": 26971201536,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-ufcoco-round1",
+      "task": "segm",
+      "impl": "ufcoco",
+      "label": "round1",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 2.330028831000618,
+      "cpu_total": 3.917833437,
+      "eval_total": 1.757658674000595,
+      "peak_rss_mb": 838.208,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 13.399999999999999,
+      "min_available_ram": 26978148352,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-hotcoco-round1",
+      "task": "segm",
+      "impl": "hotcoco",
+      "label": "round1",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 5.28599920500028,
+      "cpu_total": 7.9036472710000005,
+      "eval_total": 3.411491789000138,
+      "peak_rss_mb": 3403.512,
+      "stats": [
+        0.34365953809320504,
+        0.5385525392988467,
+        0.3644561943722223,
+        0.14920930726509232,
+        0.3823300117612489,
+        0.5217235966750724,
+        0.29347661900258926,
+        0.4642012251982559,
+        0.49898527290264366,
+        0.27380449504653454,
+        0.5608445107429889,
+        0.7023580220248347
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "1f33b31245a56729"
+      },
+      "host_cpu_percent_median": 9.9,
+      "min_available_ram": 24176398336,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-faster-round1",
+      "task": "segm",
+      "impl": "faster",
+      "label": "round1",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 15.991412019000109,
+      "cpu_total": 21.934686533999997,
+      "eval_total": 12.052260585000113,
+      "peak_rss_mb": 2631.044,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 25527152640,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-pycocotools-round1",
+      "task": "segm",
+      "impl": "pycocotools",
+      "label": "round1",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 50.154829678000624,
+      "cpu_total": 50.150276033000004,
+      "eval_total": 46.21128860200042,
+      "peak_rss_mb": 2191.028,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 26064285696,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-pycocotools-round2",
+      "task": "segm",
+      "impl": "pycocotools",
+      "label": "round2",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 49.572826423000606,
+      "cpu_total": 49.568147537,
+      "eval_total": 45.61893754200037,
+      "peak_rss_mb": 2191.232,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 26085249024,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-faster-round2",
+      "task": "segm",
+      "impl": "faster",
+      "label": "round2",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 15.937730633999308,
+      "cpu_total": 21.914471727,
+      "eval_total": 11.985217866999392,
+      "peak_rss_mb": 2629.3,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 25643028480,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-hotcoco-round2",
+      "task": "segm",
+      "impl": "hotcoco",
+      "label": "round2",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 5.306714643000305,
+      "cpu_total": 7.913204143,
+      "eval_total": 3.4045232480002596,
+      "peak_rss_mb": 3403.176,
+      "stats": [
+        0.34365953809320504,
+        0.5385525392988467,
+        0.3644561943722223,
+        0.14920930726509232,
+        0.3823300117612489,
+        0.5217235966750724,
+        0.29347661900258926,
+        0.4642012251982559,
+        0.49898527290264366,
+        0.27380449504653454,
+        0.5608445107429889,
+        0.7023580220248347
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "1f33b31245a56729"
+      },
+      "host_cpu_percent_median": 10.3,
+      "min_available_ram": 24617066496,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-ufcoco-round2",
+      "task": "segm",
+      "impl": "ufcoco",
+      "label": "round2",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 2.331846404000771,
+      "cpu_total": 3.9198328420000004,
+      "eval_total": 1.75541773400073,
+      "peak_rss_mb": 837.472,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 13.3,
+      "min_available_ram": 27038093312,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-ufcoco-round3",
+      "task": "segm",
+      "impl": "ufcoco",
+      "label": "round3",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 2.338016294999761,
+      "cpu_total": 3.925557676,
+      "eval_total": 1.7599264219998076,
+      "peak_rss_mb": 837.612,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 14.15,
+      "min_available_ram": 26908180480,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-hotcoco-round3",
+      "task": "segm",
+      "impl": "hotcoco",
+      "label": "round3",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 5.361397069999839,
+      "cpu_total": 7.964586533000001,
+      "eval_total": 3.4551379439999437,
+      "peak_rss_mb": 3402.348,
+      "stats": [
+        0.34365953809320504,
+        0.5385525392988467,
+        0.3644561943722223,
+        0.14920930726509232,
+        0.3823300117612489,
+        0.5217235966750724,
+        0.29347661900258926,
+        0.4642012251982559,
+        0.49898527290264366,
+        0.27380449504653454,
+        0.5608445107429889,
+        0.7023580220248347
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "1f33b31245a56729"
+      },
+      "host_cpu_percent_median": 10.35,
+      "min_available_ram": 24432103424,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-faster-round3",
+      "task": "segm",
+      "impl": "faster",
+      "label": "round3",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 15.914057624000634,
+      "cpu_total": 21.952525985,
+      "eval_total": 11.990862678000212,
+      "peak_rss_mb": 2630.296,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 25571483648,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-pycocotools-round3",
+      "task": "segm",
+      "impl": "pycocotools",
+      "label": "round3",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 50.56559841999979,
+      "cpu_total": 50.560207583,
+      "eval_total": 46.647485842999686,
+      "peak_rss_mb": 2191.172,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 26104713216,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-pycocotools-round4",
+      "task": "segm",
+      "impl": "pycocotools",
+      "label": "round4",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 49.191650521000156,
+      "cpu_total": 49.18643146,
+      "eval_total": 45.244050272000095,
+      "peak_rss_mb": 2191.132,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 26168983552,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-faster-round4",
+      "task": "segm",
+      "impl": "faster",
+      "label": "round4",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 15.9506875269999,
+      "cpu_total": 22.035498505,
+      "eval_total": 12.026430299999902,
+      "peak_rss_mb": 2628.788,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 25739874304,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-hotcoco-round4",
+      "task": "segm",
+      "impl": "hotcoco",
+      "label": "round4",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 5.298891462000029,
+      "cpu_total": 7.916949398,
+      "eval_total": 3.4061800719996427,
+      "peak_rss_mb": 3403.12,
+      "stats": [
+        0.34365953809320504,
+        0.5385525392988467,
+        0.3644561943722223,
+        0.14920930726509232,
+        0.3823300117612489,
+        0.5217235966750724,
+        0.29347661900258926,
+        0.4642012251982559,
+        0.49898527290264366,
+        0.27380449504653454,
+        0.5608445107429889,
+        0.7023580220248347
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "1f33b31245a56729"
+      },
+      "host_cpu_percent_median": 10.0,
+      "min_available_ram": 24874520576,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-ufcoco-round4",
+      "task": "segm",
+      "impl": "ufcoco",
+      "label": "round4",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 2.326885447999757,
+      "cpu_total": 3.909385244,
+      "eval_total": 1.7497773780000898,
+      "peak_rss_mb": 838.284,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 12.95,
+      "min_available_ram": 27282690048,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-ufcoco-round5",
+      "task": "segm",
+      "impl": "ufcoco",
+      "label": "round5",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 2.334464197000216,
+      "cpu_total": 3.9483278889999998,
+      "eval_total": 1.7626883970001472,
+      "peak_rss_mb": 838.996,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 14.15,
+      "min_available_ram": 27213508608,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-hotcoco-round5",
+      "task": "segm",
+      "impl": "hotcoco",
+      "label": "round5",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 5.294035735999842,
+      "cpu_total": 7.907240989,
+      "eval_total": 3.432545893999759,
+      "peak_rss_mb": 3403.592,
+      "stats": [
+        0.34365953809320504,
+        0.5385525392988467,
+        0.3644561943722223,
+        0.14920930726509232,
+        0.3823300117612489,
+        0.5217235966750724,
+        0.29347661900258926,
+        0.4642012251982559,
+        0.49898527290264366,
+        0.27380449504653454,
+        0.5608445107429889,
+        0.7023580220248347
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "1f33b31245a56729"
+      },
+      "host_cpu_percent_median": 9.9,
+      "min_available_ram": 24430678016,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-faster-round5",
+      "task": "segm",
+      "impl": "faster",
+      "label": "round5",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 15.86011203399903,
+      "cpu_total": 21.841793648,
+      "eval_total": 11.959963341999355,
+      "peak_rss_mb": 2629.636,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "e5951539ee4df1fc",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 25526419456,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "segm-files-t2-pycocotools-round5",
+      "task": "segm",
+      "impl": "pycocotools",
+      "label": "round5",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 49.1533665500001,
+      "cpu_total": 49.148294724,
+      "eval_total": 45.21669285999997,
+      "peak_rss_mb": 2190.776,
+      "stats": [
+        0.3436595380932048,
+        0.5385525392988464,
+        0.3644561943722224,
+        0.14920930726509513,
+        0.38233001176124254,
+        0.5217235966750563,
+        0.29347661900258953,
+        0.4642012251982567,
+        0.49898527290264416,
+        0.2738044950465343,
+        0.5608445107429896,
+        0.702358022024834
+      ],
+      "digests": {
+        "precision": "91fd10baa35f91af",
+        "recall": "c6b629ae39352057",
+        "scores": "c2101caf3eb9e2dd"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 26125111296,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t1-pycocotools-oracle",
+      "task": "keypoints",
+      "impl": "pycocotools",
+      "label": "oracle",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 9.887617822000266,
+      "cpu_total": 9.88645315,
+      "eval_total": 6.724333524000031,
+      "peak_rss_mb": 603.22,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27682750464,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-pycocotools-warmup",
+      "task": "keypoints",
+      "impl": "pycocotools",
+      "label": "warmup",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 9.794380424999872,
+      "cpu_total": 9.793248401,
+      "eval_total": 6.620305910999832,
+      "peak_rss_mb": 603.108,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27610624000,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-faster-warmup",
+      "task": "keypoints",
+      "impl": "faster",
+      "label": "warmup",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 4.591588847999901,
+      "cpu_total": 4.762477715999999,
+      "eval_total": 1.4177640150001025,
+      "peak_rss_mb": 602.608,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27669577728,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-hotcoco-warmup",
+      "task": "keypoints",
+      "impl": "hotcoco",
+      "label": "warmup",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 0.9823905520001972,
+      "cpu_total": 1.095487949,
+      "eval_total": 0.2365328060000138,
+      "peak_rss_mb": 642.54,
+      "stats": [
+        0.5638424803359237,
+        0.8196351834130862,
+        0.6089962809874975,
+        0.48979934337302256,
+        0.6825745510890345,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27521617920,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-ufcoco-warmup",
+      "task": "keypoints",
+      "impl": "ufcoco",
+      "label": "warmup",
+      "diagnostic": true,
+      "returncode": 0,
+      "stable_digests": null,
+      "wall_total": 0.5405571239998608,
+      "cpu_total": 0.703495907,
+      "eval_total": 0.26022858399983306,
+      "peak_rss_mb": 256.368,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.1,
+      "min_available_ram": 27995389952,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-pycocotools-round0",
+      "task": "keypoints",
+      "impl": "pycocotools",
+      "label": "round0",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 9.732254145000297,
+      "cpu_total": 9.730887132,
+      "eval_total": 6.574962771000173,
+      "peak_rss_mb": 602.944,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27728113664,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-faster-round0",
+      "task": "keypoints",
+      "impl": "faster",
+      "label": "round0",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 4.634768121999969,
+      "cpu_total": 4.803258908999999,
+      "eval_total": 1.476293171999714,
+      "peak_rss_mb": 602.568,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27723329536,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-hotcoco-round0",
+      "task": "keypoints",
+      "impl": "hotcoco",
+      "label": "round0",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 1.0059235189996798,
+      "cpu_total": 1.117556053,
+      "eval_total": 0.23688166099964292,
+      "peak_rss_mb": 642.392,
+      "stats": [
+        0.5638424803359237,
+        0.8196351834130862,
+        0.6089962809874975,
+        0.48979934337302256,
+        0.6825745510890345,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.1,
+      "min_available_ram": 27728871424,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-ufcoco-round0",
+      "task": "keypoints",
+      "impl": "ufcoco",
+      "label": "round0",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.5357452599996577,
+      "cpu_total": 0.696572676,
+      "eval_total": 0.2562115000000631,
+      "peak_rss_mb": 255.988,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 7.5,
+      "min_available_ram": 28015738880,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-ufcoco-round1",
+      "task": "keypoints",
+      "impl": "ufcoco",
+      "label": "round1",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.5374014819999502,
+      "cpu_total": 0.700379215,
+      "eval_total": 0.258942766999553,
+      "peak_rss_mb": 256.008,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.9,
+      "min_available_ram": 27824087040,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-hotcoco-round1",
+      "task": "keypoints",
+      "impl": "hotcoco",
+      "label": "round1",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.9771528039996156,
+      "cpu_total": 1.090799183,
+      "eval_total": 0.23662669599934816,
+      "peak_rss_mb": 642.592,
+      "stats": [
+        0.5638424803359237,
+        0.8196351834130862,
+        0.6089962809874975,
+        0.48979934337302256,
+        0.6825745510890345,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 8.600000000000001,
+      "min_available_ram": 27458236416,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-faster-round1",
+      "task": "keypoints",
+      "impl": "faster",
+      "label": "round1",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 4.526121503000013,
+      "cpu_total": 4.710255720999999,
+      "eval_total": 1.3816597780000848,
+      "peak_rss_mb": 602.504,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27462316032,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-pycocotools-round1",
+      "task": "keypoints",
+      "impl": "pycocotools",
+      "label": "round1",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 9.903578808000475,
+      "cpu_total": 9.902754262,
+      "eval_total": 6.729344537000543,
+      "peak_rss_mb": 603.164,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27591217152,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-pycocotools-round2",
+      "task": "keypoints",
+      "impl": "pycocotools",
+      "label": "round2",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 9.660595697999725,
+      "cpu_total": 9.659627288000001,
+      "eval_total": 6.519340214999829,
+      "peak_rss_mb": 603.156,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27625529344,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-faster-round2",
+      "task": "keypoints",
+      "impl": "faster",
+      "label": "round2",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 4.503513729000588,
+      "cpu_total": 4.673951571,
+      "eval_total": 1.365616503000183,
+      "peak_rss_mb": 602.656,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27724103680,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-hotcoco-round2",
+      "task": "keypoints",
+      "impl": "hotcoco",
+      "label": "round2",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.994286197999827,
+      "cpu_total": 1.104215691,
+      "eval_total": 0.23591977299975042,
+      "peak_rss_mb": 642.384,
+      "stats": [
+        0.5638424803359237,
+        0.8196351834130862,
+        0.6089962809874975,
+        0.48979934337302256,
+        0.6825745510890345,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.35,
+      "min_available_ram": 27568893952,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-ufcoco-round2",
+      "task": "keypoints",
+      "impl": "ufcoco",
+      "label": "round2",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.5453335269994568,
+      "cpu_total": 0.710359724,
+      "eval_total": 0.2630668919996424,
+      "peak_rss_mb": 256.04,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 8.4,
+      "min_available_ram": 27850039296,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-ufcoco-round3",
+      "task": "keypoints",
+      "impl": "ufcoco",
+      "label": "round3",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.5360350639994067,
+      "cpu_total": 0.69790878,
+      "eval_total": 0.258373064999887,
+      "peak_rss_mb": 255.96,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 8.3,
+      "min_available_ram": 27858698240,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-hotcoco-round3",
+      "task": "keypoints",
+      "impl": "hotcoco",
+      "label": "round3",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.9849468330007767,
+      "cpu_total": 1.09319823,
+      "eval_total": 0.2334832220003591,
+      "peak_rss_mb": 642.432,
+      "stats": [
+        0.5638424803359237,
+        0.8196351834130862,
+        0.6089962809874975,
+        0.48979934337302256,
+        0.6825745510890345,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27498577920,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-faster-round3",
+      "task": "keypoints",
+      "impl": "faster",
+      "label": "round3",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 4.531044055000166,
+      "cpu_total": 4.699896871,
+      "eval_total": 1.3701363949999177,
+      "peak_rss_mb": 602.54,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27542540288,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-pycocotools-round3",
+      "task": "keypoints",
+      "impl": "pycocotools",
+      "label": "round3",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 9.964569987999766,
+      "cpu_total": 9.963152287,
+      "eval_total": 6.82130682099978,
+      "peak_rss_mb": 603.26,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27547361280,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-pycocotools-round4",
+      "task": "keypoints",
+      "impl": "pycocotools",
+      "label": "round4",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 9.815201539000554,
+      "cpu_total": 9.814427253000002,
+      "eval_total": 6.634256267000637,
+      "peak_rss_mb": 603.296,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27642466304,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-faster-round4",
+      "task": "keypoints",
+      "impl": "faster",
+      "label": "round4",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 4.796036544999879,
+      "cpu_total": 4.966120716000001,
+      "eval_total": 1.3996834630002013,
+      "peak_rss_mb": 602.672,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27778154496,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-hotcoco-round4",
+      "task": "keypoints",
+      "impl": "hotcoco",
+      "label": "round4",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.9890188050007964,
+      "cpu_total": 1.100560319,
+      "eval_total": 0.2351533440005369,
+      "peak_rss_mb": 642.564,
+      "stats": [
+        0.5638424803359237,
+        0.8196351834130862,
+        0.6089962809874975,
+        0.48979934337302256,
+        0.6825745510890345,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27672301568,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-ufcoco-round4",
+      "task": "keypoints",
+      "impl": "ufcoco",
+      "label": "round4",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.5320832230004271,
+      "cpu_total": 0.694778034,
+      "eval_total": 0.2594171120003921,
+      "peak_rss_mb": 255.96,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27967107072,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-ufcoco-round5",
+      "task": "keypoints",
+      "impl": "ufcoco",
+      "label": "round5",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.5352068689994667,
+      "cpu_total": 0.696195381,
+      "eval_total": 0.2576705619999302,
+      "peak_rss_mb": 256.056,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 8.3,
+      "min_available_ram": 27824549888,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-hotcoco-round5",
+      "task": "keypoints",
+      "impl": "hotcoco",
+      "label": "round5",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 0.9711096169994562,
+      "cpu_total": 1.085362898,
+      "eval_total": 0.23438360899990585,
+      "peak_rss_mb": 642.476,
+      "stats": [
+        0.5638424803359237,
+        0.8196351834130862,
+        0.6089962809874975,
+        0.48979934337302256,
+        0.6825745510890345,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27260088320,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-faster-round5",
+      "task": "keypoints",
+      "impl": "faster",
+      "label": "round5",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 4.5425507069999185,
+      "cpu_total": 4.705087792,
+      "eval_total": 1.3906911340000079,
+      "peak_rss_mb": 602.58,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27386556416,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    },
+    {
+      "name": "keypoints-files-t2-pycocotools-round5",
+      "task": "keypoints",
+      "impl": "pycocotools",
+      "label": "round5",
+      "diagnostic": false,
+      "returncode": 0,
+      "stable_digests": true,
+      "wall_total": 9.84927598600052,
+      "cpu_total": 9.848283545,
+      "eval_total": 6.707502130000194,
+      "peak_rss_mb": 603.116,
+      "stats": [
+        0.5638424803359239,
+        0.8196351834130865,
+        0.6089962809874976,
+        0.4897993433730227,
+        0.682574551089035,
+        0.6315963476070529,
+        0.8765743073047859,
+        0.676794710327456,
+        0.5475279978148048,
+        0.7487179487179488
+      ],
+      "digests": {
+        "precision": "1de2eae8c54a8c87",
+        "recall": "ecb41c9ed31cacee",
+        "scores": "8bc12df8da30fb4b"
+      },
+      "host_cpu_percent_median": 9.2,
+      "min_available_ram": 27480899584,
+      "swap_in_delta": 0,
+      "swap_out_delta": 0
+    }
+  ]
+}

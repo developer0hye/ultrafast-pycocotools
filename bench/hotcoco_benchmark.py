@@ -27,7 +27,10 @@ TASKS = {
     'segm': ('instances_val2017.json', 'segment-predictions.json'),
     'keypoints': ('person_keypoints_val2017.json', 'pose-predictions.json'),
 }
-PACKAGES = ('hotcoco', 'ultrafast-pycocotools', 'pycocotools', 'numpy', 'psutil')
+PACKAGES = ('hotcoco', 'ultrafast-pycocotools', 'pycocotools', 'faster-coco-eval', 'numpy', 'psutil')
+# Only ufcoco is required to be run-to-run deterministic; other backends' digest
+# changes are recorded instead of aborting the run.
+STRICT_DIGESTS = {'ufcoco'}
 
 
 def digest(path):
@@ -36,6 +39,16 @@ def digest(path):
         for block in iter(lambda: stream.read(1 << 20), b''):
             h.update(block)
     return h.hexdigest()
+
+
+def installed_versions():
+    versions = {}
+    for package in PACKAGES:
+        try:
+            versions[package] = importlib.metadata.version(package)
+        except importlib.metadata.PackageNotFoundError:
+            versions[package] = None
+    return versions
 
 
 def snapshot():
@@ -73,6 +86,8 @@ def main():
     parser.add_argument('--rounds', type=int, default=6)
     parser.add_argument('--tasks', choices=TASKS, nargs='+', default=list(TASKS))
     parser.add_argument('--modes', choices=['files', 'list'], nargs='+', default=['files', 'list'])
+    parser.add_argument('--backends', choices=['pycocotools', 'faster', 'hotcoco', 'ufcoco'], nargs='+',
+                        default=['hotcoco', 'ufcoco'])
     args = parser.parse_args()
     if args.rounds < 2 or args.rounds % 2 or any(t < 1 for t in args.threads):
         parser.error('use a positive even number of rounds and positive thread counts')
@@ -90,7 +105,7 @@ def main():
     result = dict(started_utc=datetime.now(timezone.utc).isoformat(), command=sys.argv,
                   cpu=cpu, physical_cores=psutil.cpu_count(logical=False), logical_cpus=psutil.cpu_count(),
                   ram_bytes=psutil.virtual_memory().total, platform=platform.platform(), python=sys.version,
-                  packages={p: importlib.metadata.version(p) for p in PACKAGES},
+                  packages=installed_versions(), backends=args.backends,
                   input_sha256={n: digest(p) for n, p in files.items()},
                   script_sha256={p.name: digest(p) for p in (Path(__file__), HERE/'run_impl.py')},
                   threads=args.threads, rounds=args.rounds, modes=args.modes, tasks=args.tasks,
@@ -151,7 +166,7 @@ def main():
             checks = result['parity'].setdefault(task+'-'+mode, {})
             warmups = {}
             for threads in args.threads:
-                for impl in ('hotcoco', 'ufcoco'):
+                for impl in args.backends:
                     warmup = run(task, mode, impl, threads, 'warmup', arrays=True)
                     warmups[impl, threads] = warmup
                     if warmup['returncode'] == 0:
@@ -166,7 +181,7 @@ def main():
                     save()
             for iteration in range(args.rounds):
                 thread_order = args.threads if iteration % 2 == 0 else list(reversed(args.threads))
-                order = ('hotcoco', 'ufcoco') if iteration % 2 == 0 else ('ufcoco', 'hotcoco')
+                order = args.backends if iteration % 2 == 0 else list(reversed(args.backends))
                 for threads in thread_order:
                     for impl in order:
                         if warmups[impl, threads]['returncode']:
@@ -175,11 +190,11 @@ def main():
                         if entry['returncode']:
                             raise RuntimeError('Timed process failed; preserve all results and inspect log')
                         entry['stable_digests'] = entry['result']['digests'] == warmups[impl, threads]['result']['digests']
-                        if not entry['stable_digests']:
+                        if not entry['stable_digests'] and impl in STRICT_DIGESTS:
                             save()
                             raise RuntimeError('Within-backend nondeterminism; inspect output hashes')
             for threads in args.threads:
-                for impl in ('hotcoco', 'ufcoco'):
+                for impl in args.backends:
                     values = [r['result'] for r in result['runs'] if not r['diagnostic'] and
                               (r['task'],r['mode'],r['threads'],r['impl']) == (task,mode,threads,impl)]
                     if values:
