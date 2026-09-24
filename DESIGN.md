@@ -435,6 +435,9 @@ DT-only images, and polygons with duplicate vertices.
 | Evaluation made 21.76 million allocations | Match buffers reallocated per area range | Reuse within a category; reduced to 6.66 million and 2.22 → 0.83 s for that phase |
 | Mask memory was twice the estimate | Spare capacity in `cnts` built with `Vec::push` | Apply `shrink_to_fit` |
 | Objects365 `loadRes` used 1,148 MB | Four-corner polygon created per box prediction | Rasterize boxes on demand; historical `derive_segmentation=False` measurement saved 320 MB and 2.1 s; omission is the default in 0.1.1 |
+| COCO segm extraction held 370 MB of decoded runs | Every compact mask was decoded before evaluation, after re-parsing the whole file | Record segmentation spans at load, keep counts strings in the snapshot and decode inside `compute_iou`; peak RSS 838 → 555 MB |
+| Accumulation was 0.46 CPU s for COCO bbox | Per (maxDets, threshold, detection) reads of per-image match tables | One outcome byte per detection and threshold, gathered once per area; curves built from true positives; 0.46 → 0.13 s |
+| Loading was the largest bbox/keypoint phase | One sequential serde pass over the result array | Parallel chunks verified by exact record alignment; bbox `loadRes` 0.28 → 0.18 s |
 
 Dropping `abi3` is a packaging decision: wheels must be built for each Python
 version. The limited API turns `PyFloat_AS_DOUBLE` and `PyList_GET_ITEM` into

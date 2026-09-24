@@ -52,6 +52,7 @@ include them, so their absolute numbers are superseded by the headline above.
 | 0.1.9 | [maxDets storage and LVIS optimization](../maxdets-lvis-optimization.md) |
 | 0.1.10 | [Evaluation input boundary fixes](../evaluation-boundary-fixes.md) |
 | 0.1.11 | [Pose input storage](../pose-input-optimization.md) · [Parallel pose loading](../pose-parallel-loading.md) |
+| unreleased (main) | [Per-task bottleneck optimization](../task-bottleneck-optimization.md) |
 
 ## Reproducing
 
