@@ -1,0 +1,25 @@
+name: Upstream canary
+
+# Weekly check of this repository's main branch against the latest RF-DETR
+# and Ultralytics revisions. Not a required check: a failure here means an
+# upstream change needs attention (or the pins in ci.yml need updating), not
+# that a pull request here broke something.
+
+on:
+  schedule:
+    - cron: '41 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  latest:
+    name: Latest upstream
+    uses: ./.github/workflows/upstream-integrations.yml
+    with:
+      rfdetr-ref: develop
+      # Until ultralytics/ultralytics#26101 is merged, its head is the latest
+      # Ultralytics revision that evaluates with ultrafast-pycocotools.
+      ultralytics-repository: ultralytics/ultralytics
+      ultralytics-ref: refs/pull/26101/head
