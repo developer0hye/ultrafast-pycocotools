@@ -503,3 +503,62 @@ def test_parallel_result_parsing_rejects_like_the_sequential_parser(tmp_path, da
     assert actual_error is expected_error
     if expected_error is None:
         assert actual._compact is None and len(actual.anns) == len(expected.anns)
+
+
+def _crowded_bbox_inputs(tmp_path):
+    import numpy as np
+    rng = np.random.default_rng(3)
+    images = [{'id': i, 'height': 200, 'width': 200} for i in range(1, 41)]
+    annotations, dets = [], []
+    for i in range(400):
+        image, category = int(rng.integers(1, 41)), int(rng.integers(1, 4))
+        x, y = [float(v) for v in rng.uniform(0, 150, 2)]
+        w, h = [float(v) for v in rng.uniform(3, 60, 2)]
+        annotations.append({'id': i + 1, 'image_id': image, 'category_id': category, 'bbox': [x, y, w, h],
+                            'area': w * h, 'iscrowd': int(rng.random() < .05)})
+        for _ in range(int(rng.integers(0, 4))):
+            box = [x + rng.normal(0, 4), y + rng.normal(0, 4), w * rng.uniform(.7, 1.3), h * rng.uniform(.7, 1.3)]
+            dets.append({'image_id': image, 'category_id': category if rng.random() < .8 else int(rng.integers(1, 4)),
+                         'bbox': [float(v) for v in box], 'score': float(np.round(rng.random(), 2))})
+    for _ in range(600):
+        box = [float(v) for v in rng.uniform(0, 150, 2)] + [float(v) for v in rng.uniform(2, 80, 2)]
+        dets.append({'image_id': int(rng.integers(1, 41)), 'category_id': int(rng.integers(1, 4)), 'bbox': box,
+                     'score': float(np.round(rng.random(), 2))})
+    gp, dp = tmp_path / 'gt.json', tmp_path / 'dt.json'
+    gp.write_text(json.dumps({'images': images, 'annotations': annotations,
+                              'categories': [{'id': c} for c in (1, 2, 3)]}))
+    dp.write_text(json.dumps(dets))
+    return gp, dp
+
+
+@pytest.mark.parametrize('max_dets', [[1, 10, 100], [3, 2], [0, 5]])
+@pytest.mark.parametrize('thresholds', [[0., 0., .25, .5, 1.], [-1., 0., 1., 1.5], [.3, .3, .3], [2., .1]])
+def test_precision_envelope_with_tied_scores_and_unusual_grids(tmp_path, thresholds, max_dets):
+    # Tied scores, crowds, several detections per ground truth and
+    # out-of-range or repeated recall thresholds all reach the sampled curve.
+    import numpy as np
+    gp, dp = _crowded_bbox_inputs(tmp_path)
+
+    def tweak(p):
+        p.recThrs = np.array(thresholds)
+        p.maxDets = max_dets
+
+    import contextlib
+    import io
+    from pycocotools.coco import COCO
+    from pycocotools.cocoeval import COCOeval
+    with contextlib.redirect_stdout(io.StringIO()):
+        reference_gt = COCO(str(gp))
+        reference = COCOeval(reference_gt, reference_gt.loadRes(str(dp)), 'bbox')
+        tweak(reference.params)
+        reference.evaluate()
+        reference.accumulate()
+    gt = ufc.COCO(gp, verbose=False)
+    actual = ufc.COCOeval(gt, gt.loadRes(dp), 'bbox', print_function=lambda *_: None)
+    tweak(actual.params)
+    actual.evaluate()
+    actual.accumulate()
+    # summarize() indexes maxDets[2]; compare the complete arrays instead.
+    for key in ('precision', 'recall', 'scores'):
+        expected = np.ascontiguousarray(reference.eval[key], dtype=np.float64)
+        assert expected.tobytes() == np.ascontiguousarray(actual.eval[key]).tobytes(), key
