@@ -270,11 +270,20 @@ impl ColumnBuilder {
                 None => false,
             };
         self.boxes.push(bbox);
-        let score = record.score.unwrap_or(0.0);
-        let narrow = (
-            i32::try_from(record.image_id),
-            i32::try_from(record.category_id),
+        self.push_row(
+            record.image_id,
+            record.category_id,
+            record.score.unwrap_or(0.0),
         );
+        if let Some(fields) = &mut self.ground_truth {
+            fields.push(GroundTruth { id, area, crowd });
+        }
+        Ok(())
+    }
+
+    /// The scalar row shared by file records and array rows.
+    fn push_row(&mut self, image_id: i64, category_id: i64, score: f64) {
+        let narrow = (i32::try_from(image_id), i32::try_from(category_id));
         if let (None, (Ok(image), Ok(category))) = (&self.wide, narrow) {
             self.rows.push(Row {
                 image,
@@ -291,20 +300,13 @@ impl ColumnBuilder {
                     .collect();
                 self.wide = Some(widened);
             }
-            self.wide
-                .as_mut()
-                .unwrap()
-                .push([record.image_id, record.category_id]);
+            self.wide.as_mut().unwrap().push([image_id, category_id]);
             self.rows.push(Row {
                 image: 0,
                 category: 0,
                 score,
             });
         }
-        if let Some(fields) = &mut self.ground_truth {
-            fields.push(GroundTruth { id, area, crowd });
-        }
-        Ok(())
     }
 
     fn reserve(&mut self, records: usize) {
@@ -567,6 +569,12 @@ pub struct CompactBbox {
     /// Segmentation value spans by row (shorter when trailing rows have none),
     /// or `None` when the snapshot is too large for 32-bit offsets.
     segm: Option<Vec<SegmSpan>>,
+    /// Built from an `Nx7` result array rather than a file; `raw` is empty.
+    /// Public views and LVIS selection are then materialized in Python.
+    from_array: bool,
+    /// The array was float32: derived areas and box polygons use float32
+    /// arithmetic, as pycocotools does on NumPy float32 scalars.
+    float32: bool,
 }
 
 /// `(image slot, category slot)` for one file row, or [`UNSELECTED`] when
@@ -595,6 +603,30 @@ impl CompactBbox {
     /// `(image_id, category_id)` of row `index`.
     fn ids(&self, index: usize) -> (i64, i64) {
         row_ids(&self.rows, &self.wide, index)
+    }
+
+    /// loadRes' derived `area = w * h` for result row `index`.
+    fn result_area(&self, index: usize) -> f64 {
+        let [_, _, w, h] = self.boxes[index];
+        if self.float32 {
+            f64::from(w as f32 * h as f32)
+        } else {
+            w * h
+        }
+    }
+
+    /// The four-corner polygon loadRes derives for a box-only result.
+    fn box_geometry(&self, index: usize) -> RawSegm {
+        if !self.float32 {
+            return RawSegm::FromBbox(self.boxes[index]);
+        }
+        let [x, y, w, h] = self.boxes[index].map(|v| v as f32);
+        let (x2, y2) = (f64::from(x + w), f64::from(y + h));
+        let (x, y) = (f64::from(x), f64::from(y));
+        RawSegm::Poly {
+            coords: vec![x, y, x, y2, x2, y2, x2, y],
+            ends: vec![8],
+        }
     }
 
     pub(super) fn groups(slots: &[Slot], use_cats: bool) -> GroupSet {
@@ -632,11 +664,7 @@ impl CompactBbox {
                     let gt = &fields[index];
                     (gt.id, gt.area, gt.crowd)
                 }
-                None => (
-                    index as i64 + 1,
-                    self.boxes[index][2] * self.boxes[index][3],
-                    false,
-                ),
+                None => (index as i64 + 1, self.result_area(index), false),
             };
             out.ids.push(id);
             out.img_slot.push(image);
@@ -901,12 +929,7 @@ impl CompactBbox {
                     escaped,
                 },
                 Some(SpanSegm::Raw(raw)) => MaskRef::Ready(super::raw_to_rle(&raw, h, w, scratch)),
-                None => MaskRef::Ready(super::raw_to_rle(
-                    &RawSegm::FromBbox(self.boxes[index]),
-                    h,
-                    w,
-                    scratch,
-                )),
+                None => MaskRef::Ready(super::raw_to_rle(&self.box_geometry(index), h, w, scratch)),
             })
         };
         let parallel: Result<Vec<MaskRef>, String> = (0..rows.len())
@@ -1445,7 +1468,7 @@ impl CompactBbox {
         verified: HashMap<i64, HashSet<i64>>,
         max_det: Option<usize>,
     ) -> PyResult<Option<Py<PyList>>> {
-        if !self.results {
+        if !self.results || self.from_array {
             return Ok(None);
         }
         let mut by_image: HashMap<i64, Vec<usize>> = HashMap::new();
@@ -1500,6 +1523,11 @@ impl CompactBbox {
     }
 
     fn annotations(&self, py: Python<'_>) -> PyResult<Py<PyAny>> {
+        if self.from_array {
+            return Err(PyValueError::new_err(
+                "array-backed results are materialized from array_rows()",
+            ));
+        }
         let value = super::json::parse_bytes(py, &self.raw)?;
         let annotations = if self.results {
             value.bind(py).clone()
@@ -1514,6 +1542,39 @@ impl CompactBbox {
     fn valid_images(&self, images: Vec<i64>) -> bool {
         let allowed: HashSet<i64> = images.into_iter().collect();
         (0..self.rows.len()).all(|index| allowed.contains(&self.ids(index).0))
+    }
+    #[getter]
+    fn from_array(&self) -> bool {
+        self.from_array
+    }
+    #[getter]
+    fn float32(&self) -> bool {
+        self.float32
+    }
+    /// The `Nx7` `[image_id, x, y, w, h, score, category_id]` rows as float64,
+    /// with integer IDs as loadRes truncated them.
+    fn array_rows<'py>(&self, py: Python<'py>) -> Bound<'py, numpy::PyArray2<f64>> {
+        let n = self.rows.len();
+        let mut out = numpy::ndarray::Array2::<f64>::zeros((n, 7));
+        for (index, mut row) in out.outer_iter_mut().enumerate() {
+            let (image, category) = self.ids(index);
+            let [x, y, w, h] = self.boxes[index];
+            for (slot, value) in [
+                image as f64,
+                x,
+                y,
+                w,
+                h,
+                self.rows[index].score,
+                category as f64,
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                row[slot] = value;
+            }
+        }
+        numpy::IntoPyArray::into_pyarray(out, py)
     }
     #[getter]
     fn annotation_count(&self) -> usize {
@@ -1615,6 +1676,69 @@ pub fn load_compact_bbox(
             results,
             pose,
             segm: segm_spans.then_some(segm),
+            from_array: false,
+            float32: false,
         },
     ))
+}
+
+/// `int(v)` for a finite float in `i64` range, as `loadNumpyAnnotations` does.
+fn truncated_id(value: f64) -> Option<i64> {
+    let truncated = value.trunc();
+    (value.is_finite()
+        && truncated >= -9_223_372_036_854_775_808.0
+        && truncated < 9_223_372_036_854_775_808.0)
+        .then_some(truncated as i64)
+}
+
+fn compact_from_rows<T: Copy + Into<f64>>(
+    rows: numpy::ndarray::ArrayView2<'_, T>,
+    float32: bool,
+) -> PyResult<CompactBbox> {
+    if rows.ncols() != 7 {
+        return Err(PyValueError::new_err("result arrays must have 7 columns"));
+    }
+    let mut columns = ColumnBuilder::new(true, 0, false);
+    columns.reserve(rows.nrows());
+    for row in rows.outer_iter() {
+        let value = |column: usize| -> f64 { row[column].into() };
+        let (Some(image), Some(category)) = (truncated_id(value(0)), truncated_id(value(6))) else {
+            return Err(PyValueError::new_err(
+                "image and category IDs must be finite int64 values",
+            ));
+        };
+        columns.boxes.push([value(1), value(2), value(3), value(4)]);
+        columns.push_row(image, category, value(5));
+    }
+    let (rows, wide, ground_truth, boxes, pose, _) = columns.finish();
+    Ok(CompactBbox {
+        raw: Arc::new(Vec::new()),
+        rows,
+        wide,
+        ground_truth,
+        boxes: Arc::new(boxes),
+        results: true,
+        pose,
+        // No row has a segmentation value: masks come from the boxes.
+        segm: Some(Vec::new()),
+        from_array: true,
+        float32,
+    })
+}
+
+/// Compact result handle from an `Nx7` float64 or float32 array of
+/// `[image_id, x, y, w, h, score, category_id]`, the input `loadRes` accepts
+/// besides files and lists. No Python annotation objects are created; values
+/// and derived fields match `loadNumpyAnnotations` followed by `loadRes`.
+#[pyfunction]
+pub fn load_compact_array(data: &Bound<'_, PyAny>) -> PyResult<CompactBbox> {
+    if let Ok(rows) = data.extract::<numpy::PyReadonlyArray2<'_, f64>>() {
+        compact_from_rows(rows.as_array(), false)
+    } else if let Ok(rows) = data.extract::<numpy::PyReadonlyArray2<'_, f32>>() {
+        compact_from_rows(rows.as_array(), true)
+    } else {
+        Err(PyValueError::new_err(
+            "expected a 2-D float64 or float32 array",
+        ))
+    }
 }

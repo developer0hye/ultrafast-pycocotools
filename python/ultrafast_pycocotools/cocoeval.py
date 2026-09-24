@@ -478,9 +478,12 @@ class COCOeval:
         p.maxDets = sorted(p.maxDets)
         self.params = p
 
+        array_results = self.cocoDt._compact is not None and self.cocoDt._compact.from_array
         if (type(self) is COCOeval and not self.lvis_style
                 and type(self.cocoGt) is COCO and type(self.cocoDt) is COCO
-                and (self.cocoGt._compact is not None or self.cocoDt._compact is not None)):
+                and (self.cocoGt._compact is not None or self.cocoDt._compact is not None)
+                # Array results hold boxes only; other types read them as dictionaries.
+                and not (array_results and p.iouType not in ("bbox", "segm"))):
             categories = p.catIds if p.useCats else []
             gts = (self.cocoGt._compact if self.cocoGt._compact is not None else
                    self.cocoGt._eval_annotations(p.imgIds, categories))
