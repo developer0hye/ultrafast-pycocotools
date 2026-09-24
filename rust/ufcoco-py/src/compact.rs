@@ -132,83 +132,266 @@ impl<'de> Visitor<'de> for Rows {
         f.write_str("bbox annotations")
     }
     fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
-        let mut rows = Vec::new();
-        let mut ground_truth = if self.0 { None } else { Some(Vec::new()) };
-        let mut boxes = Vec::new();
-        let mut pose = Vec::new();
-        let mut segm = Vec::new();
-        let mut ids = HashSet::new();
+        let mut columns = ColumnBuilder::new(self.0, self.1, self.2);
         while let Some(record) = seq.next_element::<Record>()? {
-            if self.0 && record.caption {
-                return Err(serde::de::Error::custom(
-                    "caption results require caption loading",
-                ));
-            }
-            let id = if self.0 {
-                rows.len() as i64 + 1
-            } else {
-                record
-                    .id
-                    .ok_or_else(|| serde::de::Error::custom("missing GT id"))?
-            };
-            if !self.0 && !ids.insert(id) {
-                return Err(serde::de::Error::custom(
-                    "duplicate GT ids require dictionary indexing",
-                ));
-            }
-            if record.keypoints.is_some() || record.num_keypoints.is_some() {
-                pose.resize_with(rows.len(), PoseRanges::default);
-                let range = |value: &serde_json::value::RawValue| {
-                    let text = value.get();
-                    let start = text.as_ptr() as usize - self.1;
-                    start..start + text.len()
-                };
-                pose.push(PoseRanges {
-                    points: record.keypoints.map(range),
-                    count: record.num_keypoints.map(range),
-                });
-            } else if !pose.is_empty() {
-                pose.push(PoseRanges::default());
-            }
-            if let (true, Some(value)) = (self.2, record.segmentation) {
-                // Offsets fit: the caller enables spans only below 4 GiB.
-                let text = value.get();
-                segm.resize(rows.len(), NO_SEGMENTATION);
-                segm.push(((text.as_ptr() as usize - self.1) as u32, text.len() as u32));
-            } else if !segm.is_empty() {
-                segm.push(NO_SEGMENTATION);
-            }
-            let bbox = record.bbox.map(|x| x.0);
-            let area = if self.0 {
-                bbox[2] * bbox[3]
-            } else {
-                record.area.unwrap_or(bbox[2] * bbox[3])
-            };
-            let crowd = !self.0
-                && match record.iscrowd {
-                    Some(Crowd::Bool(x)) => x,
-                    Some(Crowd::Int(x)) => x != 0,
-                    None => false,
-                };
-            boxes.push(bbox);
-            rows.push(Row {
-                image: record.image_id,
-                category: record.category_id,
-                score: record.score.unwrap_or(0.0),
-            });
-            if let Some(fields) = &mut ground_truth {
-                fields.push(GroundTruth { id, area, crowd });
-            }
+            columns.push(record).map_err(serde::de::Error::custom)?;
         }
-        rows.shrink_to_fit();
-        boxes.shrink_to_fit();
-        if let Some(fields) = &mut ground_truth {
+        Ok(columns.finish())
+    }
+}
+
+/// Column storage for one annotation array, or one chunk of a result array.
+struct ColumnBuilder {
+    results: bool,
+    /// Snapshot base address for pose and segmentation spans.
+    base: usize,
+    segm_spans: bool,
+    rows: Vec<Row>,
+    ground_truth: Option<Vec<GroundTruth>>,
+    boxes: Vec<[f64; 4]>,
+    pose: Vec<PoseRanges>,
+    segm: Vec<SegmSpan>,
+    ids: HashSet<i64>,
+}
+
+impl ColumnBuilder {
+    fn new(results: bool, base: usize, segm_spans: bool) -> Self {
+        ColumnBuilder {
+            results,
+            base,
+            segm_spans,
+            rows: Vec::new(),
+            ground_truth: (!results).then(Vec::new),
+            boxes: Vec::new(),
+            pose: Vec::new(),
+            segm: Vec::new(),
+            ids: HashSet::new(),
+        }
+    }
+
+    fn push(&mut self, record: Record<'_>) -> Result<(), &'static str> {
+        if self.results && record.caption {
+            return Err("caption results require caption loading");
+        }
+        let id = if self.results {
+            self.rows.len() as i64 + 1
+        } else {
+            record.id.ok_or("missing GT id")?
+        };
+        if !self.results && !self.ids.insert(id) {
+            return Err("duplicate GT ids require dictionary indexing");
+        }
+        if record.keypoints.is_some() || record.num_keypoints.is_some() {
+            self.pose.resize_with(self.rows.len(), PoseRanges::default);
+            let base = self.base;
+            let range = |value: &serde_json::value::RawValue| {
+                let text = value.get();
+                let start = text.as_ptr() as usize - base;
+                start..start + text.len()
+            };
+            self.pose.push(PoseRanges {
+                points: record.keypoints.map(range),
+                count: record.num_keypoints.map(range),
+            });
+        } else if !self.pose.is_empty() {
+            self.pose.push(PoseRanges::default());
+        }
+        if let (true, Some(value)) = (self.segm_spans, record.segmentation) {
+            // Offsets fit: the caller enables spans only below 4 GiB.
+            let text = value.get();
+            self.segm.resize(self.rows.len(), NO_SEGMENTATION);
+            self.segm.push((
+                (text.as_ptr() as usize - self.base) as u32,
+                text.len() as u32,
+            ));
+        } else if !self.segm.is_empty() {
+            self.segm.push(NO_SEGMENTATION);
+        }
+        let bbox = record.bbox.map(|x| x.0);
+        let area = if self.results {
+            bbox[2] * bbox[3]
+        } else {
+            record.area.unwrap_or(bbox[2] * bbox[3])
+        };
+        let crowd = !self.results
+            && match record.iscrowd {
+                Some(Crowd::Bool(x)) => x,
+                Some(Crowd::Int(x)) => x != 0,
+                None => false,
+            };
+        self.boxes.push(bbox);
+        self.rows.push(Row {
+            image: record.image_id,
+            category: record.category_id,
+            score: record.score.unwrap_or(0.0),
+        });
+        if let Some(fields) = &mut self.ground_truth {
+            fields.push(GroundTruth { id, area, crowd });
+        }
+        Ok(())
+    }
+
+    fn finish(mut self) -> Columns {
+        self.rows.shrink_to_fit();
+        self.boxes.shrink_to_fit();
+        if let Some(fields) = &mut self.ground_truth {
             fields.shrink_to_fit();
         }
-        pose.shrink_to_fit();
-        segm.shrink_to_fit();
-        Ok((rows, ground_truth, boxes, pose, segm))
+        self.pose.shrink_to_fit();
+        self.segm.shrink_to_fit();
+        (
+            self.rows,
+            self.ground_truth,
+            self.boxes,
+            self.pose,
+            self.segm,
+        )
     }
+}
+
+fn is_json_whitespace(byte: u8) -> bool {
+    matches!(byte, b' ' | b'\n' | b'\r' | b'\t')
+}
+
+fn skip_whitespace(raw: &[u8], mut position: usize) -> usize {
+    while raw.get(position).copied().is_some_and(is_json_whitespace) {
+        position += 1;
+    }
+    position
+}
+
+/// Result files at least this large are parsed in parallel chunks.
+const PARALLEL_RESULTS_BYTES: usize = 1 << 22;
+
+/// Parse a top-level result array in parallel, or `None` to use the
+/// sequential parser.
+///
+/// The array is split at candidate record starts: `{` after `}`, `,` and
+/// whitespace. A candidate may lie inside a string, so each chunk is parsed
+/// record by record with the ordinary `Record` deserializer and accepted only
+/// if its last record ends exactly at the next chunk's start. The first chunk
+/// starts at the real first record, so by induction every accepted start is a
+/// real record boundary and the records are exactly those of the sequential
+/// parse, in order. Anything else (a misaligned or failing chunk, trailing
+/// data, a non-object element) returns `None`, and the sequential parser
+/// decides, including its error.
+fn parallel_results(raw: &[u8], segm_spans: bool) -> Option<Columns> {
+    let threads = rayon::current_num_threads();
+    if raw.len() < PARALLEL_RESULTS_BYTES || threads < 2 {
+        return None;
+    }
+    let mut first = skip_whitespace(raw, 0);
+    if raw.get(first) != Some(&b'[') {
+        return None;
+    }
+    first = skip_whitespace(raw, first + 1);
+    if raw.get(first) != Some(&b'{') {
+        return None;
+    }
+    let chunks = threads * 4;
+    let mut starts = vec![first];
+    for chunk in 1..chunks {
+        let target = raw.len() / chunks * chunk;
+        if let Some(start) = candidate_record_start(raw, target.max(first + 1)) {
+            if start > *starts.last().unwrap() {
+                starts.push(start);
+            }
+        }
+    }
+    let base = raw.as_ptr() as usize;
+    let parts: Vec<Option<ColumnBuilder>> = (0..starts.len())
+        .into_par_iter()
+        .map(|i| parse_result_chunk(raw, starts[i], starts.get(i + 1).copied(), base, segm_spans))
+        .collect();
+    let parts: Vec<ColumnBuilder> = parts.into_iter().collect::<Option<_>>()?;
+    Some(concatenate(parts, base, segm_spans))
+}
+
+/// The first `{` at or after `from` that follows `}`, `,` and JSON whitespace.
+fn candidate_record_start(raw: &[u8], from: usize) -> Option<usize> {
+    let mut position = from;
+    loop {
+        position += raw.get(position..)?.iter().position(|&b| b == b'}')? + 1;
+        let comma = skip_whitespace(raw, position);
+        if raw.get(comma) == Some(&b',') {
+            let next = skip_whitespace(raw, comma + 1);
+            if raw.get(next) == Some(&b'{') {
+                return Some(next);
+            }
+        }
+    }
+}
+
+/// Records from `start` up to exactly `end` (the next chunk's start), or to
+/// the closing bracket and end of input for the last chunk.
+fn parse_result_chunk(
+    raw: &[u8],
+    start: usize,
+    end: Option<usize>,
+    base: usize,
+    segm_spans: bool,
+) -> Option<ColumnBuilder> {
+    let mut columns = ColumnBuilder::new(true, base, segm_spans);
+    let mut position = start;
+    loop {
+        let mut stream =
+            serde_json::Deserializer::from_slice(&raw[position..]).into_iter::<Record>();
+        let record = stream.next()?.ok()?;
+        position += stream.byte_offset();
+        columns.push(record).ok()?;
+        position = skip_whitespace(raw, position);
+        match raw.get(position) {
+            Some(b',') => {
+                position = skip_whitespace(raw, position + 1);
+                if let Some(end) = end {
+                    if position >= end {
+                        return (position == end).then_some(columns);
+                    }
+                }
+            }
+            Some(b']') if end.is_none() => {
+                return (skip_whitespace(raw, position + 1) == raw.len()).then_some(columns);
+            }
+            _ => return None,
+        }
+    }
+}
+
+/// Join chunk columns in order, as one sequential parse would have built them.
+fn concatenate(parts: Vec<ColumnBuilder>, base: usize, segm_spans: bool) -> Columns {
+    let total: usize = parts.iter().map(|part| part.rows.len()).sum();
+    let any_pose = parts.iter().any(|part| !part.pose.is_empty());
+    let any_segm = parts.iter().any(|part| !part.segm.is_empty());
+    let mut out = ColumnBuilder::new(true, base, segm_spans);
+    out.rows.reserve_exact(total);
+    out.boxes.reserve_exact(total);
+    if any_pose {
+        out.pose.reserve_exact(total);
+    }
+    if any_segm {
+        out.segm.reserve_exact(total);
+    }
+    for part in parts {
+        let n = part.rows.len();
+        out.rows.extend(part.rows);
+        out.boxes.extend(part.boxes);
+        if any_pose {
+            if part.pose.is_empty() {
+                out.pose
+                    .resize_with(out.pose.len() + n, PoseRanges::default);
+            } else {
+                out.pose.extend(part.pose);
+            }
+        }
+        if any_segm {
+            if part.segm.is_empty() {
+                out.segm.resize(out.segm.len() + n, NO_SEGMENTATION);
+            } else {
+                out.segm.extend(part.segm);
+            }
+        }
+    }
+    out.finish()
 }
 
 struct Dataset<'py> {
@@ -1257,22 +1440,32 @@ pub fn load_compact_bbox(
 ) -> PyResult<(Py<PyDict>, CompactBbox)> {
     let raw = std::fs::read(path).map_err(|e| PyIOError::new_err(e.to_string()))?;
     let segm_spans = u32::try_from(raw.len()).is_ok_and(|n| n < u32::MAX);
-    let mut de = serde_json::Deserializer::from_slice(&raw);
-    let parsed = if results {
-        Rows(true, raw.as_ptr() as usize, segm_spans)
-            .deserialize(&mut de)
-            .map(|rows| (PyDict::new(py).unbind(), rows))
+    let parallel = if results {
+        parallel_results(&raw, segm_spans)
     } else {
-        Dataset {
-            py,
-            raw_base: raw.as_ptr() as usize,
-            segm_spans,
-        }
-        .deserialize(&mut de)
+        None
     };
-    let (metadata, (rows, ground_truth, boxes, pose, segm)) =
-        parsed.map_err(|e| PyValueError::new_err(e.to_string()))?;
-    de.end().map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let (metadata, (rows, ground_truth, boxes, pose, segm)) = match parallel {
+        Some(columns) => (PyDict::new(py).unbind(), columns),
+        None => {
+            let mut de = serde_json::Deserializer::from_slice(&raw);
+            let parsed = if results {
+                Rows(true, raw.as_ptr() as usize, segm_spans)
+                    .deserialize(&mut de)
+                    .map(|rows| (PyDict::new(py).unbind(), rows))
+            } else {
+                Dataset {
+                    py,
+                    raw_base: raw.as_ptr() as usize,
+                    segm_spans,
+                }
+                .deserialize(&mut de)
+            };
+            let parsed = parsed.map_err(|e| PyValueError::new_err(e.to_string()))?;
+            de.end().map_err(|e| PyValueError::new_err(e.to_string()))?;
+            parsed
+        }
+    };
     Ok((
         metadata,
         CompactBbox {

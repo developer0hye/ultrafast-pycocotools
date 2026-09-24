@@ -431,3 +431,75 @@ def test_segmentation_spans_keep_escaped_counts_exact(tmp_path, use_cats):
     actual.run()
     assert gt._compact is not None and dt._compact is not None
     assert_bit_identical(reference, actual, f'escaped counts useCats={use_cats}')
+
+
+def _large_results(tmp_path, count=45000):
+    # Above the parallel-parsing threshold. String values imitate record
+    # boundaries (`}, {`) and contain escapes, so a chunk may start inside one.
+    import numpy as np
+    rng = np.random.default_rng(11)
+    images = [{'id': i, 'height': 480, 'width': 640} for i in range(1, 301)]
+    annotations = []
+    for i in range(1500):
+        x, y, w, h = [float(v) for v in rng.uniform(0, 400, 2)] + [float(v) for v in rng.uniform(4, 200, 2)]
+        annotations.append({'id': i + 1, 'image_id': 1 + i % 300, 'category_id': 1 + i % 3,
+                            'bbox': [x, y, w, h], 'area': w * h, 'iscrowd': 0})
+    dets = []
+    for i in range(count):
+        a = annotations[int(rng.integers(0, len(annotations)))]
+        box = [v + float(rng.normal(0, 3)) for v in a['bbox']]
+        name = ['plain.jpg', 'a}, {"image_id": 1, "bbox": [0,0,1,1]}, {"x', 'q\\"}, {\\\\', '},{'][i % 4]
+        dets.append({'image_id': a['image_id'], 'file_name': name, 'category_id': a['category_id'],
+                     'bbox': box, 'score': round(float(rng.random()), 3)})
+    data = {'images': images, 'annotations': annotations, 'categories': [{'id': c} for c in (1, 2, 3)]}
+    gp, dp = tmp_path / 'gt.json', tmp_path / 'dt.json'
+    gp.write_text(json.dumps(data))
+    text = json.dumps(dets)
+    assert len(text) > 4 << 20
+    dp.write_text(text)
+    return gp, dp, dets
+
+
+def test_parallel_result_parsing_matches_sequential_semantics(tmp_path):
+    gp, dp, dets = _large_results(tmp_path)
+    reference = run_reference(gp, dp, 'bbox')
+    gt = ufc.COCO(gp, verbose=False)
+    dt = gt.loadRes(dp)
+    assert dt._compact is not None and dt._compact.annotation_count == len(dets)
+    actual = ufc.COCOeval(gt, dt, 'bbox', print_function=lambda *_: None)
+    actual.run()
+    assert_bit_identical(reference, actual, 'parallel result parsing')
+    expected = gt.loadRes(copy.deepcopy(dets))
+    assert dt.anns == expected.anns
+
+
+@pytest.mark.parametrize('damage', ['trailing comma', 'trailing data', 'truncated', 'bad separator',
+                                    'non-object element', 'bad record'])
+def test_parallel_result_parsing_rejects_like_the_sequential_parser(tmp_path, damage):
+    gp, dp, dets = _large_results(tmp_path)
+    text = dp.read_text()
+    middle = text.index('}, {', len(text) // 2) + 1
+    text = {
+        'trailing comma': text[:-1] + ', ]',
+        'trailing data': text + ' x',
+        'truncated': text[:-7],
+        'bad separator': text[:middle] + ';' + text[middle + 1:],
+        'non-object element': text[:middle] + ', 5' + text[middle:],
+        'bad record': text[:middle] + ', {"image_id": 1}' + text[middle:],
+    }[damage]
+    dp.write_text(text)
+    gt = ufc.COCO(gp, verbose=False)
+
+    def load(**options):
+        try:
+            return gt.loadRes(dp, **options), None
+        except Exception as error:  # noqa: BLE001 - the outcome is compared
+            return None, type(error)
+
+    # `derive_segmentation=True` bypasses compact loading: the ordinary loader
+    # is what a rejected compact file must fall back to.
+    actual, actual_error = load()
+    expected, expected_error = load(derive_segmentation=True)
+    assert actual_error is expected_error
+    if expected_error is None:
+        assert actual._compact is None and len(actual.anns) == len(expected.anns)
