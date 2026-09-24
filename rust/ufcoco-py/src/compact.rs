@@ -84,10 +84,26 @@ fn field_present<'de, D: serde::Deserializer<'de>>(d: D) -> Result<bool, D::Erro
 }
 
 // Detection IDs and areas are derived by loadRes; retain only independent values.
+// Image and category IDs are 32-bit; once any row's ID does not fit, every
+// row's IDs are also kept in a 64-bit side column (see `WideIds`).
 struct Row {
-    image: i64,
-    category: i64,
+    image: i32,
+    category: i32,
     score: f64,
+}
+
+/// `[image_id, category_id]` for every row, present only when some ID does
+/// not fit in 32 bits.
+type WideIds = Option<Vec<[i64; 2]>>;
+
+fn row_ids(rows: &[Row], wide: &WideIds, index: usize) -> (i64, i64) {
+    match wide {
+        Some(ids) => (ids[index][0], ids[index][1]),
+        None => (
+            i64::from(rows[index].image),
+            i64::from(rows[index].category),
+        ),
+    }
 }
 
 struct GroundTruth {
@@ -97,11 +113,37 @@ struct GroundTruth {
 }
 
 // Byte ranges refer to the immutable owned snapshot, never borrowed Python data.
-// Allocate this column only for files containing pose fields.
-#[derive(Clone, Default)]
+// Allocate this column only for files containing pose fields. `(offset, length)`
+// pairs, [`NO_SPAN`] when absent; snapshots of 4 GiB or more use the ordinary
+// loader for pose files.
+#[derive(Clone, Copy)]
 struct PoseRanges {
-    points: Option<std::ops::Range<usize>>,
-    count: Option<std::ops::Range<usize>>,
+    points: (u32, u32),
+    count: (u32, u32),
+}
+
+const NO_SPAN: (u32, u32) = (u32::MAX, 0);
+
+impl Default for PoseRanges {
+    fn default() -> Self {
+        PoseRanges {
+            points: NO_SPAN,
+            count: NO_SPAN,
+        }
+    }
+}
+
+impl PoseRanges {
+    fn points(&self) -> Option<std::ops::Range<usize>> {
+        span_range(self.points)
+    }
+    fn count(&self) -> Option<std::ops::Range<usize>> {
+        span_range(self.count)
+    }
+}
+
+fn span_range((offset, length): (u32, u32)) -> Option<std::ops::Range<usize>> {
+    ((offset, length) != NO_SPAN).then(|| offset as usize..offset as usize + length as usize)
 }
 
 /// `(offset, length)` of a row's `segmentation` value in the snapshot, or
@@ -111,14 +153,16 @@ const NO_SEGMENTATION: SegmSpan = (u32::MAX, 0);
 
 type Columns = (
     Vec<Row>,
+    WideIds,
     Option<Vec<GroundTruth>>,
     Vec<[f64; 4]>,
     Vec<PoseRanges>,
     Vec<SegmSpan>,
 );
 
-/// `(results file, snapshot base address, record segmentation spans)`.
-/// Spans use 32-bit offsets and are skipped for snapshots of 4 GiB or more.
+/// `(results file, snapshot base address, snapshot below 4 GiB)`. Spans use
+/// 32-bit offsets: segmentation spans are skipped for larger snapshots, and
+/// pose files take the ordinary loader.
 struct Rows(bool, usize, bool);
 impl<'de> DeserializeSeed<'de> for Rows {
     type Value = Columns;
@@ -147,6 +191,7 @@ struct ColumnBuilder {
     base: usize,
     segm_spans: bool,
     rows: Vec<Row>,
+    wide: WideIds,
     ground_truth: Option<Vec<GroundTruth>>,
     boxes: Vec<[f64; 4]>,
     pose: Vec<PoseRanges>,
@@ -161,6 +206,7 @@ impl ColumnBuilder {
             base,
             segm_spans,
             rows: Vec::new(),
+            wide: None,
             ground_truth: (!results).then(Vec::new),
             boxes: Vec::new(),
             pose: Vec::new(),
@@ -182,16 +228,20 @@ impl ColumnBuilder {
             return Err("duplicate GT ids require dictionary indexing");
         }
         if record.keypoints.is_some() || record.num_keypoints.is_some() {
+            if !self.segm_spans {
+                return Err("pose files of 4 GiB or more require dictionary loading");
+            }
             self.pose.resize_with(self.rows.len(), PoseRanges::default);
             let base = self.base;
-            let range = |value: &serde_json::value::RawValue| {
-                let text = value.get();
-                let start = text.as_ptr() as usize - base;
-                start..start + text.len()
+            let span = |value: Option<&serde_json::value::RawValue>| {
+                value.map_or(NO_SPAN, |value| {
+                    let text = value.get();
+                    ((text.as_ptr() as usize - base) as u32, text.len() as u32)
+                })
             };
             self.pose.push(PoseRanges {
-                points: record.keypoints.map(range),
-                count: record.num_keypoints.map(range),
+                points: span(record.keypoints),
+                count: span(record.num_keypoints),
             });
         } else if !self.pose.is_empty() {
             self.pose.push(PoseRanges::default());
@@ -220,11 +270,37 @@ impl ColumnBuilder {
                 None => false,
             };
         self.boxes.push(bbox);
-        self.rows.push(Row {
-            image: record.image_id,
-            category: record.category_id,
-            score: record.score.unwrap_or(0.0),
-        });
+        let score = record.score.unwrap_or(0.0);
+        let narrow = (
+            i32::try_from(record.image_id),
+            i32::try_from(record.category_id),
+        );
+        if let (None, (Ok(image), Ok(category))) = (&self.wide, narrow) {
+            self.rows.push(Row {
+                image,
+                category,
+                score,
+            });
+        } else {
+            if self.wide.is_none() {
+                let widened = (0..self.rows.len())
+                    .map(|i| {
+                        let (image, category) = row_ids(&self.rows, &None, i);
+                        [image, category]
+                    })
+                    .collect();
+                self.wide = Some(widened);
+            }
+            self.wide
+                .as_mut()
+                .unwrap()
+                .push([record.image_id, record.category_id]);
+            self.rows.push(Row {
+                image: 0,
+                category: 0,
+                score,
+            });
+        }
         if let Some(fields) = &mut self.ground_truth {
             fields.push(GroundTruth { id, area, crowd });
         }
@@ -233,6 +309,9 @@ impl ColumnBuilder {
 
     fn finish(mut self) -> Columns {
         self.rows.shrink_to_fit();
+        if let Some(ids) = &mut self.wide {
+            ids.shrink_to_fit();
+        }
         self.boxes.shrink_to_fit();
         if let Some(fields) = &mut self.ground_truth {
             fields.shrink_to_fit();
@@ -241,6 +320,7 @@ impl ColumnBuilder {
         self.segm.shrink_to_fit();
         (
             self.rows,
+            self.wide,
             self.ground_truth,
             self.boxes,
             self.pose,
@@ -361,10 +441,14 @@ fn parse_result_chunk(
 fn concatenate(parts: Vec<ColumnBuilder>, base: usize, segm_spans: bool) -> Columns {
     let total: usize = parts.iter().map(|part| part.rows.len()).sum();
     let any_pose = parts.iter().any(|part| !part.pose.is_empty());
+    let any_wide = parts.iter().any(|part| part.wide.is_some());
     let any_segm = parts.iter().any(|part| !part.segm.is_empty());
     let mut out = ColumnBuilder::new(true, base, segm_spans);
     out.rows.reserve_exact(total);
     out.boxes.reserve_exact(total);
+    if any_wide {
+        out.wide = Some(Vec::with_capacity(total));
+    }
     if any_pose {
         out.pose.reserve_exact(total);
     }
@@ -373,6 +457,12 @@ fn concatenate(parts: Vec<ColumnBuilder>, base: usize, segm_spans: bool) -> Colu
     }
     for part in parts {
         let n = part.rows.len();
+        if let Some(ids) = &mut out.wide {
+            ids.extend((0..n).map(|i| {
+                let (image, category) = row_ids(&part.rows, &part.wide, i);
+                [image, category]
+            }));
+        }
         out.rows.extend(part.rows);
         out.boxes.extend(part.boxes);
         if any_pose {
@@ -448,6 +538,7 @@ pub struct CompactBbox {
     // Shared with evaluators that decode masks from it lazily.
     raw: Arc<Vec<u8>>,
     rows: Vec<Row>,
+    wide: WideIds,
     ground_truth: Option<Vec<GroundTruth>>,
     boxes: Arc<Vec<[f64; 4]>>,
     results: bool,
@@ -466,15 +557,20 @@ impl CompactBbox {
     /// Resolve every row's image and category slot once. Each later pass reads
     /// this column instead of repeating two map lookups per row.
     pub(super) fn slots(&self, images: &IdMap<u32>, categories: &IdMap<u32>) -> Vec<Slot> {
-        self.rows
-            .iter()
-            .map(
-                |row| match (images.get(&row.image), categories.get(&row.category)) {
+        (0..self.rows.len())
+            .map(|index| {
+                let (image, category) = self.ids(index);
+                match (images.get(&image), categories.get(&category)) {
                     (Some(&image), Some(&category)) => (image, category),
                     _ => UNSELECTED,
-                },
-            )
+                }
+            })
             .collect()
+    }
+
+    /// `(image_id, category_id)` of row `index`.
+    fn ids(&self, index: usize) -> (i64, i64) {
+        row_ids(&self.rows, &self.wide, index)
     }
 
     pub(super) fn groups(slots: &[Slot], use_cats: bool) -> GroupSet {
@@ -493,6 +589,11 @@ impl CompactBbox {
             GeomStore::Bboxes(Vec::with_capacity(n))
         };
         let mut out = super::new_instances_with_geom(n, geom);
+        if !is_gt {
+            // The engine reads crowd and ignore flags of ground truth only.
+            out.iscrowd = Vec::new();
+            out.ignore = Vec::new();
+        }
         for (index, (row, &(image, category))) in self.rows.iter().zip(slots).enumerate() {
             if (image, category) == UNSELECTED {
                 continue;
@@ -513,8 +614,10 @@ impl CompactBbox {
             out.cat_slot.push(category);
             out.scores.push(row.score);
             out.areas.push(area);
-            out.iscrowd.push(crowd);
-            out.ignore.push(is_gt && crowd);
+            if is_gt {
+                out.iscrowd.push(crowd);
+                out.ignore.push(crowd);
+            }
             out.lvis_mark.push(false);
             if let GeomStore::Bboxes(ref mut boxes) = out.geom {
                 boxes.push(self.boxes[index]);
@@ -540,14 +643,14 @@ impl CompactBbox {
         if rows.is_empty()
             || rows
                 .iter()
-                .any(|&i| self.pose.get(i).and_then(|r| r.points.as_ref()).is_none())
+                .any(|&i| self.pose.get(i).and_then(|r| r.points()).is_none())
         {
             return Ok(false);
         }
         let mut joints = 0;
         let mut scratch = Vec::new();
         let mut visible = Vec::new();
-        let range = self.pose[rows[0]].points.as_ref().unwrap();
+        let range = self.pose[rows[0]].points().unwrap();
         let mut de = serde_json::Deserializer::from_slice(&self.raw[range.clone()]);
         KeypointCoordinates::<false> {
             data: &mut scratch,
@@ -591,7 +694,7 @@ impl CompactBbox {
         data.resize(retained.len() * joints * 2, 0.0);
         let parse = |index: usize, destination: &mut [f64]| -> Result<(), serde_json::Error> {
             let ranges = &self.pose[index];
-            let range = ranges.points.as_ref().unwrap();
+            let range = ranges.points().unwrap();
             let raw = &self.raw[range.clone()];
             if !super::pose_numbers::decode(raw, destination, joints) {
                 let mut de = serde_json::Deserializer::from_slice(raw);
@@ -602,7 +705,7 @@ impl CompactBbox {
                 .deserialize(&mut de)?;
                 de.end()?;
             }
-            if let Some(range) = &ranges.count {
+            if let Some(range) = ranges.count() {
                 serde_json::from_slice::<Crowd>(&self.raw[range.clone()])?;
             }
             Ok(())
@@ -664,7 +767,7 @@ impl CompactBbox {
                 offsets.push(if retain { data.len() } else { usize::MAX });
             }
             let ranges = self.pose.get(index);
-            if let Some(range) = ranges.and_then(|r| r.points.as_ref()) {
+            if let Some(range) = ranges.and_then(|r| r.points()) {
                 let mut de = serde_json::Deserializer::from_slice(&self.raw[range.clone()]);
                 let parsed = if retain {
                     KeypointCoordinates::<true> {
@@ -691,7 +794,7 @@ impl CompactBbox {
             }
             // Preserve validation of this field on detection inputs too.
             let count = ranges
-                .and_then(|r| r.count.as_ref())
+                .and_then(|r| r.count())
                 .map(|range| serde_json::from_slice::<Crowd>(&self.raw[range.clone()]))
                 .transpose()
                 .map_err(|e| PyValueError::new_err(e.to_string()))?;
@@ -749,7 +852,7 @@ impl CompactBbox {
                 Some(parsed)
             };
             let (h, w) = sizes[image as usize]
-                .ok_or_else(|| format!("no image entry for image_id {}", self.rows[index].image))?;
+                .ok_or_else(|| format!("no image entry for image_id {}", self.ids(index).0))?;
             let group = (image, if use_cats { category } else { 0 });
             if opposing_groups.is_some_and(|groups| !groups.contains(&group))
                 || detection_keep.is_some_and(|keep| !keep[selected])
@@ -1255,9 +1358,7 @@ impl<'de> Visitor<'de> for &mut GeometryRows<'_> {
 
     fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<(), A::Error> {
         let mut selected = 0;
-        for (index, (row, &(image, category))) in
-            self.source.rows.iter().zip(self.slots).enumerate()
-        {
+        for (index, &(image, category)) in self.slots.iter().enumerate() {
             if (image, category) == UNSELECTED {
                 seq.next_element::<serde::de::IgnoredAny>()?;
                 continue;
@@ -1266,7 +1367,10 @@ impl<'de> Visitor<'de> for &mut GeometryRows<'_> {
                 .next_element::<MaskGeometry>()?
                 .ok_or_else(|| serde::de::Error::custom("missing mask annotation"))?;
             let (h, w) = self.sizes[image as usize].ok_or_else(|| {
-                serde::de::Error::custom(format!("no image entry for image_id {}", row.image))
+                serde::de::Error::custom(format!(
+                    "no image entry for image_id {}",
+                    self.source.ids(index).0
+                ))
             })?;
             let mut raw = record
                 .segmentation
@@ -1316,9 +1420,10 @@ impl CompactBbox {
             return Ok(None);
         }
         let mut by_image: HashMap<i64, Vec<usize>> = HashMap::new();
-        for (index, row) in self.rows.iter().enumerate() {
-            if verified.contains_key(&row.image) {
-                by_image.entry(row.image).or_default().push(index);
+        for index in 0..self.rows.len() {
+            let image = self.ids(index).0;
+            if verified.contains_key(&image) {
+                by_image.entry(image).or_default().push(index);
             }
         }
         let mut selected = Vec::new();
@@ -1335,7 +1440,7 @@ impl CompactBbox {
                     }
                 }
                 selected.extend(indices.iter().copied().filter(|&index| {
-                    let category = self.rows[index].category;
+                    let category = self.ids(index).1;
                     categories.contains(&category) && verified[&image].contains(&category)
                 }));
             }
@@ -1379,7 +1484,7 @@ impl CompactBbox {
     }
     fn valid_images(&self, images: Vec<i64>) -> bool {
         let allowed: HashSet<i64> = images.into_iter().collect();
-        self.rows.iter().all(|r| allowed.contains(&r.image))
+        (0..self.rows.len()).all(|index| allowed.contains(&self.ids(index).0))
     }
     #[getter]
     fn annotation_count(&self) -> usize {
@@ -1398,6 +1503,10 @@ impl CompactBbox {
                 .map_or(0, |v| v.capacity() * std::mem::size_of::<GroundTruth>())
             + self.boxes.capacity() * std::mem::size_of::<[f64; 4]>()
             + self.pose.capacity() * std::mem::size_of::<PoseRanges>()
+            + self
+                .wide
+                .as_ref()
+                .map_or(0, |v| v.capacity() * std::mem::size_of::<[i64; 2]>())
     }
 }
 
@@ -1445,7 +1554,7 @@ pub fn load_compact_bbox(
     } else {
         None
     };
-    let (metadata, (rows, ground_truth, boxes, pose, segm)) = match parallel {
+    let (metadata, (rows, wide, ground_truth, boxes, pose, segm)) = match parallel {
         Some(columns) => (PyDict::new(py).unbind(), columns),
         None => {
             let mut de = serde_json::Deserializer::from_slice(&raw);
@@ -1471,6 +1580,7 @@ pub fn load_compact_bbox(
         CompactBbox {
             raw: Arc::new(raw),
             rows,
+            wide,
             ground_truth,
             boxes: Arc::new(boxes),
             results,

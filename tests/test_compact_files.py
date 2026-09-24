@@ -455,7 +455,7 @@ def _large_results(tmp_path, count=45000):
     gp, dp = tmp_path / 'gt.json', tmp_path / 'dt.json'
     gp.write_text(json.dumps(data))
     text = json.dumps(dets)
-    assert len(text) > 4 << 20
+    assert (len(text) > 4 << 20) == (count >= 45000)
     dp.write_text(text)
     return gp, dp, dets
 
@@ -562,3 +562,41 @@ def test_precision_envelope_with_tied_scores_and_unusual_grids(tmp_path, thresho
     for key in ('precision', 'recall', 'scores'):
         expected = np.ascontiguousarray(reference.eval[key], dtype=np.float64)
         assert expected.tobytes() == np.ascontiguousarray(actual.eval[key]).tobytes(), key
+
+
+@pytest.mark.parametrize('large', ['image', 'category', 'both'])
+@pytest.mark.parametrize('size', ['small', 'parallel'])
+def test_ids_beyond_32_bits_keep_compact_semantics(tmp_path, large, size):
+    # Row IDs are stored in 32 bits until one does not fit; later and earlier
+    # rows must then report their full IDs, also across parallel chunks.
+    gp, dp, dets = _large_results(tmp_path, count=45000 if size == 'parallel' else 300)
+    data = json.loads(gp.read_text())
+    offset = 2**40
+    shift_image = large in ('image', 'both')
+    shift_category = large in ('category', 'both')
+    for image in data['images']:
+        if shift_image and image['id'] % 2:
+            image['id'] += offset
+    for ann in data['annotations']:
+        if shift_image and ann['image_id'] % 2:
+            ann['image_id'] += offset
+        if shift_category and ann['category_id'] == 2:
+            ann['category_id'] += offset
+    for category in data['categories']:
+        if shift_category and category['id'] == 2:
+            category['id'] += offset
+    for det in dets:
+        if shift_image and det['image_id'] % 2:
+            det['image_id'] += offset
+        if shift_category and det['category_id'] == 2:
+            det['category_id'] += offset
+    gp.write_text(json.dumps(data))
+    dp.write_text(json.dumps(dets))
+    reference = run_reference(gp, dp, 'bbox')
+    gt = ufc.COCO(gp, verbose=False)
+    dt = gt.loadRes(dp)
+    assert gt._compact is not None and dt._compact is not None
+    actual = ufc.COCOeval(gt, dt, 'bbox', print_function=lambda *_: None)
+    actual.run()
+    assert_bit_identical(reference, actual, f'wide {large} ids')
+    assert dt.anns == gt.loadRes(copy.deepcopy(dets)).anns

@@ -197,8 +197,10 @@ pub struct Instances {
     pub ids: Vec<i64>,
     pub scores: Vec<f64>,
     pub areas: Vec<f64>,
+    /// Read for ground truth only; may be empty for detections.
     pub iscrowd: Vec<bool>,
     /// Ground truth only: the `ignore` flag pycocotools derives in `_prepare`.
+    /// May be empty for detections.
     pub ignore: Vec<bool>,
     /// LVIS extension: a detection of a category that is not exhaustively
     /// annotated in this image is ignored rather than counted as a false
