@@ -10,9 +10,10 @@ use std::fmt;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Instant;
-use ufcoco_core::eval::{GeomStore, Instances, IouType};
+use ufcoco_core::eval::{GeomStore, Instances, IouType, MaskRef};
+use ufcoco_core::rle;
 
-use super::{ExtractTimings, RawSegm, CHUNK};
+use super::{ExtractTimings, GroupSet, IdMap, RawSegm, CHUNK};
 
 #[derive(Deserialize)]
 #[serde(untagged)]
@@ -69,8 +70,8 @@ struct Record<'a> {
     iscrowd: Option<Crowd>,
     // Presence tracking makes duplicate geometry fields take the ordinary JSON
     // loader's last-value path, just like duplicate scalar fields already do.
-    #[serde(default, rename = "segmentation")]
-    _segmentation: Option<serde::de::IgnoredAny>,
+    #[serde(default, borrow)]
+    segmentation: Option<&'a serde_json::value::RawValue>,
     #[serde(default, borrow, rename = "keypoints")]
     keypoints: Option<&'a serde_json::value::RawValue>,
     #[serde(default, borrow)]
@@ -83,10 +84,26 @@ fn field_present<'de, D: serde::Deserializer<'de>>(d: D) -> Result<bool, D::Erro
 }
 
 // Detection IDs and areas are derived by loadRes; retain only independent values.
+// Image and category IDs are 32-bit; once any row's ID does not fit, every
+// row's IDs are also kept in a 64-bit side column (see `WideIds`).
 struct Row {
-    image: i64,
-    category: i64,
+    image: i32,
+    category: i32,
     score: f64,
+}
+
+/// `[image_id, category_id]` for every row, present only when some ID does
+/// not fit in 32 bits.
+type WideIds = Option<Vec<[i64; 2]>>;
+
+fn row_ids(rows: &[Row], wide: &WideIds, index: usize) -> (i64, i64) {
+    match wide {
+        Some(ids) => (ids[index][0], ids[index][1]),
+        None => (
+            i64::from(rows[index].image),
+            i64::from(rows[index].category),
+        ),
+    }
 }
 
 struct GroundTruth {
@@ -96,21 +113,57 @@ struct GroundTruth {
 }
 
 // Byte ranges refer to the immutable owned snapshot, never borrowed Python data.
-// Allocate this column only for files containing pose fields.
-#[derive(Clone, Default)]
+// Allocate this column only for files containing pose fields. `(offset, length)`
+// pairs, [`NO_SPAN`] when absent; snapshots of 4 GiB or more use the ordinary
+// loader for pose files.
+#[derive(Clone, Copy)]
 struct PoseRanges {
-    points: Option<std::ops::Range<usize>>,
-    count: Option<std::ops::Range<usize>>,
+    points: (u32, u32),
+    count: (u32, u32),
 }
+
+const NO_SPAN: (u32, u32) = (u32::MAX, 0);
+
+impl Default for PoseRanges {
+    fn default() -> Self {
+        PoseRanges {
+            points: NO_SPAN,
+            count: NO_SPAN,
+        }
+    }
+}
+
+impl PoseRanges {
+    fn points(&self) -> Option<std::ops::Range<usize>> {
+        span_range(self.points)
+    }
+    fn count(&self) -> Option<std::ops::Range<usize>> {
+        span_range(self.count)
+    }
+}
+
+fn span_range((offset, length): (u32, u32)) -> Option<std::ops::Range<usize>> {
+    ((offset, length) != NO_SPAN).then(|| offset as usize..offset as usize + length as usize)
+}
+
+/// `(offset, length)` of a row's `segmentation` value in the snapshot, or
+/// [`NO_SEGMENTATION`] when the field is absent or null.
+type SegmSpan = (u32, u32);
+const NO_SEGMENTATION: SegmSpan = (u32::MAX, 0);
 
 type Columns = (
     Vec<Row>,
+    WideIds,
     Option<Vec<GroundTruth>>,
     Vec<[f64; 4]>,
     Vec<PoseRanges>,
+    Vec<SegmSpan>,
 );
 
-struct Rows(bool, usize);
+/// `(results file, snapshot base address, snapshot below 4 GiB)`. Spans use
+/// 32-bit offsets: segmentation spans are skipped for larger snapshots, and
+/// pose files take the ordinary loader.
+struct Rows(bool, usize, bool);
 impl<'de> DeserializeSeed<'de> for Rows {
     type Value = Columns;
     fn deserialize<D: serde::Deserializer<'de>>(self, d: D) -> Result<Self::Value, D::Error> {
@@ -123,78 +176,339 @@ impl<'de> Visitor<'de> for Rows {
         f.write_str("bbox annotations")
     }
     fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<Self::Value, A::Error> {
-        let mut rows = Vec::new();
-        let mut ground_truth = if self.0 { None } else { Some(Vec::new()) };
-        let mut boxes = Vec::new();
-        let mut pose = Vec::new();
-        let mut ids = HashSet::new();
+        let mut columns = ColumnBuilder::new(self.0, self.1, self.2);
         while let Some(record) = seq.next_element::<Record>()? {
-            if self.0 && record.caption {
-                return Err(serde::de::Error::custom(
-                    "caption results require caption loading",
-                ));
-            }
-            let id = if self.0 {
-                rows.len() as i64 + 1
-            } else {
-                record
-                    .id
-                    .ok_or_else(|| serde::de::Error::custom("missing GT id"))?
-            };
-            if !self.0 && !ids.insert(id) {
-                return Err(serde::de::Error::custom(
-                    "duplicate GT ids require dictionary indexing",
-                ));
-            }
-            if record.keypoints.is_some() || record.num_keypoints.is_some() {
-                pose.resize_with(rows.len(), PoseRanges::default);
-                let range = |value: &serde_json::value::RawValue| {
-                    let text = value.get();
-                    let start = text.as_ptr() as usize - self.1;
-                    start..start + text.len()
-                };
-                pose.push(PoseRanges {
-                    points: record.keypoints.map(range),
-                    count: record.num_keypoints.map(range),
-                });
-            } else if !pose.is_empty() {
-                pose.push(PoseRanges::default());
-            }
-            let bbox = record.bbox.map(|x| x.0);
-            let area = if self.0 {
-                bbox[2] * bbox[3]
-            } else {
-                record.area.unwrap_or(bbox[2] * bbox[3])
-            };
-            let crowd = !self.0
-                && match record.iscrowd {
-                    Some(Crowd::Bool(x)) => x,
-                    Some(Crowd::Int(x)) => x != 0,
-                    None => false,
-                };
-            boxes.push(bbox);
-            rows.push(Row {
-                image: record.image_id,
-                category: record.category_id,
-                score: record.score.unwrap_or(0.0),
-            });
-            if let Some(fields) = &mut ground_truth {
-                fields.push(GroundTruth { id, area, crowd });
-            }
+            columns.push(record).map_err(serde::de::Error::custom)?;
         }
-        rows.shrink_to_fit();
-        boxes.shrink_to_fit();
-        if let Some(fields) = &mut ground_truth {
+        Ok(columns.finish())
+    }
+}
+
+/// Column storage for one annotation array, or one chunk of a result array.
+struct ColumnBuilder {
+    results: bool,
+    /// Snapshot base address for pose and segmentation spans.
+    base: usize,
+    segm_spans: bool,
+    rows: Vec<Row>,
+    wide: WideIds,
+    ground_truth: Option<Vec<GroundTruth>>,
+    boxes: Vec<[f64; 4]>,
+    pose: Vec<PoseRanges>,
+    segm: Vec<SegmSpan>,
+    ids: HashSet<i64>,
+}
+
+impl ColumnBuilder {
+    fn new(results: bool, base: usize, segm_spans: bool) -> Self {
+        ColumnBuilder {
+            results,
+            base,
+            segm_spans,
+            rows: Vec::new(),
+            wide: None,
+            ground_truth: (!results).then(Vec::new),
+            boxes: Vec::new(),
+            pose: Vec::new(),
+            segm: Vec::new(),
+            ids: HashSet::new(),
+        }
+    }
+
+    fn push(&mut self, record: Record<'_>) -> Result<(), &'static str> {
+        if self.results && record.caption {
+            return Err("caption results require caption loading");
+        }
+        let id = if self.results {
+            self.rows.len() as i64 + 1
+        } else {
+            record.id.ok_or("missing GT id")?
+        };
+        if !self.results && !self.ids.insert(id) {
+            return Err("duplicate GT ids require dictionary indexing");
+        }
+        if record.keypoints.is_some() || record.num_keypoints.is_some() {
+            if !self.segm_spans {
+                return Err("pose files of 4 GiB or more require dictionary loading");
+            }
+            self.pose.resize_with(self.rows.len(), PoseRanges::default);
+            let base = self.base;
+            let span = |value: Option<&serde_json::value::RawValue>| {
+                value.map_or(NO_SPAN, |value| {
+                    let text = value.get();
+                    ((text.as_ptr() as usize - base) as u32, text.len() as u32)
+                })
+            };
+            self.pose.push(PoseRanges {
+                points: span(record.keypoints),
+                count: span(record.num_keypoints),
+            });
+        } else if !self.pose.is_empty() {
+            self.pose.push(PoseRanges::default());
+        }
+        if let (true, Some(value)) = (self.segm_spans, record.segmentation) {
+            // Offsets fit: the caller enables spans only below 4 GiB.
+            let text = value.get();
+            self.segm.resize(self.rows.len(), NO_SEGMENTATION);
+            self.segm.push((
+                (text.as_ptr() as usize - self.base) as u32,
+                text.len() as u32,
+            ));
+        } else if !self.segm.is_empty() {
+            self.segm.push(NO_SEGMENTATION);
+        }
+        let bbox = record.bbox.map(|x| x.0);
+        let area = if self.results {
+            bbox[2] * bbox[3]
+        } else {
+            record.area.unwrap_or(bbox[2] * bbox[3])
+        };
+        let crowd = !self.results
+            && match record.iscrowd {
+                Some(Crowd::Bool(x)) => x,
+                Some(Crowd::Int(x)) => x != 0,
+                None => false,
+            };
+        self.boxes.push(bbox);
+        let score = record.score.unwrap_or(0.0);
+        let narrow = (
+            i32::try_from(record.image_id),
+            i32::try_from(record.category_id),
+        );
+        if let (None, (Ok(image), Ok(category))) = (&self.wide, narrow) {
+            self.rows.push(Row {
+                image,
+                category,
+                score,
+            });
+        } else {
+            if self.wide.is_none() {
+                let widened = (0..self.rows.len())
+                    .map(|i| {
+                        let (image, category) = row_ids(&self.rows, &None, i);
+                        [image, category]
+                    })
+                    .collect();
+                self.wide = Some(widened);
+            }
+            self.wide
+                .as_mut()
+                .unwrap()
+                .push([record.image_id, record.category_id]);
+            self.rows.push(Row {
+                image: 0,
+                category: 0,
+                score,
+            });
+        }
+        if let Some(fields) = &mut self.ground_truth {
+            fields.push(GroundTruth { id, area, crowd });
+        }
+        Ok(())
+    }
+
+    fn reserve(&mut self, records: usize) {
+        self.rows.reserve(records);
+        self.boxes.reserve(records);
+        if let Some(ids) = &mut self.wide {
+            ids.reserve(records);
+        }
+        if !self.pose.is_empty() {
+            self.pose.reserve(records);
+        }
+        if !self.segm.is_empty() {
+            self.segm.reserve(records);
+        }
+    }
+
+    fn finish(mut self) -> Columns {
+        self.rows.shrink_to_fit();
+        if let Some(ids) = &mut self.wide {
+            ids.shrink_to_fit();
+        }
+        self.boxes.shrink_to_fit();
+        if let Some(fields) = &mut self.ground_truth {
             fields.shrink_to_fit();
         }
-        pose.shrink_to_fit();
-        Ok((rows, ground_truth, boxes, pose))
+        self.pose.shrink_to_fit();
+        self.segm.shrink_to_fit();
+        (
+            self.rows,
+            self.wide,
+            self.ground_truth,
+            self.boxes,
+            self.pose,
+            self.segm,
+        )
     }
+}
+
+fn is_json_whitespace(byte: u8) -> bool {
+    matches!(byte, b' ' | b'\n' | b'\r' | b'\t')
+}
+
+fn skip_whitespace(raw: &[u8], mut position: usize) -> usize {
+    while raw.get(position).copied().is_some_and(is_json_whitespace) {
+        position += 1;
+    }
+    position
+}
+
+/// Result files at least this large are parsed in parallel chunks.
+const PARALLEL_RESULTS_BYTES: usize = 1 << 22;
+
+/// Parse a top-level result array in parallel, or `None` to use the
+/// sequential parser.
+///
+/// The array is split at candidate record starts: `{` after `}`, `,` and
+/// whitespace. A candidate may lie inside a string, so each chunk is parsed
+/// record by record with the ordinary `Record` deserializer and accepted only
+/// if its last record ends exactly at the next chunk's start. The first chunk
+/// starts at the real first record, so by induction every accepted start is a
+/// real record boundary and the records are exactly those of the sequential
+/// parse, in order. Anything else (a misaligned or failing chunk, trailing
+/// data, a non-object element) returns `None`, and the sequential parser
+/// decides, including its error.
+fn parallel_results(raw: &[u8], segm_spans: bool) -> Option<Columns> {
+    let threads = rayon::current_num_threads();
+    if raw.len() < PARALLEL_RESULTS_BYTES || threads < 2 {
+        return None;
+    }
+    let mut first = skip_whitespace(raw, 0);
+    if raw.get(first) != Some(&b'[') {
+        return None;
+    }
+    first = skip_whitespace(raw, first + 1);
+    if raw.get(first) != Some(&b'{') {
+        return None;
+    }
+    let chunks = threads * 4;
+    let mut starts = vec![first];
+    for chunk in 1..chunks {
+        let target = raw.len() / chunks * chunk;
+        if let Some(start) = candidate_record_start(raw, target.max(first + 1)) {
+            if start > *starts.last().unwrap() {
+                starts.push(start);
+            }
+        }
+    }
+    let base = raw.as_ptr() as usize;
+    let parts: Vec<Option<ColumnBuilder>> = (0..starts.len())
+        .into_par_iter()
+        .map(|i| parse_result_chunk(raw, starts[i], starts.get(i + 1).copied(), base, segm_spans))
+        .collect();
+    let parts: Vec<ColumnBuilder> = parts.into_iter().collect::<Option<_>>()?;
+    Some(concatenate(parts, base, segm_spans))
+}
+
+/// The first `{` at or after `from` that follows `}`, `,` and JSON whitespace.
+fn candidate_record_start(raw: &[u8], from: usize) -> Option<usize> {
+    let mut position = from;
+    loop {
+        position += raw.get(position..)?.iter().position(|&b| b == b'}')? + 1;
+        let comma = skip_whitespace(raw, position);
+        if raw.get(comma) == Some(&b',') {
+            let next = skip_whitespace(raw, comma + 1);
+            if raw.get(next) == Some(&b'{') {
+                return Some(next);
+            }
+        }
+    }
+}
+
+/// Records from `start` up to exactly `end` (the next chunk's start), or to
+/// the closing bracket and end of input for the last chunk.
+fn parse_result_chunk(
+    raw: &[u8],
+    start: usize,
+    end: Option<usize>,
+    base: usize,
+    segm_spans: bool,
+) -> Option<ColumnBuilder> {
+    let mut columns = ColumnBuilder::new(true, base, segm_spans);
+    let mut position = start;
+    loop {
+        let mut stream =
+            serde_json::Deserializer::from_slice(&raw[position..]).into_iter::<Record>();
+        let record = stream.next()?.ok()?;
+        position += stream.byte_offset();
+        columns.push(record).ok()?;
+        if columns.rows.len() == 1 {
+            // Reserve for the chunk's estimated record count, so the columns
+            // do not reallocate (and briefly double) while growing.
+            let chunk = end.unwrap_or(raw.len()) - start;
+            let first = (position - start).max(1);
+            columns.reserve(chunk / first + chunk / first / 8 + 16);
+        }
+        position = skip_whitespace(raw, position);
+        match raw.get(position) {
+            Some(b',') => {
+                position = skip_whitespace(raw, position + 1);
+                if let Some(end) = end {
+                    if position >= end {
+                        return (position == end).then_some(columns);
+                    }
+                }
+            }
+            Some(b']') if end.is_none() => {
+                return (skip_whitespace(raw, position + 1) == raw.len()).then_some(columns);
+            }
+            _ => return None,
+        }
+    }
+}
+
+/// Join chunk columns in order, as one sequential parse would have built them.
+fn concatenate(parts: Vec<ColumnBuilder>, base: usize, segm_spans: bool) -> Columns {
+    let total: usize = parts.iter().map(|part| part.rows.len()).sum();
+    let any_pose = parts.iter().any(|part| !part.pose.is_empty());
+    let any_wide = parts.iter().any(|part| part.wide.is_some());
+    let any_segm = parts.iter().any(|part| !part.segm.is_empty());
+    let mut out = ColumnBuilder::new(true, base, segm_spans);
+    out.rows.reserve_exact(total);
+    out.boxes.reserve_exact(total);
+    if any_wide {
+        out.wide = Some(Vec::with_capacity(total));
+    }
+    if any_pose {
+        out.pose.reserve_exact(total);
+    }
+    if any_segm {
+        out.segm.reserve_exact(total);
+    }
+    for part in parts {
+        let n = part.rows.len();
+        if let Some(ids) = &mut out.wide {
+            ids.extend((0..n).map(|i| {
+                let (image, category) = row_ids(&part.rows, &part.wide, i);
+                [image, category]
+            }));
+        }
+        out.rows.extend(part.rows);
+        out.boxes.extend(part.boxes);
+        if any_pose {
+            if part.pose.is_empty() {
+                out.pose
+                    .resize_with(out.pose.len() + n, PoseRanges::default);
+            } else {
+                out.pose.extend(part.pose);
+            }
+        }
+        if any_segm {
+            if part.segm.is_empty() {
+                out.segm.resize(out.segm.len() + n, NO_SEGMENTATION);
+            } else {
+                out.segm.extend(part.segm);
+            }
+        }
+    }
+    out.finish()
 }
 
 struct Dataset<'py> {
     py: Python<'py>,
     raw_base: usize,
+    segm_spans: bool,
 }
 impl<'de, 'py> DeserializeSeed<'de> for Dataset<'py> {
     type Value = (Py<PyDict>, Columns);
@@ -218,7 +532,7 @@ impl<'de, 'py> Visitor<'de> for Dataset<'py> {
                         "duplicate annotation arrays require ordinary JSON loading",
                     ));
                 }
-                rows = Some(map.next_value_seed(Rows(false, self.raw_base))?);
+                rows = Some(map.next_value_seed(Rows(false, self.raw_base, self.segm_spans))?);
                 metadata
                     .set_item("annotations", self.py.None())
                     .map_err(serde::de::Error::custom)?;
@@ -242,41 +556,60 @@ impl<'de, 'py> Visitor<'de> for Dataset<'py> {
 #[pyclass(module = "ultrafast_pycocotools._ufcoco")]
 pub struct CompactBbox {
     // Keep an owned snapshot: changing or deleting the input file cannot change later API reads.
-    raw: Vec<u8>,
+    // Shared with evaluators that decode masks from it lazily.
+    raw: Arc<Vec<u8>>,
     rows: Vec<Row>,
+    wide: WideIds,
     ground_truth: Option<Vec<GroundTruth>>,
     boxes: Arc<Vec<[f64; 4]>>,
     results: bool,
     pose: Vec<PoseRanges>,
+    /// Segmentation value spans by row (shorter when trailing rows have none),
+    /// or `None` when the snapshot is too large for 32-bit offsets.
+    segm: Option<Vec<SegmSpan>>,
 }
 
+/// `(image slot, category slot)` for one file row, or [`UNSELECTED`] when
+/// either ID is outside the evaluation.
+type Slot = (u32, u32);
+const UNSELECTED: Slot = (u32::MAX, u32::MAX);
+
 impl CompactBbox {
-    pub(super) fn groups(
-        &self,
-        images: &HashMap<i64, u32>,
-        categories: &HashMap<i64, u32>,
-        use_cats: bool,
-    ) -> HashSet<(u32, u32)> {
-        self.rows
-            .iter()
-            .filter_map(|row| {
-                let image = *images.get(&row.image)?;
-                let category = *categories.get(&row.category)?;
-                Some((image, if use_cats { category } else { 0 }))
-            })
+    /// Resolve every row's image and category slot once. Each later pass reads
+    /// this column instead of repeating two map lookups per row.
+    pub(super) fn slots(&self, images: &IdMap<u32>, categories: &IdMap<u32>) -> Vec<Slot> {
+        (0..self.rows.len())
+            .map(|index| self.slot(index, images, categories))
             .collect()
     }
 
-    pub fn instances(
-        &self,
-        is_gt: bool,
-        images: &HashMap<i64, u32>,
-        categories: &HashMap<i64, u32>,
-    ) -> Instances {
-        let n = self
-            .rows
+    /// The slots of one row; see [`CompactBbox::slots`].
+    pub(super) fn slot(&self, index: usize, images: &IdMap<u32>, categories: &IdMap<u32>) -> Slot {
+        let (image, category) = self.ids(index);
+        match (images.get(&image), categories.get(&category)) {
+            (Some(&image), Some(&category)) => (image, category),
+            _ => UNSELECTED,
+        }
+    }
+
+    /// `(image_id, category_id)` of row `index`.
+    fn ids(&self, index: usize) -> (i64, i64) {
+        row_ids(&self.rows, &self.wide, index)
+    }
+
+    pub(super) fn groups(slots: &[Slot], use_cats: bool) -> GroupSet {
+        slots
             .iter()
-            .filter(|r| images.contains_key(&r.image) && categories.contains_key(&r.category))
+            .filter(|&&slot| slot != UNSELECTED)
+            .map(|&(image, category)| (image, if use_cats { category } else { 0 }))
+            .collect()
+    }
+
+    /// Scalar instances of the selected rows; `slot` gives each row's slots.
+    /// Bbox evaluation passes map lookups, which need no per-row slot column.
+    pub fn instances(&self, is_gt: bool, slot: impl Fn(usize) -> Slot) -> Instances {
+        let n = (0..self.rows.len())
+            .filter(|&index| slot(index) != UNSELECTED)
             .count();
         let geom = if n == self.rows.len() {
             GeomStore::SharedBboxes(Arc::clone(&self.boxes))
@@ -284,12 +617,16 @@ impl CompactBbox {
             GeomStore::Bboxes(Vec::with_capacity(n))
         };
         let mut out = super::new_instances_with_geom(n, geom);
+        if !is_gt {
+            // The engine reads crowd and ignore flags of ground truth only.
+            out.iscrowd = Vec::new();
+            out.ignore = Vec::new();
+        }
         for (index, row) in self.rows.iter().enumerate() {
-            let (Some(&image), Some(&category)) =
-                (images.get(&row.image), categories.get(&row.category))
-            else {
+            let (image, category) = slot(index);
+            if (image, category) == UNSELECTED {
                 continue;
-            };
+            }
             let (id, area, crowd) = match &self.ground_truth {
                 Some(fields) => {
                     let gt = &fields[index];
@@ -306,8 +643,10 @@ impl CompactBbox {
             out.cat_slot.push(category);
             out.scores.push(row.score);
             out.areas.push(area);
-            out.iscrowd.push(crowd);
-            out.ignore.push(is_gt && crowd);
+            if is_gt {
+                out.iscrowd.push(crowd);
+                out.ignore.push(crowd);
+            }
             out.lvis_mark.push(false);
             if let GeomStore::Bboxes(ref mut boxes) = out.geom {
                 boxes.push(self.boxes[index]);
@@ -321,31 +660,26 @@ impl CompactBbox {
     fn parallel_pose_detections(
         &self,
         out: &mut Instances,
-        images: &HashMap<i64, u32>,
-        categories: &HashMap<i64, u32>,
+        slots: &[Slot],
         keep: &[bool],
     ) -> PyResult<bool> {
-        let rows: Vec<_> = self
-            .rows
+        let rows: Vec<_> = slots
             .iter()
             .enumerate()
-            .filter_map(|(index, row)| {
-                (images.contains_key(&row.image) && categories.contains_key(&row.category))
-                    .then_some(index)
-            })
+            .filter_map(|(index, &slot)| (slot != UNSELECTED).then_some(index))
             .collect();
         // Preserve the existing handling of absent/null geometry and empty inputs.
         if rows.is_empty()
             || rows
                 .iter()
-                .any(|&i| self.pose.get(i).and_then(|r| r.points.as_ref()).is_none())
+                .any(|&i| self.pose.get(i).and_then(|r| r.points()).is_none())
         {
             return Ok(false);
         }
         let mut joints = 0;
         let mut scratch = Vec::new();
         let mut visible = Vec::new();
-        let range = self.pose[rows[0]].points.as_ref().unwrap();
+        let range = self.pose[rows[0]].points().unwrap();
         let mut de = serde_json::Deserializer::from_slice(&self.raw[range.clone()]);
         KeypointCoordinates::<false> {
             data: &mut scratch,
@@ -389,7 +723,7 @@ impl CompactBbox {
         data.resize(retained.len() * joints * 2, 0.0);
         let parse = |index: usize, destination: &mut [f64]| -> Result<(), serde_json::Error> {
             let ranges = &self.pose[index];
-            let range = ranges.points.as_ref().unwrap();
+            let range = ranges.points().unwrap();
             let raw = &self.raw[range.clone()];
             if !super::pose_numbers::decode(raw, destination, joints) {
                 let mut de = serde_json::Deserializer::from_slice(raw);
@@ -400,7 +734,7 @@ impl CompactBbox {
                 .deserialize(&mut de)?;
                 de.end()?;
             }
-            if let Some(range) = &ranges.count {
+            if let Some(range) = ranges.count() {
                 serde_json::from_slice::<Crowd>(&self.raw[range.clone()])?;
             }
             Ok(())
@@ -427,11 +761,10 @@ impl CompactBbox {
         &self,
         out: &mut Instances,
         is_gt: bool,
-        images: &HashMap<i64, u32>,
-        categories: &HashMap<i64, u32>,
+        slots: &[Slot],
         keep: Option<&[bool]>,
     ) -> PyResult<()> {
-        if !is_gt && self.parallel_pose_detections(out, images, categories, keep.unwrap())? {
+        if !is_gt && self.parallel_pose_detections(out, slots, keep.unwrap())? {
             return Ok(());
         }
         let GeomStore::Keypoints {
@@ -451,8 +784,8 @@ impl CompactBbox {
             offsets.reserve_exact(out.ids.len());
         }
         let mut selected = 0;
-        for (index, row) in self.rows.iter().enumerate() {
-            if !images.contains_key(&row.image) || !categories.contains_key(&row.category) {
+        for (index, &slot) in slots.iter().enumerate() {
+            if slot == UNSELECTED {
                 continue;
             }
             if is_gt {
@@ -463,7 +796,7 @@ impl CompactBbox {
                 offsets.push(if retain { data.len() } else { usize::MAX });
             }
             let ranges = self.pose.get(index);
-            if let Some(range) = ranges.and_then(|r| r.points.as_ref()) {
+            if let Some(range) = ranges.and_then(|r| r.points()) {
                 let mut de = serde_json::Deserializer::from_slice(&self.raw[range.clone()]);
                 let parsed = if retain {
                     KeypointCoordinates::<true> {
@@ -490,7 +823,7 @@ impl CompactBbox {
             }
             // Preserve validation of this field on detection inputs too.
             let count = ranges
-                .and_then(|r| r.count.as_ref())
+                .and_then(|r| r.count())
                 .map(|range| serde_json::from_slice::<Crowd>(&self.raw[range.clone()]))
                 .transpose()
                 .map_err(|e| PyValueError::new_err(e.to_string()))?;
@@ -507,6 +840,93 @@ impl CompactBbox {
         Ok(())
     }
 
+    /// Segmentation masks from the spans recorded at load time.
+    ///
+    /// Each selected row's `segmentation` value is parsed on its own, in
+    /// parallel, instead of re-parsing the whole file. Unused rows are still
+    /// parsed so malformed geometry is rejected exactly as before. A plain
+    /// compressed `counts` string is kept as a reference into the snapshot and
+    /// decoded by the engine when an IoU needs it; every other form is
+    /// rasterised here with the same routine as the pipelined path.
+    fn span_masks(
+        &self,
+        spans: &[SegmSpan],
+        sizes: &[Option<(u32, u32)>],
+        slots: &[Slot],
+        opposing_groups: Option<&GroupSet>,
+        use_cats: bool,
+        detection_keep: Option<&[bool]>,
+    ) -> PyResult<Vec<MaskRef>> {
+        let rows: Vec<u32> = (0..slots.len() as u32)
+            .filter(|&i| slots[i as usize] != UNSELECTED)
+            .collect();
+        let base = self.raw.as_ptr() as usize;
+        let mask = |selected: usize, scratch: &mut rle::PolyScratch| -> Result<MaskRef, String> {
+            let index = rows[selected] as usize;
+            let (image, category) = slots[index];
+            let (offset, length) = spans.get(index).copied().unwrap_or(NO_SEGMENTATION);
+            let parsed = if (offset, length) == NO_SEGMENTATION {
+                None
+            } else if let Some((coords, ends)) = super::pose_numbers::decode_polygons(
+                &self.raw[offset as usize..offset as usize + length as usize],
+            ) {
+                Some(SpanSegm::Raw(RawSegm::Poly { coords, ends }))
+            } else {
+                let value = &self.raw[offset as usize..offset as usize + length as usize];
+                let mut de = serde_json::Deserializer::from_slice(value);
+                let parsed = SpanGeometry(base)
+                    .deserialize(&mut de)
+                    .and_then(|parsed| de.end().map(|()| parsed))
+                    .map_err(|e| e.to_string())?;
+                Some(parsed)
+            };
+            let (h, w) = sizes[image as usize]
+                .ok_or_else(|| format!("no image entry for image_id {}", self.ids(index).0))?;
+            let group = (image, if use_cats { category } else { 0 });
+            if opposing_groups.is_some_and(|groups| !groups.contains(&group))
+                || detection_keep.is_some_and(|keep| !keep[selected])
+            {
+                return Ok(MaskRef::Ready(Default::default()));
+            }
+            Ok(match parsed {
+                Some(SpanSegm::Encoded {
+                    start,
+                    len,
+                    escaped,
+                }) => MaskRef::Encoded {
+                    start,
+                    len,
+                    h,
+                    w,
+                    escaped,
+                },
+                Some(SpanSegm::Raw(raw)) => MaskRef::Ready(super::raw_to_rle(&raw, h, w, scratch)),
+                None => MaskRef::Ready(super::raw_to_rle(
+                    &RawSegm::FromBbox(self.boxes[index]),
+                    h,
+                    w,
+                    scratch,
+                )),
+            })
+        };
+        let parallel: Result<Vec<MaskRef>, String> = (0..rows.len())
+            .into_par_iter()
+            .map_init(rle::PolyScratch::default, |scratch, selected| {
+                mask(selected, scratch)
+            })
+            .collect();
+        parallel
+            .or_else(|_| -> Result<Vec<MaskRef>, String> {
+                // Report the first failing row in file order, as the sequential path does.
+                let mut scratch = rle::PolyScratch::default();
+                for selected in 0..rows.len() {
+                    mask(selected, &mut scratch)?;
+                }
+                unreachable!("a parallel mask failure must fail sequentially")
+            })
+            .map_err(PyValueError::new_err)
+    }
+
     /// Read only the requested geometry from the immutable JSON snapshot.
     /// No Python annotation dictionaries or indexes are needed for evaluation.
     #[allow(clippy::too_many_arguments)]
@@ -514,28 +934,24 @@ impl CompactBbox {
         &self,
         is_gt: bool,
         kind: IouType,
-        sizes: &HashMap<i64, (u32, u32)>,
-        images: &HashMap<i64, u32>,
-        categories: &HashMap<i64, u32>,
+        sizes: &IdMap<(u32, u32)>,
+        image_ids: &[i64],
+        slots: &[Slot],
+        categories: usize,
         boundary_dilation: f64,
         timings: &ExtractTimings,
-        opposing_groups: Option<&HashSet<(u32, u32)>>,
+        opposing_groups: Option<&GroupSet>,
         use_cats: bool,
         max_det: usize,
     ) -> PyResult<Instances> {
-        let mut out = self.instances(is_gt, images, categories);
+        let mut out = self.instances(is_gt, |index| slots[index]);
         out.geom = super::new_geometry(out.len(), kind);
         if kind == IouType::Keypoints {
             let start = Instant::now();
             let keep = (!is_gt).then(|| {
-                ufcoco_core::eval::detection_geometry_keep(
-                    &out,
-                    categories.len(),
-                    use_cats,
-                    max_det,
-                )
+                ufcoco_core::eval::detection_geometry_keep(&out, categories, use_cats, max_det)
             });
-            self.pose_instances(&mut out, is_gt, images, categories, keep.as_deref())?;
+            self.pose_instances(&mut out, is_gt, slots, keep.as_deref())?;
             let counter = if is_gt {
                 &timings.gt_read_ns
             } else {
@@ -546,8 +962,33 @@ impl CompactBbox {
         }
         let mask_count = out.len();
         let detection_keep = (!is_gt && kind != IouType::Keypoints).then(|| {
-            ufcoco_core::eval::detection_geometry_keep(&out, categories.len(), use_cats, max_det)
+            ufcoco_core::eval::detection_geometry_keep(&out, categories, use_cats, max_det)
         });
+        // Image sizes by slot, so the per-row geometry pass needs no hashing.
+        let sizes: Vec<Option<(u32, u32)>> =
+            image_ids.iter().map(|id| sizes.get(id).copied()).collect();
+        if let (IouType::Segm, Some(spans)) = (kind, &self.segm) {
+            let start = Instant::now();
+            let masks = self.span_masks(
+                spans,
+                &sizes,
+                slots,
+                opposing_groups,
+                use_cats,
+                detection_keep.as_deref(),
+            )?;
+            out.geom = GeomStore::EncodedMasks {
+                raw: Arc::clone(&self.raw),
+                masks,
+            };
+            let counter = if is_gt {
+                &timings.gt_read_ns
+            } else {
+                &timings.dt_read_ns
+            };
+            counter.fetch_add(start.elapsed().as_nanos() as u64, Ordering::Relaxed);
+            return Ok(out);
+        }
         std::thread::scope(|scope| -> PyResult<()> {
             let (tx, rx) = std::sync::mpsc::sync_channel(2);
             let worker = scope.spawn(|| {
@@ -562,9 +1003,8 @@ impl CompactBbox {
             let start = Instant::now();
             let mut geometry = GeometryRows {
                 source: self,
-                sizes,
-                images,
-                categories,
+                sizes: &sizes,
+                slots,
                 chunk: Vec::with_capacity(if kind == IouType::Keypoints { 0 } else { CHUNK }),
                 sender: &tx,
                 timings,
@@ -604,6 +1044,90 @@ impl CompactBbox {
 struct MaskGeometry {
     #[serde(default)]
     segmentation: Option<RawSegm>,
+}
+
+/// A `segmentation` value parsed from its own span.
+enum SpanSegm {
+    /// A compressed `counts` string at `raw[start..start + len]`; see
+    /// [`MaskRef::Encoded`] for `escaped`.
+    Encoded {
+        start: usize,
+        len: u32,
+        escaped: bool,
+    },
+    Raw(RawSegm),
+}
+
+/// Parse one `segmentation` value like [`RawSegm`], but keep an unescaped
+/// compressed `counts` string as a snapshot offset. The field is the address
+/// of the snapshot start.
+struct SpanGeometry(usize);
+impl<'de> DeserializeSeed<'de> for SpanGeometry {
+    type Value = SpanSegm;
+    fn deserialize<D: Deserializer<'de>>(self, d: D) -> Result<SpanSegm, D::Error> {
+        d.deserialize_any(self)
+    }
+}
+impl<'de> Visitor<'de> for SpanGeometry {
+    type Value = SpanSegm;
+    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("polygon rings or an RLE object")
+    }
+    fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<SpanSegm, A::Error> {
+        let mut coords = Vec::new();
+        let mut ends = Vec::new();
+        while let Some(ring) = seq.next_element::<Vec<Coordinate>>()? {
+            coords.extend(ring.into_iter().map(|value| value.0));
+            ends.push(coords.len() as u32);
+        }
+        Ok(SpanSegm::Raw(RawSegm::Poly { coords, ends }))
+    }
+    // Callers try `pose_numbers::decode_polygons` on the span first.
+    fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<SpanSegm, A::Error> {
+        let mut counts = None;
+        while let Some(key) = map.next_key::<MaskField>()? {
+            match key {
+                MaskField::Counts => {
+                    let value: &'de serde_json::value::RawValue = map.next_value()?;
+                    counts = Some(span_counts(value, self.0).map_err(serde::de::Error::custom)?);
+                }
+                MaskField::Other => {
+                    map.next_value::<serde::de::IgnoredAny>()?;
+                }
+            }
+        }
+        counts.ok_or_else(|| serde::de::Error::custom("RLE segmentation is missing counts"))
+    }
+}
+
+/// Classify a `counts` value from its validated JSON text. A string whose only
+/// escapes are `\\` pairs stays in the snapshot; any other form is decoded
+/// with the same [`Counts`] visitor as the whole-file path.
+fn span_counts(value: &serde_json::value::RawValue, base: usize) -> Result<SpanSegm, String> {
+    let text = value.get().as_bytes();
+    if let [b'"', inner @ .., b'"'] = text {
+        let mut escaped = false;
+        let mut plain_pairs_only = true;
+        let mut bytes = inner.iter();
+        while let Some(&byte) = bytes.next() {
+            if byte == b'\\' {
+                escaped = true;
+                plain_pairs_only &= bytes.next() == Some(&b'\\');
+            }
+        }
+        if plain_pairs_only {
+            return Ok(SpanSegm::Encoded {
+                start: inner.as_ptr() as usize - base,
+                len: inner.len() as u32,
+                escaped,
+            });
+        }
+    }
+    let mut de = serde_json::Deserializer::from_str(value.get());
+    Counts
+        .deserialize(&mut de)
+        .map(SpanSegm::Raw)
+        .map_err(|e| e.to_string())
 }
 
 // Stream coordinates straight into evaluator storage; validate skipped rows too.
@@ -826,13 +1350,13 @@ impl<'de> Visitor<'de> for Counts {
 
 struct GeometryRows<'a> {
     source: &'a CompactBbox,
-    sizes: &'a HashMap<i64, (u32, u32)>,
-    images: &'a HashMap<i64, u32>,
-    categories: &'a HashMap<i64, u32>,
+    /// Image `(height, width)` by image slot; `None` when the image has no entry.
+    sizes: &'a [Option<(u32, u32)>],
+    slots: &'a [Slot],
     chunk: Vec<(RawSegm, u32, u32)>,
     sender: &'a std::sync::mpsc::SyncSender<Vec<(RawSegm, u32, u32)>>,
     timings: &'a ExtractTimings,
-    opposing_groups: Option<&'a HashSet<(u32, u32)>>,
+    opposing_groups: Option<&'a GroupSet>,
     use_cats: bool,
     detection_keep: Option<&'a [bool]>,
 }
@@ -863,17 +1387,19 @@ impl<'de> Visitor<'de> for &mut GeometryRows<'_> {
 
     fn visit_seq<A: SeqAccess<'de>>(self, mut seq: A) -> Result<(), A::Error> {
         let mut selected = 0;
-        for (index, row) in self.source.rows.iter().enumerate() {
-            if !self.images.contains_key(&row.image) || !self.categories.contains_key(&row.category)
-            {
+        for (index, &(image, category)) in self.slots.iter().enumerate() {
+            if (image, category) == UNSELECTED {
                 seq.next_element::<serde::de::IgnoredAny>()?;
                 continue;
             }
             let record = seq
                 .next_element::<MaskGeometry>()?
                 .ok_or_else(|| serde::de::Error::custom("missing mask annotation"))?;
-            let (h, w) = self.sizes.get(&row.image).copied().ok_or_else(|| {
-                serde::de::Error::custom(format!("no image entry for image_id {}", row.image))
+            let (h, w) = self.sizes[image as usize].ok_or_else(|| {
+                serde::de::Error::custom(format!(
+                    "no image entry for image_id {}",
+                    self.source.ids(index).0
+                ))
             })?;
             let mut raw = record
                 .segmentation
@@ -881,14 +1407,7 @@ impl<'de> Visitor<'de> for &mut GeometryRows<'_> {
             // Parse geometry and check image metadata even for unused masks.
             // Only the expensive rasterisation/storage is omitted. Crowds
             // and ignored annotations remain in the opposing group set.
-            let group = (
-                self.images[&row.image],
-                if self.use_cats {
-                    self.categories[&row.category]
-                } else {
-                    0
-                },
-            );
+            let group = (image, if self.use_cats { category } else { 0 });
             if self
                 .opposing_groups
                 .is_some_and(|groups| !groups.contains(&group))
@@ -930,9 +1449,10 @@ impl CompactBbox {
             return Ok(None);
         }
         let mut by_image: HashMap<i64, Vec<usize>> = HashMap::new();
-        for (index, row) in self.rows.iter().enumerate() {
-            if verified.contains_key(&row.image) {
-                by_image.entry(row.image).or_default().push(index);
+        for index in 0..self.rows.len() {
+            let image = self.ids(index).0;
+            if verified.contains_key(&image) {
+                by_image.entry(image).or_default().push(index);
             }
         }
         let mut selected = Vec::new();
@@ -949,7 +1469,7 @@ impl CompactBbox {
                     }
                 }
                 selected.extend(indices.iter().copied().filter(|&index| {
-                    let category = self.rows[index].category;
+                    let category = self.ids(index).1;
                     categories.contains(&category) && verified[&image].contains(&category)
                 }));
             }
@@ -993,7 +1513,7 @@ impl CompactBbox {
     }
     fn valid_images(&self, images: Vec<i64>) -> bool {
         let allowed: HashSet<i64> = images.into_iter().collect();
-        self.rows.iter().all(|r| allowed.contains(&r.image))
+        (0..self.rows.len()).all(|index| allowed.contains(&self.ids(index).0))
     }
     #[getter]
     fn annotation_count(&self) -> usize {
@@ -1012,6 +1532,10 @@ impl CompactBbox {
                 .map_or(0, |v| v.capacity() * std::mem::size_of::<GroundTruth>())
             + self.boxes.capacity() * std::mem::size_of::<[f64; 4]>()
             + self.pose.capacity() * std::mem::size_of::<PoseRanges>()
+            + self
+                .wide
+                .as_ref()
+                .map_or(0, |v| v.capacity() * std::mem::size_of::<[i64; 2]>())
     }
 }
 
@@ -1053,30 +1577,44 @@ pub fn load_compact_bbox(
     results: bool,
 ) -> PyResult<(Py<PyDict>, CompactBbox)> {
     let raw = std::fs::read(path).map_err(|e| PyIOError::new_err(e.to_string()))?;
-    let mut de = serde_json::Deserializer::from_slice(&raw);
-    let parsed = if results {
-        Rows(true, raw.as_ptr() as usize)
-            .deserialize(&mut de)
-            .map(|rows| (PyDict::new(py).unbind(), rows))
+    let segm_spans = u32::try_from(raw.len()).is_ok_and(|n| n < u32::MAX);
+    let parallel = if results {
+        parallel_results(&raw, segm_spans)
     } else {
-        Dataset {
-            py,
-            raw_base: raw.as_ptr() as usize,
-        }
-        .deserialize(&mut de)
+        None
     };
-    let (metadata, (rows, ground_truth, boxes, pose)) =
-        parsed.map_err(|e| PyValueError::new_err(e.to_string()))?;
-    de.end().map_err(|e| PyValueError::new_err(e.to_string()))?;
+    let (metadata, (rows, wide, ground_truth, boxes, pose, segm)) = match parallel {
+        Some(columns) => (PyDict::new(py).unbind(), columns),
+        None => {
+            let mut de = serde_json::Deserializer::from_slice(&raw);
+            let parsed = if results {
+                Rows(true, raw.as_ptr() as usize, segm_spans)
+                    .deserialize(&mut de)
+                    .map(|rows| (PyDict::new(py).unbind(), rows))
+            } else {
+                Dataset {
+                    py,
+                    raw_base: raw.as_ptr() as usize,
+                    segm_spans,
+                }
+                .deserialize(&mut de)
+            };
+            let parsed = parsed.map_err(|e| PyValueError::new_err(e.to_string()))?;
+            de.end().map_err(|e| PyValueError::new_err(e.to_string()))?;
+            parsed
+        }
+    };
     Ok((
         metadata,
         CompactBbox {
-            raw,
+            raw: Arc::new(raw),
             rows,
+            wide,
             ground_truth,
             boxes: Arc::new(boxes),
             results,
             pose,
+            segm: segm_spans.then_some(segm),
         },
     ))
 }

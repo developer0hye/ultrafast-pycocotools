@@ -48,6 +48,43 @@ fn c_i32(x: f64) -> i32 {
     }
 }
 
+/// `(t / h, t % h)` for a fixed column height `h`, and `(0, 0)` when `h` is 0
+/// (as `to_bbox` does), without a hardware divide.
+///
+/// `inverse = floor(2^32 / h)` underestimates `1 / h` by less than `2^-32 / h`,
+/// so for any `u32` `t` the estimate `floor(t * inverse / 2^32)` is the true
+/// quotient or one less; one comparison of the remainder corrects it.
+#[derive(Clone, Copy)]
+struct ColumnDivider {
+    h: u32,
+    inverse: u64,
+}
+
+impl ColumnDivider {
+    fn new(h: u32) -> Self {
+        let inverse = if h == 0 {
+            0
+        } else {
+            (1u64 << 32) / u64::from(h)
+        };
+        ColumnDivider { h, inverse }
+    }
+
+    #[inline]
+    fn split(self, t: u32) -> (u32, u32) {
+        if self.h == 0 {
+            return (0, 0);
+        }
+        let mut q = ((u64::from(t) * self.inverse) >> 32) as u32;
+        let mut r = t - q * self.h;
+        if r >= self.h {
+            q += 1;
+            r -= self.h;
+        }
+        (q, r)
+    }
+}
+
 /// Hand back a run array with no capacity slack.
 ///
 /// The counts vectors are built by pushing, so they carry up to 2x the bytes
@@ -92,6 +129,56 @@ impl Rle {
             j += 2;
         }
         a
+    }
+
+    /// [`Rle::to_bbox`] and [`Rle::area`] in one pass over the runs.
+    ///
+    /// Both walk the same complete (start, length) pairs: `area` sums the odd
+    /// entries, and every odd index lies below `to_bbox`'s even-truncated
+    /// count. The column-major index is split into (x, y) with an exact
+    /// reciprocal division (see [`ColumnDivider`]) instead of a hardware
+    /// divide per run; the integers, and so both results, are unchanged.
+    pub fn bbox_and_area(&self) -> ([f64; 4], u32) {
+        let h = self.h;
+        let w = self.w;
+        let m = (self.cnts.len() / 2) * 2;
+        if m == 0 {
+            return ([0.0, 0.0, 0.0, 0.0], 0);
+        }
+        let divider = ColumnDivider::new(h);
+        let (mut xs, mut ys) = (w, h);
+        let (mut xe, mut ye) = (0u32, 0u32);
+        let mut cc: u32 = 0;
+        let mut xp: u32 = 0;
+        let mut area: u32 = 0;
+        for j in 0..m {
+            let count = self.cnts[j];
+            cc = cc.wrapping_add(count);
+            let t = cc.wrapping_sub((j % 2) as u32);
+            let (x, y) = divider.split(t);
+            if j % 2 == 0 {
+                xp = x;
+            } else {
+                area = area.wrapping_add(count);
+                if xp < x {
+                    ys = 0;
+                    ye = h.saturating_sub(1);
+                }
+            }
+            xs = xs.min(x);
+            xe = xe.max(x);
+            ys = ys.min(y);
+            ye = ye.max(y);
+        }
+        (
+            [
+                xs as f64,
+                ys as f64,
+                (xe.wrapping_sub(xs).wrapping_add(1)) as f64,
+                (ye.wrapping_sub(ys).wrapping_add(1)) as f64,
+            ],
+            area,
+        )
     }
 
     /// `rleToBbox`: tight [x, y, w, h] box around the set pixels.
@@ -229,43 +316,75 @@ impl Rle {
 
     /// `rleFrString`: inverse of [`Rle::to_string`].
     pub fn from_str(s: &[u8], h: u32, w: u32) -> Rle {
-        let mut cnts: Vec<u32> = Vec::with_capacity(s.len() / 2 + 1);
-        let mut p = 0usize;
-        while p < s.len() {
-            let mut x: i64 = 0;
-            let mut k = 0u32;
-            let mut more = true;
-            while more && p < s.len() {
-                let c = s[p].wrapping_sub(48);
-                let shift = 5 * k;
-                if shift < 64 {
-                    x |= ((c & 0x1f) as i64) << shift;
-                }
-                more = (c & 0x20) != 0;
-                p += 1;
-                k += 1;
-                if !more && (c & 0x10) != 0 {
-                    // Sign-extend. C would invoke UB once the shift reaches the
-                    // width of `long`; we simply stop, which keeps the value
-                    // already accumulated.
-                    let shift = 5 * k;
-                    if shift < 64 {
-                        x |= -1i64 << shift;
-                    }
-                }
-            }
-            let m = cnts.len();
-            if m > 2 {
-                x += cnts[m - 2] as i64;
-            }
-            cnts.push(x as u32);
-        }
         Rle {
             h,
             w,
-            cnts: tight(cnts),
+            cnts: tight(decode_counts(s, false)),
         }
     }
+
+    /// [`Rle::from_str`] on `counts` text as it appears inside a JSON string,
+    /// for a mask that is used once and dropped: when `escaped`, each `\\`
+    /// pair stands for one backslash (the caller has checked that no other
+    /// escape occurs), and the run array keeps its capacity slack.
+    pub fn from_json_counts(text: &[u8], escaped: bool, h: u32, w: u32) -> Rle {
+        Rle {
+            h,
+            w,
+            cnts: decode_counts(text, escaped),
+        }
+    }
+}
+
+/// The `rleFrString` decoder shared by [`Rle::from_str`] and
+/// [`Rle::from_json_counts`].
+fn decode_counts(s: &[u8], escaped: bool) -> Vec<u32> {
+    if escaped {
+        decode_counts_as::<true>(s)
+    } else {
+        decode_counts_as::<false>(s)
+    }
+}
+
+/// [`decode_counts`] specialized for plain or `\\`-escaped text, so the
+/// plain loop carries no escape test.
+fn decode_counts_as<const ESCAPED: bool>(s: &[u8]) -> Vec<u32> {
+    // Every count takes at least one character, so this never reallocates.
+    let mut cnts: Vec<u32> = Vec::with_capacity(s.len());
+    let mut p = 0usize;
+    while p < s.len() {
+        let mut x: i64 = 0;
+        let mut k = 0u32;
+        let mut more = true;
+        while more && p < s.len() {
+            if ESCAPED && s[p] == b'\\' {
+                p += 1;
+            }
+            let c = s[p].wrapping_sub(48);
+            let shift = 5 * k;
+            if shift < 64 {
+                x |= ((c & 0x1f) as i64) << shift;
+            }
+            more = (c & 0x20) != 0;
+            p += 1;
+            k += 1;
+            if !more && (c & 0x10) != 0 {
+                // Sign-extend. C would invoke UB once the shift reaches the
+                // width of `long`; we simply stop, which keeps the value
+                // already accumulated.
+                let shift = 5 * k;
+                if shift < 64 {
+                    x |= -1i64 << shift;
+                }
+            }
+        }
+        let m = cnts.len();
+        if m > 2 {
+            x += cnts[m - 2] as i64;
+        }
+        cnts.push(x as u32);
+    }
+    cnts
 }
 
 /// `rleMerge`: union (`intersect == false`) or intersection of `n` masks.
@@ -440,22 +559,24 @@ pub fn rle_iou_refs(dt: &[&Rle], gt: &[&Rle], iscrowd: &[u8], out: &mut [f64]) {
 /// substituting `0.0` for a true `0.37` would change which ground truth wins.
 pub fn rle_iou_refs_above(dt: &[&Rle], gt: &[&Rle], iscrowd: &[u8], min_thr: f64, out: &mut [f64]) {
     let n = gt.len();
-    let db: Vec<[f64; 4]> = dt.iter().map(|r| r.to_bbox()).collect();
-    let gb: Vec<[f64; 4]> = gt.iter().map(|r| r.to_bbox()).collect();
+    // Boxes and areas come from the same pass over each mask's runs.
+    let (db, da): (Vec<[f64; 4]>, Vec<f64>) = dt
+        .iter()
+        .map(|r| {
+            let (bbox, area) = r.bbox_and_area();
+            (bbox, area as f64)
+        })
+        .unzip();
+    let (gb, ga): (Vec<[f64; 4]>, Vec<f64>) = gt
+        .iter()
+        .map(|r| {
+            let (bbox, area) = r.bbox_and_area();
+            (bbox, area as f64)
+        })
+        .unzip();
     bb_iou(&db, &gb, iscrowd, out);
 
     let bound_on = min_thr > 0.0;
-    // Areas only when the bound can use them; `area()` is another pass over the
-    // runs and a cell with one detection and one ground truth would pay two of
-    // them to maybe save one merge.
-    let (da, ga): (Vec<f64>, Vec<f64>) = if bound_on {
-        (
-            dt.iter().map(|r| r.area() as f64).collect(),
-            gt.iter().map(|r| r.area() as f64).collect(),
-        )
-    } else {
-        (Vec::new(), Vec::new())
-    };
 
     for g in 0..n {
         let crowd = iscrowd.get(g).is_some_and(|&c| c != 0);
@@ -540,7 +661,7 @@ pub fn rle_fr_poly(xy: &[f64], h: u32, w: u32) -> Rle {
 
 /// Reusable working buffers for [`rle_fr_poly_into`].
 ///
-/// Rasterising a polygon needs seven temporary vectors. A COCO-scale
+/// Rasterising a polygon needs five temporary vectors. A COCO-scale
 /// segmentation run does that ~70k times, and the allocator traffic was 80% of
 /// the segm setup cost before these were hoisted out; hand one of these per
 /// worker thread (`rayon`'s `map_init`) and the allocations disappear.
@@ -548,8 +669,6 @@ pub fn rle_fr_poly(xy: &[f64], h: u32, w: u32) -> Rle {
 pub struct PolyScratch {
     x: Vec<i32>,
     y: Vec<i32>,
-    u: Vec<i32>,
-    v: Vec<i32>,
     px: Vec<i32>,
     py: Vec<i32>,
     a: Vec<u32>,
@@ -557,6 +676,16 @@ pub struct PolyScratch {
 }
 
 /// `rleFrPoly`, reusing caller-owned scratch buffers.
+///
+/// This streams the upstream three-pass algorithm: each traced edge point is
+/// compared with the previous one as it is produced, so the upsampled trace is
+/// never stored. Where upstream computes `xd = (u + 0.5) / 5 - 0.5` for every
+/// column change and keeps it only when `floor(xd) == xd`, this tests
+/// `u mod 5 == 2` first. For every `i32` `u` the two tests agree: the quotient
+/// is exactly `k + 0.5` when `u = 5k + 2`, and otherwise lies at least 0.2 from
+/// an integer, far beyond one rounding error at this magnitude. The kept
+/// crossings use the unchanged floating-point expressions, and
+/// `rle_fr_poly_reference` in the tests checks the result bit for bit.
 pub fn rle_fr_poly_into(xy: &[f64], h: u32, w: u32, s: &mut PolyScratch) -> Rle {
     let k = xy.len() / 2;
     if k == 0 {
@@ -578,13 +707,43 @@ pub fn rle_fr_poly_into(xy: &[f64], h: u32, w: u32, s: &mut PolyScratch) -> Rle 
     }
     y.push(y[0]);
 
+    let px = &mut s.px;
+    let py = &mut s.py;
+    px.clear();
+    py.clear();
+    // `w - 1` on C's unsigned `siz`: for w == 0 it wraps to a huge value
+    // rather than -1, which changes the comparison. Reproduce it.
+    let x_max = (w as u64).wrapping_sub(1) as f64;
+    let mut previous: Option<(i32, i32)> = None;
+    // Keep the points where the trace crosses a column boundary, downsampled
+    // back to pixel coordinates.
+    let mut point = |u: i32, v: i32| {
+        if let Some((pu, pv)) = previous {
+            if u != pu {
+                let column = if u < pu { u } else { u.wrapping_sub(1) };
+                if column.rem_euclid(5) == 2 {
+                    let xd = (column as f64 + 0.5) / scale - 0.5;
+                    if !(xd < 0.0 || xd > x_max) {
+                        let mut yd = (if v < pv { v } else { pv }) as f64;
+                        yd = (yd + 0.5) / scale - 0.5;
+                        if yd < 0.0 {
+                            yd = 0.0;
+                        } else if yd > h as f64 {
+                            yd = h as f64;
+                        }
+                        yd = yd.ceil();
+                        px.push(c_i32(xd));
+                        py.push(c_i32(yd));
+                    }
+                }
+            }
+        }
+        previous = Some((u, v));
+    };
+
     // Walk each edge with a Bresenham-ish trace. `s` is deliberately left to
     // divide by zero on a degenerate edge (NaN/inf), because c_i32 then
     // reproduces the C result; see c_i32.
-    let u = &mut s.u;
-    let v = &mut s.v;
-    u.clear();
-    v.clear();
     for j in 0..k {
         let (mut xs, mut xe) = (x[j], x[j + 1]);
         let (mut ys, mut ye) = (y[j], y[j + 1]);
@@ -599,51 +758,15 @@ pub fn rle_fr_poly_into(xy: &[f64], h: u32, w: u32, s: &mut PolyScratch) -> Rle 
             let s = (ye - ys) as f64 / dx as f64;
             for d in 0..=dx {
                 let t = if flip { dx - d } else { d };
-                u.push(t.wrapping_add(xs));
-                v.push(c_i32(ys as f64 + s * t as f64 + 0.5));
+                point(t.wrapping_add(xs), c_i32(ys as f64 + s * t as f64 + 0.5));
             }
         } else {
             let s = (xe - xs) as f64 / dy as f64;
             for d in 0..=dy {
                 let t = if flip { dy - d } else { d };
-                v.push(t.wrapping_add(ys));
-                u.push(c_i32(xs as f64 + s * t as f64 + 0.5));
+                point(c_i32(xs as f64 + s * t as f64 + 0.5), t.wrapping_add(ys));
             }
         }
-    }
-
-    // Keep the points where the trace crosses a column boundary, downsampled
-    // back to pixel coordinates.
-    let kk = u.len();
-    let px = &mut s.px;
-    let py = &mut s.py;
-    px.clear();
-    py.clear();
-    for j in 1..kk {
-        if u[j] == u[j - 1] {
-            continue;
-        }
-        let mut xd = (if u[j] < u[j - 1] {
-            u[j]
-        } else {
-            u[j].wrapping_sub(1)
-        }) as f64;
-        xd = (xd + 0.5) / scale - 0.5;
-        // `w - 1` on C's unsigned `siz`: for w == 0 it wraps to a huge value
-        // rather than -1, which changes the comparison. Reproduce it.
-        if xd.floor() != xd || xd < 0.0 || xd > (w as u64).wrapping_sub(1) as f64 {
-            continue;
-        }
-        let mut yd = (if v[j] < v[j - 1] { v[j] } else { v[j - 1] }) as f64;
-        yd = (yd + 0.5) / scale - 0.5;
-        if yd < 0.0 {
-            yd = 0.0;
-        } else if yd > h as f64 {
-            yd = h as f64;
-        }
-        yd = yd.ceil();
-        px.push(c_i32(xd));
-        py.push(c_i32(yd));
     }
 
     // Column-major linear indices of the crossings, plus a sentinel at h*w.
@@ -820,6 +943,294 @@ pub fn rle_to_boundary(rle: &Rle, dilation_ratio: f64) -> Rle {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[derive(Default)]
+    struct ReferenceScratch {
+        x: Vec<i32>,
+        y: Vec<i32>,
+        u: Vec<i32>,
+        v: Vec<i32>,
+        px: Vec<i32>,
+        py: Vec<i32>,
+        a: Vec<u32>,
+    }
+
+    /// The original two-pass `rleFrPoly` port, kept as the bit-exact reference
+    /// for the streaming rasteriser.
+    fn rle_fr_poly_reference(xy: &[f64], h: u32, w: u32) -> Rle {
+        let s = &mut ReferenceScratch::default();
+        let k = xy.len() / 2;
+        if k == 0 {
+            return Rle::new(h, w, vec![(h as u64 * w as u64) as u32]);
+        }
+        let scale = 5.0f64;
+
+        // Upsample and close the polygon.
+        let x = &mut s.x;
+        let y = &mut s.y;
+        x.clear();
+        y.clear();
+        for j in 0..k {
+            x.push(c_i32(scale * xy[j * 2] + 0.5));
+        }
+        x.push(x[0]);
+        for j in 0..k {
+            y.push(c_i32(scale * xy[j * 2 + 1] + 0.5));
+        }
+        y.push(y[0]);
+
+        // Walk each edge with a Bresenham-ish trace. `s` is deliberately left to
+        // divide by zero on a degenerate edge (NaN/inf), because c_i32 then
+        // reproduces the C result; see c_i32.
+        let u = &mut s.u;
+        let v = &mut s.v;
+        u.clear();
+        v.clear();
+        for j in 0..k {
+            let (mut xs, mut xe) = (x[j], x[j + 1]);
+            let (mut ys, mut ye) = (y[j], y[j + 1]);
+            let dx = xe.wrapping_sub(xs).wrapping_abs();
+            let dy = ys.wrapping_sub(ye).wrapping_abs();
+            let flip = (dx >= dy && xs > xe) || (dx < dy && ys > ye);
+            if flip {
+                std::mem::swap(&mut xs, &mut xe);
+                std::mem::swap(&mut ys, &mut ye);
+            }
+            if dx >= dy {
+                let s = (ye - ys) as f64 / dx as f64;
+                for d in 0..=dx {
+                    let t = if flip { dx - d } else { d };
+                    u.push(t.wrapping_add(xs));
+                    v.push(c_i32(ys as f64 + s * t as f64 + 0.5));
+                }
+            } else {
+                let s = (xe - xs) as f64 / dy as f64;
+                for d in 0..=dy {
+                    let t = if flip { dy - d } else { d };
+                    v.push(t.wrapping_add(ys));
+                    u.push(c_i32(xs as f64 + s * t as f64 + 0.5));
+                }
+            }
+        }
+
+        // Keep the points where the trace crosses a column boundary, downsampled
+        // back to pixel coordinates.
+        let kk = u.len();
+        let px = &mut s.px;
+        let py = &mut s.py;
+        px.clear();
+        py.clear();
+        for j in 1..kk {
+            if u[j] == u[j - 1] {
+                continue;
+            }
+            let mut xd = (if u[j] < u[j - 1] {
+                u[j]
+            } else {
+                u[j].wrapping_sub(1)
+            }) as f64;
+            xd = (xd + 0.5) / scale - 0.5;
+            // `w - 1` on C's unsigned `siz`: for w == 0 it wraps to a huge value
+            // rather than -1, which changes the comparison. Reproduce it.
+            if xd.floor() != xd || xd < 0.0 || xd > (w as u64).wrapping_sub(1) as f64 {
+                continue;
+            }
+            let mut yd = (if v[j] < v[j - 1] { v[j] } else { v[j - 1] }) as f64;
+            yd = (yd + 0.5) / scale - 0.5;
+            if yd < 0.0 {
+                yd = 0.0;
+            } else if yd > h as f64 {
+                yd = h as f64;
+            }
+            yd = yd.ceil();
+            px.push(c_i32(xd));
+            py.push(c_i32(yd));
+        }
+
+        // Column-major linear indices of the crossings, plus a sentinel at h*w.
+        let m = px.len();
+        let a = &mut s.a;
+        a.clear();
+        for j in 0..m {
+            // C does the multiply in `int` and then casts to `uint`; wrapping
+            // keeps us identical on the (pathological) overflow path.
+            a.push((px[j].wrapping_mul(h as i32).wrapping_add(py[j])) as u32);
+        }
+        a.push((h as u64 * w as u64) as u32);
+        a.sort_unstable();
+
+        // Delta-encode, then collapse zero-length runs.
+        let mut p: u32 = 0;
+        for v in a.iter_mut() {
+            let t = *v;
+            *v = v.wrapping_sub(p);
+            p = t;
+        }
+        let k2 = a.len();
+        let mut b: Vec<u32> = Vec::with_capacity(k2);
+        let mut j = 0usize;
+        b.push(a[j]);
+        j += 1;
+        while j < k2 {
+            if a[j] > 0 {
+                b.push(a[j]);
+                j += 1;
+            } else {
+                j += 1;
+                if j < k2 {
+                    let last = b.len() - 1;
+                    b[last] = b[last].wrapping_add(a[j]);
+                    j += 1;
+                }
+            }
+        }
+        Rle {
+            h,
+            w,
+            cnts: tight(b),
+        }
+    }
+
+    /// Deterministic polygons covering in-image, clipped, negative, sub-pixel,
+    /// degenerate and far-out-of-image coordinates. Non-finite coordinates
+    /// trace ~2^31 points on both implementations, as in the C original.
+    fn polygon_cases() -> Vec<(Vec<f64>, u32, u32)> {
+        let mut state = 0x9e37_79b9_7f4a_7c15u64;
+        let mut next = move || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+        let mut cases = vec![
+            (vec![], 5, 5),
+            (vec![1.0, 1.0], 5, 5),
+            (vec![0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 4, 4),
+            (vec![0.0, 0.0, 10.0, 0.0, 10.0, 10.0], 0, 0),
+            (vec![-3.0, -2.0, 40.0, 1.5, 12.25, 50.0], 32, 24),
+            (vec![-900.5, 1.0, 3.0, 2400.25, 5.0, -1.0], 8, 8),
+            (vec![0.1, 0.1, 0.3, 0.1, 0.3, 0.3, 0.1, 0.3], 2, 2),
+        ];
+        for _ in 0..4000 {
+            let (h, w) = (1 + (next() % 300) as u32, 1 + (next() % 300) as u32);
+            let n = 3 + (next() % 30) as usize;
+            // Full-image, small and far-out-of-image polygons.
+            let scale: f64 = [1.0, 0.37, 11.0][(next() % 3) as usize];
+            let xy = (0..n * 2)
+                .map(|i| {
+                    let limit = if i % 2 == 0 { w } else { h } as f64;
+                    let r = (next() >> 11) as f64 / (1u64 << 53) as f64;
+                    (r * 1.4 - 0.2) * limit * scale
+                })
+                .collect();
+            cases.push((xy, h, w));
+        }
+        cases
+    }
+
+    #[test]
+    fn column_divider_matches_hardware_division() {
+        for h in (0..2000u32).chain([65535, 65536, 1 << 20, u32::MAX - 1, u32::MAX]) {
+            let divider = ColumnDivider::new(h);
+            let mut state = 0x9e37_79b9u64 ^ u64::from(h);
+            for i in 0..2000u32 {
+                state ^= state << 13;
+                state ^= state >> 7;
+                state ^= state << 17;
+                for t in [
+                    i,
+                    state as u32,
+                    u32::MAX - i,
+                    h.wrapping_mul(i),
+                    h.wrapping_mul(i).wrapping_sub(1),
+                ] {
+                    let expected = if h == 0 { (0, 0) } else { (t / h, t % h) };
+                    assert_eq!(divider.split(t), expected, "{t} / {h}");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn bbox_and_area_match_the_separate_passes() {
+        let mut state = 0xdead_beef_cafe_f00du64;
+        let mut next = move || {
+            state ^= state << 13;
+            state ^= state >> 7;
+            state ^= state << 17;
+            state
+        };
+        for case in 0..50000 {
+            let h = (next() % 60) as u32;
+            let w = (next() % 60) as u32;
+            let n = (next() % 14) as usize;
+            let scale = [1, 3, 50, 5000][case % 4];
+            let mut cnts: Vec<u32> = (0..n).map(|_| (next() % scale) as u32).collect();
+            if case % 97 == 0 && !cnts.is_empty() {
+                cnts[0] = u32::MAX - 5; // wrapping cumulative counts
+            }
+            let r = Rle::new(h, w, cnts);
+            let (bbox, area) = r.bbox_and_area();
+            assert_eq!(
+                bbox.map(f64::to_bits),
+                r.to_bbox().map(f64::to_bits),
+                "{r:?}"
+            );
+            assert_eq!(area, r.area(), "{r:?}");
+        }
+    }
+
+    #[test]
+    fn json_counts_decode_like_the_unescaped_string() {
+        let mut state = 0x1234_5678_9abc_def1u64;
+        for _ in 0..2000 {
+            let len = (state % 400) as usize;
+            let text: Vec<u8> = (0..len)
+                .map(|_| {
+                    state ^= state << 13;
+                    state ^= state >> 7;
+                    state ^= state << 17;
+                    48 + (state % 64) as u8
+                })
+                .collect();
+            let json: Vec<u8> = text
+                .iter()
+                .flat_map(|&b| {
+                    if b == b'\\' {
+                        vec![b'\\', b'\\']
+                    } else {
+                        vec![b]
+                    }
+                })
+                .collect();
+            let expected = Rle::from_str(&text, 7, 9);
+            assert_eq!(Rle::from_json_counts(&json, true, 7, 9), expected);
+            assert_eq!(Rle::from_json_counts(&text, false, 7, 9), expected);
+        }
+    }
+
+    #[test]
+    fn streaming_rasteriser_matches_the_reference_bit_for_bit() {
+        let mut scratch = PolyScratch::default();
+        for (xy, h, w) in polygon_cases() {
+            let expected = rle_fr_poly_reference(&xy, h, w);
+            assert_eq!(
+                rle_fr_poly_into(&xy, h, w, &mut scratch),
+                expected,
+                "{xy:?} {h}x{w}"
+            );
+        }
+    }
+
+    #[test]
+    fn column_residue_test_matches_the_floor_check_for_every_residue() {
+        for column in
+            (-1_000_000..1_000_000).chain([i32::MIN, i32::MIN + 1, i32::MAX - 1, i32::MAX])
+        {
+            let xd = (column as f64 + 0.5) / 5.0 - 0.5;
+            assert_eq!(xd.floor() == xd, column.rem_euclid(5) == 2, "{column}");
+        }
+    }
 
     #[test]
     fn encode_decode_roundtrip() {

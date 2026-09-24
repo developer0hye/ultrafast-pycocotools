@@ -378,3 +378,225 @@ def test_mask_cap_preserves_ties_and_reloads_geometry_when_limit_grows(tmp_path,
                 for key in ('dtIds', 'gtIds', 'dtMatches', 'gtMatches', 'dtIgnore', 'gtIgnore'):
                     np.testing.assert_array_equal(actual[key], expected[key])
         assert gt._compact is not None and dt._compact is not None
+
+
+@pytest.mark.parametrize('use_cats', [0, 1])
+def test_segmentation_spans_keep_escaped_counts_exact(tmp_path, use_cats):
+    # The RLE alphabet contains a backslash, which JSON escapes. Compact files
+    # keep such strings in the snapshot and decode them lazily; strings with any
+    # other escape take the ordinary decoder. Both must match pycocotools.
+    import numpy as np
+    from pycocotools import mask as ref_mask
+    rng = np.random.default_rng(7)
+    h, w = 96, 128
+    images = [{'id': i, 'height': h, 'width': w} for i in (1, 2, 3)]
+    annotations, dets = [], []
+    for i in range(90):
+        image, category = 1 + i % 3, 1 + i % 2
+        x, y = int(rng.integers(0, w - 40)), int(rng.integers(0, h - 40))
+        bw, bh = int(rng.integers(6, 40)), int(rng.integers(6, 40))
+        annotations.append({'id': i + 1, 'image_id': image, 'category_id': category,
+                            'bbox': [x, y, bw, bh], 'area': bw * bh, 'iscrowd': 0,
+                            'segmentation': [[x, y, x + bw, y, x + bw, y + bh, x, y + bh]]})
+        for _ in range(2):
+            m = np.zeros((h, w), np.uint8)
+            dx, dy = int(rng.integers(-4, 5)), int(rng.integers(-4, 5))
+            m[max(y + dy, 0):y + dy + bh, max(x + dx, 0):x + dx + bw] = 1
+            m[rng.integers(0, h, 25), rng.integers(0, w, 25)] = 1
+            rle = ref_mask.encode(np.asfortranarray(m))
+            # A file bbox, as detectors write it; its area differs from the mask area.
+            dets.append({'image_id': image, 'category_id': category, 'score': float(rng.random()),
+                         'bbox': [x + dx, y + dy, bw, bh],
+                         'segmentation': {'size': [h, w], 'counts': rle['counts'].decode()}})
+    data = {'images': images, 'annotations': annotations, 'categories': [{'id': 1}, {'id': 2}]}
+    escaped = [i for i, d in enumerate(dets) if '\\' in d['segmentation']['counts']]
+    assert len(escaped) > 10
+    gp, dp = tmp_path / 'gt.json', tmp_path / 'dt.json'
+    gp.write_text(json.dumps(data))
+    text = json.dumps(dets)
+    # One string uses a unicode escape for its backslash instead of a pair.
+    first = json.dumps(dets[escaped[0]]['segmentation']['counts'])
+    text = text.replace(first, first.replace('\\\\', '\\u005c'), 1)
+    assert '\\u005c' in text
+    dp.write_text(text)
+
+    def tweak(params):
+        params.useCats = use_cats
+
+    reference = run_reference(gp, dp, 'segm', tweak)
+    gt = ufc.COCO(gp, verbose=False)
+    dt = gt.loadRes(dp)
+    actual = ufc.COCOeval(gt, dt, 'segm', print_function=lambda *_: None)
+    tweak(actual.params)
+    actual.run()
+    assert gt._compact is not None and dt._compact is not None
+    assert_bit_identical(reference, actual, f'escaped counts useCats={use_cats}')
+
+
+def _large_results(tmp_path, count=45000):
+    # Above the parallel-parsing threshold. String values imitate record
+    # boundaries (`}, {`) and contain escapes, so a chunk may start inside one.
+    import numpy as np
+    rng = np.random.default_rng(11)
+    images = [{'id': i, 'height': 480, 'width': 640} for i in range(1, 301)]
+    annotations = []
+    for i in range(1500):
+        x, y, w, h = [float(v) for v in rng.uniform(0, 400, 2)] + [float(v) for v in rng.uniform(4, 200, 2)]
+        annotations.append({'id': i + 1, 'image_id': 1 + i % 300, 'category_id': 1 + i % 3,
+                            'bbox': [x, y, w, h], 'area': w * h, 'iscrowd': 0})
+    dets = []
+    for i in range(count):
+        a = annotations[int(rng.integers(0, len(annotations)))]
+        box = [v + float(rng.normal(0, 3)) for v in a['bbox']]
+        name = ['plain.jpg', 'a}, {"image_id": 1, "bbox": [0,0,1,1]}, {"x', 'q\\"}, {\\\\', '},{'][i % 4]
+        dets.append({'image_id': a['image_id'], 'file_name': name, 'category_id': a['category_id'],
+                     'bbox': box, 'score': round(float(rng.random()), 3)})
+    data = {'images': images, 'annotations': annotations, 'categories': [{'id': c} for c in (1, 2, 3)]}
+    gp, dp = tmp_path / 'gt.json', tmp_path / 'dt.json'
+    gp.write_text(json.dumps(data))
+    text = json.dumps(dets)
+    assert (len(text) > 4 << 20) == (count >= 45000)
+    dp.write_text(text)
+    return gp, dp, dets
+
+
+def test_parallel_result_parsing_matches_sequential_semantics(tmp_path):
+    gp, dp, dets = _large_results(tmp_path)
+    reference = run_reference(gp, dp, 'bbox')
+    gt = ufc.COCO(gp, verbose=False)
+    dt = gt.loadRes(dp)
+    assert dt._compact is not None and dt._compact.annotation_count == len(dets)
+    actual = ufc.COCOeval(gt, dt, 'bbox', print_function=lambda *_: None)
+    actual.run()
+    assert_bit_identical(reference, actual, 'parallel result parsing')
+    expected = gt.loadRes(copy.deepcopy(dets))
+    assert dt.anns == expected.anns
+
+
+@pytest.mark.parametrize('damage', ['trailing comma', 'trailing data', 'truncated', 'bad separator',
+                                    'non-object element', 'bad record'])
+def test_parallel_result_parsing_rejects_like_the_sequential_parser(tmp_path, damage):
+    gp, dp, dets = _large_results(tmp_path)
+    text = dp.read_text()
+    middle = text.index('}, {', len(text) // 2) + 1
+    text = {
+        'trailing comma': text[:-1] + ', ]',
+        'trailing data': text + ' x',
+        'truncated': text[:-7],
+        'bad separator': text[:middle] + ';' + text[middle + 1:],
+        'non-object element': text[:middle] + ', 5' + text[middle:],
+        'bad record': text[:middle] + ', {"image_id": 1}' + text[middle:],
+    }[damage]
+    dp.write_text(text)
+    gt = ufc.COCO(gp, verbose=False)
+
+    def load(**options):
+        try:
+            return gt.loadRes(dp, **options), None
+        except Exception as error:  # noqa: BLE001 - the outcome is compared
+            return None, type(error)
+
+    # `derive_segmentation=True` bypasses compact loading: the ordinary loader
+    # is what a rejected compact file must fall back to.
+    actual, actual_error = load()
+    expected, expected_error = load(derive_segmentation=True)
+    assert actual_error is expected_error
+    if expected_error is None:
+        assert actual._compact is None and len(actual.anns) == len(expected.anns)
+
+
+def _crowded_bbox_inputs(tmp_path):
+    import numpy as np
+    rng = np.random.default_rng(3)
+    images = [{'id': i, 'height': 200, 'width': 200} for i in range(1, 41)]
+    annotations, dets = [], []
+    for i in range(400):
+        image, category = int(rng.integers(1, 41)), int(rng.integers(1, 4))
+        x, y = [float(v) for v in rng.uniform(0, 150, 2)]
+        w, h = [float(v) for v in rng.uniform(3, 60, 2)]
+        annotations.append({'id': i + 1, 'image_id': image, 'category_id': category, 'bbox': [x, y, w, h],
+                            'area': w * h, 'iscrowd': int(rng.random() < .05)})
+        for _ in range(int(rng.integers(0, 4))):
+            box = [x + rng.normal(0, 4), y + rng.normal(0, 4), w * rng.uniform(.7, 1.3), h * rng.uniform(.7, 1.3)]
+            dets.append({'image_id': image, 'category_id': category if rng.random() < .8 else int(rng.integers(1, 4)),
+                         'bbox': [float(v) for v in box], 'score': float(np.round(rng.random(), 2))})
+    for _ in range(600):
+        box = [float(v) for v in rng.uniform(0, 150, 2)] + [float(v) for v in rng.uniform(2, 80, 2)]
+        dets.append({'image_id': int(rng.integers(1, 41)), 'category_id': int(rng.integers(1, 4)), 'bbox': box,
+                     'score': float(np.round(rng.random(), 2))})
+    gp, dp = tmp_path / 'gt.json', tmp_path / 'dt.json'
+    gp.write_text(json.dumps({'images': images, 'annotations': annotations,
+                              'categories': [{'id': c} for c in (1, 2, 3)]}))
+    dp.write_text(json.dumps(dets))
+    return gp, dp
+
+
+@pytest.mark.parametrize('max_dets', [[1, 10, 100], [3, 2], [0, 5]])
+@pytest.mark.parametrize('thresholds', [[0., 0., .25, .5, 1.], [-1., 0., 1., 1.5], [.3, .3, .3], [2., .1]])
+def test_precision_envelope_with_tied_scores_and_unusual_grids(tmp_path, thresholds, max_dets):
+    # Tied scores, crowds, several detections per ground truth and
+    # out-of-range or repeated recall thresholds all reach the sampled curve.
+    import numpy as np
+    gp, dp = _crowded_bbox_inputs(tmp_path)
+
+    def tweak(p):
+        p.recThrs = np.array(thresholds)
+        p.maxDets = max_dets
+
+    import contextlib
+    import io
+    from pycocotools.coco import COCO
+    from pycocotools.cocoeval import COCOeval
+    with contextlib.redirect_stdout(io.StringIO()):
+        reference_gt = COCO(str(gp))
+        reference = COCOeval(reference_gt, reference_gt.loadRes(str(dp)), 'bbox')
+        tweak(reference.params)
+        reference.evaluate()
+        reference.accumulate()
+    gt = ufc.COCO(gp, verbose=False)
+    actual = ufc.COCOeval(gt, gt.loadRes(dp), 'bbox', print_function=lambda *_: None)
+    tweak(actual.params)
+    actual.evaluate()
+    actual.accumulate()
+    # summarize() indexes maxDets[2]; compare the complete arrays instead.
+    for key in ('precision', 'recall', 'scores'):
+        expected = np.ascontiguousarray(reference.eval[key], dtype=np.float64)
+        assert expected.tobytes() == np.ascontiguousarray(actual.eval[key]).tobytes(), key
+
+
+@pytest.mark.parametrize('large', ['image', 'category', 'both'])
+@pytest.mark.parametrize('size', ['small', 'parallel'])
+def test_ids_beyond_32_bits_keep_compact_semantics(tmp_path, large, size):
+    # Row IDs are stored in 32 bits until one does not fit; later and earlier
+    # rows must then report their full IDs, also across parallel chunks.
+    gp, dp, dets = _large_results(tmp_path, count=45000 if size == 'parallel' else 300)
+    data = json.loads(gp.read_text())
+    offset = 2**40
+    shift_image = large in ('image', 'both')
+    shift_category = large in ('category', 'both')
+    for image in data['images']:
+        if shift_image and image['id'] % 2:
+            image['id'] += offset
+    for ann in data['annotations']:
+        if shift_image and ann['image_id'] % 2:
+            ann['image_id'] += offset
+        if shift_category and ann['category_id'] == 2:
+            ann['category_id'] += offset
+    for category in data['categories']:
+        if shift_category and category['id'] == 2:
+            category['id'] += offset
+    for det in dets:
+        if shift_image and det['image_id'] % 2:
+            det['image_id'] += offset
+        if shift_category and det['category_id'] == 2:
+            det['category_id'] += offset
+    gp.write_text(json.dumps(data))
+    dp.write_text(json.dumps(dets))
+    reference = run_reference(gp, dp, 'bbox')
+    gt = ufc.COCO(gp, verbose=False)
+    dt = gt.loadRes(dp)
+    assert gt._compact is not None and dt._compact is not None
+    actual = ufc.COCOeval(gt, dt, 'bbox', print_function=lambda *_: None)
+    actual.run()
+    assert_bit_identical(reference, actual, f'wide {large} ids')
+    assert dt.anns == gt.loadRes(copy.deepcopy(dets)).anns

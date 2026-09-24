@@ -1,0 +1,852 @@
+{
+ "headline": {
+  "bbox": {
+   "t2": {
+    "base": {
+     "wall_total": {
+      "median": 0.8372683099996721,
+      "min": 0.8338259660013136,
+      "max": 0.8419767619961931
+     },
+     "cpu_total": {
+      "median": 1.214923899,
+      "min": 1.209167184,
+      "max": 1.222103518
+     },
+     "peak_rss_mb": {
+      "median": 273.124,
+      "min": 273.064,
+      "max": 273.312
+     },
+     "byte_identical": true,
+     "packages": {
+      "hotcoco": "1.0.1",
+      "ultrafast-pycocotools": "0.1.11",
+      "pycocotools": "2.0.11",
+      "faster-coco-eval": "1.8.0",
+      "numpy": "2.4.4",
+      "psutil": "7.2.2"
+     },
+     "started_utc": "2026-09-24T02:37:59.975490+00:00",
+     "input_sha256": {
+      "instances_val2017.json": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+      "detect-predictions.json": "950756817cbaf3442e766a787852729cbb5dd6781a242117c36d6a9dbac7c4be",
+      "segment-predictions.json": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+      "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+      "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+     }
+    },
+    "new": {
+     "wall_total": {
+      "median": 0.48735491999923397,
+      "min": 0.4826886459977686,
+      "max": 0.49220732700268854
+     },
+     "cpu_total": {
+      "median": 0.7691470979999999,
+      "min": 0.763319104,
+      "max": 0.778280294
+     },
+     "peak_rss_mb": {
+      "median": 262.23400000000004,
+      "min": 262.132,
+      "max": 262.4
+     },
+     "byte_identical": true,
+     "packages": {
+      "hotcoco": null,
+      "ultrafast-pycocotools": "0.1.11",
+      "pycocotools": "2.0.11",
+      "faster-coco-eval": null,
+      "numpy": "2.4.4",
+      "psutil": "7.2.2"
+     },
+     "started_utc": "2026-09-24T02:40:30.139369+00:00",
+     "input_sha256": {
+      "instances_val2017.json": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+      "detect-predictions.json": "950756817cbaf3442e766a787852729cbb5dd6781a242117c36d6a9dbac7c4be",
+      "segment-predictions.json": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+      "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+      "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+     }
+    }
+   },
+   "t1": {
+    "base": {
+     "wall_total": {
+      "median": 1.1783363980011927,
+      "min": 1.1700129250002647,
+      "max": 1.180488231999334
+     },
+     "cpu_total": {
+      "median": 1.178191089,
+      "min": 1.1699179709999998,
+      "max": 1.180415072
+     },
+     "peak_rss_mb": {
+      "median": 266.178,
+      "min": 266.084,
+      "max": 266.224
+     },
+     "byte_identical": true,
+     "packages": {
+      "hotcoco": "1.0.1",
+      "ultrafast-pycocotools": "0.1.11",
+      "pycocotools": "2.0.11",
+      "faster-coco-eval": "1.8.0",
+      "numpy": "2.4.4",
+      "psutil": "7.2.2"
+     },
+     "started_utc": "2026-09-24T02:42:51.567383+00:00",
+     "input_sha256": {
+      "instances_val2017.json": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+      "detect-predictions.json": "950756817cbaf3442e766a787852729cbb5dd6781a242117c36d6a9dbac7c4be",
+      "segment-predictions.json": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+      "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+      "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+     }
+    },
+    "new": {
+     "wall_total": {
+      "median": 0.7309744240001237,
+      "min": 0.7240263000021514,
+      "max": 0.7349429129990313
+     },
+     "cpu_total": {
+      "median": 0.730956624,
+      "min": 0.724000471,
+      "max": 0.7348887949999999
+     },
+     "peak_rss_mb": {
+      "median": 256.49,
+      "min": 256.456,
+      "max": 256.656
+     },
+     "byte_identical": true,
+     "packages": {
+      "hotcoco": null,
+      "ultrafast-pycocotools": "0.1.11",
+      "pycocotools": "2.0.11",
+      "faster-coco-eval": null,
+      "numpy": "2.4.4",
+      "psutil": "7.2.2"
+     },
+     "started_utc": "2026-09-24T02:45:31.824403+00:00",
+     "input_sha256": {
+      "instances_val2017.json": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+      "detect-predictions.json": "950756817cbaf3442e766a787852729cbb5dd6781a242117c36d6a9dbac7c4be",
+      "segment-predictions.json": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+      "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+      "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+     }
+    }
+   }
+  },
+  "segm": {
+   "t2": {
+    "base": {
+     "wall_total": {
+      "median": 2.2957533854996655,
+      "min": 2.2887579329999426,
+      "max": 2.323346125000171
+     },
+     "cpu_total": {
+      "median": 3.8894563604999997,
+      "min": 3.871676918,
+      "max": 3.9462058919999996
+     },
+     "peak_rss_mb": {
+      "median": 838.31,
+      "min": 838.068,
+      "max": 838.54
+     },
+     "byte_identical": true,
+     "packages": {
+      "hotcoco": "1.0.1",
+      "ultrafast-pycocotools": "0.1.11",
+      "pycocotools": "2.0.11",
+      "faster-coco-eval": "1.8.0",
+      "numpy": "2.4.4",
+      "psutil": "7.2.2"
+     },
+     "started_utc": "2026-09-24T02:37:59.975490+00:00",
+     "input_sha256": {
+      "instances_val2017.json": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+      "detect-predictions.json": "950756817cbaf3442e766a787852729cbb5dd6781a242117c36d6a9dbac7c4be",
+      "segment-predictions.json": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+      "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+      "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+     }
+    },
+    "new": {
+     "wall_total": {
+      "median": 1.681009134499618,
+      "min": 1.6609905670029548,
+      "max": 1.6870306960045127
+     },
+     "cpu_total": {
+      "median": 2.98709565,
+      "min": 2.952442876,
+      "max": 3.0004265410000004
+     },
+     "peak_rss_mb": {
+      "median": 555.4300000000001,
+      "min": 555.316,
+      "max": 555.584
+     },
+     "byte_identical": true,
+     "packages": {
+      "hotcoco": null,
+      "ultrafast-pycocotools": "0.1.11",
+      "pycocotools": "2.0.11",
+      "faster-coco-eval": null,
+      "numpy": "2.4.4",
+      "psutil": "7.2.2"
+     },
+     "started_utc": "2026-09-24T02:40:30.139369+00:00",
+     "input_sha256": {
+      "instances_val2017.json": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+      "detect-predictions.json": "950756817cbaf3442e766a787852729cbb5dd6781a242117c36d6a9dbac7c4be",
+      "segment-predictions.json": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+      "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+      "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+     }
+    }
+   },
+   "t1": {
+    "base": {
+     "wall_total": {
+      "median": 3.2514556779997292,
+      "min": 3.233156759002668,
+      "max": 3.2643983520010806
+     },
+     "cpu_total": {
+      "median": 3.7816782835,
+      "min": 3.759448966,
+      "max": 3.806364685
+     },
+     "peak_rss_mb": {
+      "median": 832.9639999999999,
+      "min": 832.808,
+      "max": 833.092
+     },
+     "byte_identical": true,
+     "packages": {
+      "hotcoco": "1.0.1",
+      "ultrafast-pycocotools": "0.1.11",
+      "pycocotools": "2.0.11",
+      "faster-coco-eval": "1.8.0",
+      "numpy": "2.4.4",
+      "psutil": "7.2.2"
+     },
+     "started_utc": "2026-09-24T02:42:51.567383+00:00",
+     "input_sha256": {
+      "instances_val2017.json": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+      "detect-predictions.json": "950756817cbaf3442e766a787852729cbb5dd6781a242117c36d6a9dbac7c4be",
+      "segment-predictions.json": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+      "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+      "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+     }
+    },
+    "new": {
+     "wall_total": {
+      "median": 2.871729151999716,
+      "min": 2.862030201999005,
+      "max": 2.8851190010009304
+     },
+     "cpu_total": {
+      "median": 2.871567391,
+      "min": 2.861758836,
+      "max": 2.8848728610000003
+     },
+     "peak_rss_mb": {
+      "median": 548.808,
+      "min": 548.78,
+      "max": 549.068
+     },
+     "byte_identical": true,
+     "packages": {
+      "hotcoco": null,
+      "ultrafast-pycocotools": "0.1.11",
+      "pycocotools": "2.0.11",
+      "faster-coco-eval": null,
+      "numpy": "2.4.4",
+      "psutil": "7.2.2"
+     },
+     "started_utc": "2026-09-24T02:45:31.824403+00:00",
+     "input_sha256": {
+      "instances_val2017.json": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+      "detect-predictions.json": "950756817cbaf3442e766a787852729cbb5dd6781a242117c36d6a9dbac7c4be",
+      "segment-predictions.json": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+      "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+      "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+     }
+    }
+   }
+  },
+  "keypoints": {
+   "t2": {
+    "base": {
+     "wall_total": {
+      "median": 0.5279172849986935,
+      "min": 0.5246835070011002,
+      "max": 0.5315274439999484
+     },
+     "cpu_total": {
+      "median": 0.694071466,
+      "min": 0.6882021899999999,
+      "max": 0.69822244
+     },
+     "peak_rss_mb": {
+      "median": 256.746,
+      "min": 256.7,
+      "max": 256.9
+     },
+     "byte_identical": true,
+     "packages": {
+      "hotcoco": "1.0.1",
+      "ultrafast-pycocotools": "0.1.11",
+      "pycocotools": "2.0.11",
+      "faster-coco-eval": "1.8.0",
+      "numpy": "2.4.4",
+      "psutil": "7.2.2"
+     },
+     "started_utc": "2026-09-24T02:37:59.975490+00:00",
+     "input_sha256": {
+      "instances_val2017.json": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+      "detect-predictions.json": "950756817cbaf3442e766a787852729cbb5dd6781a242117c36d6a9dbac7c4be",
+      "segment-predictions.json": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+      "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+      "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+     }
+    },
+    "new": {
+     "wall_total": {
+      "median": 0.4134598749988072,
+      "min": 0.4121102350018191,
+      "max": 0.4137583310021
+     },
+     "cpu_total": {
+      "median": 0.6755861545,
+      "min": 0.6739591570000001,
+      "max": 0.6771479220000001
+     },
+     "peak_rss_mb": {
+      "median": 248.788,
+      "min": 248.728,
+      "max": 248.956
+     },
+     "byte_identical": true,
+     "packages": {
+      "hotcoco": null,
+      "ultrafast-pycocotools": "0.1.11",
+      "pycocotools": "2.0.11",
+      "faster-coco-eval": null,
+      "numpy": "2.4.4",
+      "psutil": "7.2.2"
+     },
+     "started_utc": "2026-09-24T02:40:30.139369+00:00",
+     "input_sha256": {
+      "instances_val2017.json": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+      "detect-predictions.json": "950756817cbaf3442e766a787852729cbb5dd6781a242117c36d6a9dbac7c4be",
+      "segment-predictions.json": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+      "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+      "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+     }
+    }
+   },
+   "t1": {
+    "base": {
+     "wall_total": {
+      "median": 0.6850674235029146,
+      "min": 0.6828338549985347,
+      "max": 0.6873423909983103
+     },
+     "cpu_total": {
+      "median": 0.6849712720000001,
+      "min": 0.682505415,
+      "max": 0.6871831039999999
+     },
+     "peak_rss_mb": {
+      "median": 256.906,
+      "min": 256.588,
+      "max": 256.988
+     },
+     "byte_identical": true,
+     "packages": {
+      "hotcoco": "1.0.1",
+      "ultrafast-pycocotools": "0.1.11",
+      "pycocotools": "2.0.11",
+      "faster-coco-eval": "1.8.0",
+      "numpy": "2.4.4",
+      "psutil": "7.2.2"
+     },
+     "started_utc": "2026-09-24T02:42:51.567383+00:00",
+     "input_sha256": {
+      "instances_val2017.json": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+      "detect-predictions.json": "950756817cbaf3442e766a787852729cbb5dd6781a242117c36d6a9dbac7c4be",
+      "segment-predictions.json": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+      "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+      "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+     }
+    },
+    "new": {
+     "wall_total": {
+      "median": 0.6572343419984463,
+      "min": 0.6528618980009924,
+      "max": 0.6635638350016961
+     },
+     "cpu_total": {
+      "median": 0.6571599939999999,
+      "min": 0.6528226749999999,
+      "max": 0.663384285
+     },
+     "peak_rss_mb": {
+      "median": 248.824,
+      "min": 248.748,
+      "max": 248.92
+     },
+     "byte_identical": true,
+     "packages": {
+      "hotcoco": null,
+      "ultrafast-pycocotools": "0.1.11",
+      "pycocotools": "2.0.11",
+      "faster-coco-eval": null,
+      "numpy": "2.4.4",
+      "psutil": "7.2.2"
+     },
+     "started_utc": "2026-09-24T02:45:31.824403+00:00",
+     "input_sha256": {
+      "instances_val2017.json": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+      "detect-predictions.json": "950756817cbaf3442e766a787852729cbb5dd6781a242117c36d6a9dbac7c4be",
+      "segment-predictions.json": "5299053c37b1621e2c819ab23800ad43960983afd89e9a480a5ae46342c182de",
+      "person_keypoints_val2017.json": "788e2dae83c86bd547be7fab269d6399df5671063d29a61360cdb2cc370d2b14",
+      "pose-predictions.json": "15701515f2a27a5e3ca5db903ae0997360728c375739b12b1c198e460c83b885"
+     }
+    }
+   }
+  }
+ },
+ "phases": {
+  "bbox": {
+   "base": {
+    "phases": {
+     "load_gt": {
+      "wall": 0.059845698000572156,
+      "cpu": 0.05983818399999999,
+      "rust_peak_mb": 25.822408,
+      "rust_live_mb": 22.93092,
+      "allocations": 113936
+     },
+     "load_dt": {
+      "wall": 0.27582670800074993,
+      "cpu": 0.275804406,
+      "rust_peak_mb": 180.290162,
+      "rust_live_mb": 162.621866,
+      "allocations": 113978
+     },
+     "evaluate:prelude": {
+      "wall": 0.006030952999935835,
+      "cpu": 0.006031665999999991,
+      "rust_peak_mb": 162.621866,
+      "rust_live_mb": 162.621866,
+      "allocations": 113978
+     },
+     "evaluate:extract": {
+      "wall": 0.09934962899933453,
+      "cpu": 0.09934822300000001,
+      "rust_peak_mb": 195.958671,
+      "rust_live_mb": 194.458423,
+      "allocations": 114045
+     },
+     "evaluate:engine": {
+      "wall": 0.39351444600106333,
+      "cpu": 0.7669574240000001,
+      "rust_peak_mb": 234.382988,
+      "rust_live_mb": 210.067957,
+      "allocations": 459226
+     },
+     "evaluate:epilogue": {
+      "wall": 0.001016448999507702,
+      "cpu": 0.00101637599999993,
+      "rust_peak_mb": 210.067957,
+      "rust_live_mb": 210.067957,
+      "allocations": 459226
+     },
+     "accumulate": {
+      "wall": 2.5344999812659808e-05,
+      "cpu": 2.5154999999887906e-05,
+      "rust_peak_mb": 210.067957,
+      "rust_live_mb": 210.067957,
+      "allocations": 459226
+     },
+     "summarize": {
+      "wall": 0.002749932998995064,
+      "cpu": 0.0027513489999999585,
+      "rust_peak_mb": 210.067957,
+      "rust_live_mb": 210.067957,
+      "allocations": 459226
+     }
+    },
+    "engine": {
+     "gt_read": 1.29e-07,
+     "dt_read": 2.2e-08,
+     "group_index": 0.048151791,
+     "iou_cpu": 0.032469534,
+     "match_cpu": 0.250209097,
+     "accumulate_cpu": 0.460045109
+    },
+    "runs": 5
+   },
+   "new": {
+    "phases": {
+     "load_gt": {
+      "wall": 0.06104991399843129,
+      "cpu": 0.061046536,
+      "rust_peak_mb": 25.822408,
+      "rust_live_mb": 22.93096,
+      "allocations": 113952
+     },
+     "load_dt": {
+      "wall": 0.17747097499886877,
+      "cpu": 0.297719633,
+      "rust_peak_mb": 197.106274,
+      "rust_live_mb": 156.776466,
+      "allocations": 114028
+     },
+     "evaluate:prelude": {
+      "wall": 0.0062435910003841855,
+      "cpu": 0.006243985999999979,
+      "rust_peak_mb": 156.776466,
+      "rust_live_mb": 156.776466,
+      "allocations": 114028
+     },
+     "evaluate:extract": {
+      "wall": 0.07044373899952916,
+      "cpu": 0.07042248799999995,
+      "rust_peak_mb": 188.647131,
+      "rust_live_mb": 187.146883,
+      "allocations": 114095
+     },
+     "evaluate:engine": {
+      "wall": 0.17256111800088547,
+      "cpu": 0.3362095970000001,
+      "rust_peak_mb": 221.645616,
+      "rust_live_mb": 202.737337,
+      "allocations": 407051
+     },
+     "evaluate:epilogue": {
+      "wall": 0.0010242139996989863,
+      "cpu": 0.0010241429999999774,
+      "rust_peak_mb": 202.737337,
+      "rust_live_mb": 202.737337,
+      "allocations": 407051
+     },
+     "accumulate": {
+      "wall": 2.5549999918439426e-05,
+      "cpu": 2.5390000000014012e-05,
+      "rust_peak_mb": 202.737337,
+      "rust_live_mb": 202.737337,
+      "allocations": 407051
+     },
+     "summarize": {
+      "wall": 0.0024925729994720314,
+      "cpu": 0.002493462000000002,
+      "rust_peak_mb": 202.737337,
+      "rust_live_mb": 202.737337,
+      "allocations": 407051
+     }
+    },
+    "engine": {
+     "gt_read": 1.32e-07,
+     "dt_read": 2.2e-08,
+     "group_index": 0.049341415,
+     "iou_cpu": 0.034814362,
+     "match_cpu": 0.150880883,
+     "accumulate_cpu": 0.129774832
+    },
+    "runs": 5
+   }
+  },
+  "segm": {
+   "base": {
+    "phases": {
+     "load_gt": {
+      "wall": 0.05988269500085153,
+      "cpu": 0.05987422499999999,
+      "rust_peak_mb": 25.822408,
+      "rust_live_mb": 22.93092,
+      "allocations": 113936
+     },
+     "load_dt": {
+      "wall": 0.4993781660014065,
+      "cpu": 0.49932886400000004,
+      "rust_peak_mb": 412.928205,
+      "rust_live_mb": 394.805349,
+      "allocations": 113979
+     },
+     "evaluate:prelude": {
+      "wall": 0.009438507999220747,
+      "cpu": 0.009439291000000072,
+      "rust_peak_mb": 394.805349,
+      "rust_live_mb": 394.805349,
+      "allocations": 113979
+     },
+     "evaluate:extract": {
+      "wall": 1.0602616979995219,
+      "cpu": 2.013281783,
+      "rust_peak_mb": 759.092407,
+      "rust_live_mb": 756.010755,
+      "allocations": 1929138
+     },
+     "evaluate:engine": {
+      "wall": 0.7006239010006539,
+      "cpu": 1.3785125859999998,
+      "rust_peak_mb": 795.595368,
+      "rust_live_mb": 771.601209,
+      "allocations": 2380160
+     },
+     "evaluate:epilogue": {
+      "wall": 0.0011273159998381743,
+      "cpu": 0.0011272330000000608,
+      "rust_peak_mb": 771.601209,
+      "rust_live_mb": 771.601209,
+      "allocations": 2380160
+     },
+     "accumulate": {
+      "wall": 2.6100000468431972e-05,
+      "cpu": 2.591699999943131e-05,
+      "rust_peak_mb": 771.601209,
+      "rust_live_mb": 771.601209,
+      "allocations": 2380160
+     },
+     "summarize": {
+      "wall": 0.0025504219993308652,
+      "cpu": 0.0025517650000006498,
+      "rust_peak_mb": 771.601209,
+      "rust_live_mb": 771.601209,
+      "allocations": 2380160
+     }
+    },
+    "engine": {
+     "gt_read": 0.257030382,
+     "dt_read": 0.527598293,
+     "group_index": 0.050948029,
+     "iou_cpu": 0.602454143,
+     "match_cpu": 0.273667929,
+     "accumulate_cpu": 0.470283905
+    },
+    "runs": 5
+   },
+   "new": {
+    "phases": {
+     "load_gt": {
+      "wall": 0.06124582999837003,
+      "cpu": 0.061248145000000004,
+      "rust_peak_mb": 25.822408,
+      "rust_live_mb": 22.93096,
+      "allocations": 113952
+     },
+     "load_dt": {
+      "wall": 0.39409082000020135,
+      "cpu": 0.630664705,
+      "rust_peak_mb": 452.072605,
+      "rust_live_mb": 394.824509,
+      "allocations": 839001
+     },
+     "evaluate:prelude": {
+      "wall": 0.009622396999475313,
+      "cpu": 0.009614557999999995,
+      "rust_peak_mb": 394.824509,
+      "rust_live_mb": 394.824509,
+      "allocations": 839001
+     },
+     "evaluate:extract": {
+      "wall": 0.5855914179992396,
+      "cpu": 1.0308968840000001,
+      "rust_peak_mb": 525.469774,
+      "rust_live_mb": 484.198165,
+      "allocations": 1099834
+     },
+     "evaluate:engine": {
+      "wall": 0.6728433600001154,
+      "cpu": 1.339878667,
+      "rust_peak_mb": 518.513289,
+      "rust_live_mb": 499.788619,
+      "allocations": 2280327
+     },
+     "evaluate:epilogue": {
+      "wall": 0.001112403999286471,
+      "cpu": 0.0011087100000000127,
+      "rust_peak_mb": 499.788619,
+      "rust_live_mb": 499.788619,
+      "allocations": 2280327
+     },
+     "accumulate": {
+      "wall": 2.574300015112385e-05,
+      "cpu": 2.558600000002187e-05,
+      "rust_peak_mb": 499.788619,
+      "rust_live_mb": 499.788619,
+      "allocations": 2280327
+     },
+     "summarize": {
+      "wall": 0.002467808000801597,
+      "cpu": 0.0024686159999998125,
+      "rust_peak_mb": 499.788619,
+      "rust_live_mb": 499.788619,
+      "allocations": 2280327
+     }
+    },
+    "engine": {
+     "gt_read": 0.317559318,
+     "dt_read": 0.172445229,
+     "group_index": 0.048201154,
+     "iou_cpu": 1.041867704,
+     "match_cpu": 0.148597405,
+     "accumulate_cpu": 0.127765281
+    },
+    "runs": 5
+   }
+  },
+  "keypoints": {
+   "base": {
+    "phases": {
+     "load_gt": {
+      "wall": 0.03055954499905056,
+      "cpu": 0.030561397000000004,
+      "rust_peak_mb": 12.267129,
+      "rust_live_mb": 11.429769,
+      "allocations": 62154
+     },
+     "load_dt": {
+      "wall": 0.23835303200030467,
+      "cpu": 0.23834930999999998,
+      "rust_peak_mb": 193.018626,
+      "rust_live_mb": 179.760642,
+      "allocations": 62209
+     },
+     "evaluate:prelude": {
+      "wall": 0.006262372000492178,
+      "cpu": 0.006262720999999971,
+      "rust_peak_mb": 179.760642,
+      "rust_live_mb": 179.760642,
+      "allocations": 62209
+     },
+     "evaluate:extract": {
+      "wall": 0.18307250199904956,
+      "cpu": 0.314034619,
+      "rust_peak_mb": 212.876306,
+      "rust_live_mb": 209.138115,
+      "allocations": 84405
+     },
+     "evaluate:engine": {
+      "wall": 0.061743107999063795,
+      "cpu": 0.08884727999999997,
+      "rust_peak_mb": 219.466494,
+      "rust_live_mb": 209.186889,
+      "allocations": 116501
+     },
+     "evaluate:epilogue": {
+      "wall": 0.0011766229999921052,
+      "cpu": 0.0011765649999999628,
+      "rust_peak_mb": 209.186889,
+      "rust_live_mb": 209.186889,
+      "allocations": 116501
+     },
+     "accumulate": {
+      "wall": 2.5456000003032386e-05,
+      "cpu": 2.523499999995682e-05,
+      "rust_peak_mb": 209.186889,
+      "rust_live_mb": 209.186889,
+      "allocations": 116501
+     },
+     "summarize": {
+      "wall": 0.0003773909993469715,
+      "cpu": 0.00037771799999997135,
+      "rust_peak_mb": 209.186889,
+      "rust_live_mb": 209.186889,
+      "allocations": 116501
+     }
+    },
+    "engine": {
+     "gt_read": 0.011723874,
+     "dt_read": 0.153645894,
+     "group_index": 0.007777252,
+     "iou_cpu": 0.01768975,
+     "match_cpu": 0.012184738,
+     "accumulate_cpu": 0.03042174
+    },
+    "runs": 5
+   },
+   "new": {
+    "phases": {
+     "load_gt": {
+      "wall": 0.031148206999205286,
+      "cpu": 0.031149850999999992,
+      "rust_peak_mb": 11.742841,
+      "rust_live_mb": 11.077681,
+      "allocations": 62168
+     },
+     "load_dt": {
+      "wall": 0.15763646499908646,
+      "cpu": 0.256186946,
+      "rust_peak_mb": 183.816626,
+      "rust_live_mb": 174.041154,
+      "allocations": 62261
+     },
+     "evaluate:prelude": {
+      "wall": 0.006252683000639081,
+      "cpu": 0.006253100999999983,
+      "rust_peak_mb": 174.041154,
+      "rust_live_mb": 174.041154,
+      "allocations": 62261
+     },
+     "evaluate:extract": {
+      "wall": 0.1830218569994031,
+      "cpu": 0.32387898299999995,
+      "rust_peak_mb": 207.945716,
+      "rust_live_mb": 203.130221,
+      "allocations": 84426
+     },
+     "evaluate:engine": {
+      "wall": 0.037480880000657635,
+      "cpu": 0.06286959799999992,
+      "rust_peak_mb": 211.117936,
+      "rust_live_mb": 203.178995,
+      "allocations": 114351
+     },
+     "evaluate:epilogue": {
+      "wall": 0.0011903439990419429,
+      "cpu": 0.001190500999999955,
+      "rust_peak_mb": 203.178995,
+      "rust_live_mb": 203.178995,
+      "allocations": 114351
+     },
+     "accumulate": {
+      "wall": 2.5241000912501477e-05,
+      "cpu": 2.5037000000005527e-05,
+      "rust_peak_mb": 203.178995,
+      "rust_live_mb": 203.178995,
+      "allocations": 114351
+     },
+     "summarize": {
+      "wall": 0.0003806849999818951,
+      "cpu": 0.0003809310000000288,
+      "rust_peak_mb": 203.178995,
+      "rust_live_mb": 203.178995,
+      "allocations": 114351
+     }
+    },
+    "engine": {
+     "gt_read": 0.010890675,
+     "dt_read": 0.159997067,
+     "group_index": 0.007824516,
+     "iou_cpu": 0.017708944,
+     "match_cpu": 0.009115767,
+     "accumulate_cpu": 0.009571992
+    },
+    "runs": 5
+   }
+  }
+ }
+}

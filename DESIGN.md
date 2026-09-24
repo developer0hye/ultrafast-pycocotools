@@ -38,6 +38,24 @@ Subclasses, unsupported schemas and non-bbox evaluators use the ordinary path.
 The [0.1.3 report](docs/efficiency-v013.md) separates output-storage lower bounds
 from optional representation costs and measured process RSS.
 
+Loading records spans into the snapshot for `keypoints`, `num_keypoints` and
+`segmentation` values, as 32-bit offsets. Result arrays of 4 MiB or more are
+parsed in parallel chunks split at candidate record starts; a chunk is accepted
+only if its last record ends exactly where the next chunk starts, so every
+accepted start is a real boundary (by induction from the first record), and any
+other outcome re-runs the sequential parser, which decides the result and its
+error.
+
+Segmentation extraction parses only the selected spans, in parallel, and keeps
+compressed `counts` strings (including the `\\`-escaped form the RLE alphabet
+needs) as references into the snapshot (`GeomStore::EncodedMasks`). The engine
+decodes each with `Rle::from_str`'s loop inside `compute_iou`. Every annotation
+lies in exactly one evaluated cell, so a mask is decoded at most once, as
+before, but the decoded run arrays no longer coexist. Boundary evaluation and
+the dictionary route keep the pipelined rasteriser described under
+[Parallelism](#parallelism). See the
+[task bottleneck report](docs/task-bottleneck-optimization.md).
+
 ## Borrowed workspaces in 0.1.4
 
 Per-image work borrows GT index slices from the evaluator's grouping storage.
@@ -152,6 +170,17 @@ for k in categories (parallel with Rayon):
 Each worker retains one category's working data. IoU matrices are reused across
 area ranges, preserving the reference amount of IoU computation.
 
+After matching, an image keeps one outcome byte per (detection, threshold):
+ignored, true positive or false positive. Its match table stays in per-worker
+scratch unless `evalImgs` or `per_instance` report it. Accumulation gathers the
+outcomes in score order once per area range. Between true positives `tp` is
+fixed and `fp + tp + EPS` never decreases, so precision never rises there and
+every suffix maximum of the precision curve (the reference envelope) is
+attained at a true positive; each curve is therefore built from the true
+positives' positions and false-positive counts alone, with the same division
+per value. Recall samples compare `tp` with the fewest true positives that
+satisfy each threshold, found once with the same division.
+
 The tradeoff is that `evalImgs` is not materialized by default. With
 `store_eval_imgs=True`, `materialise_eval_imgs()` reconstructs reference-style
 dictionaries and restores `None` for absent images, preserving positional indices.
@@ -167,7 +196,8 @@ released. This avoids retaining a second full set of result tensors.
 Reading Python annotations requires the GIL and is single-threaded. Geometry is
 collected in chunks of 4,096 annotations; rasterization runs with the GIL
 released through `py.detach()`. Peak storage is one chunk plus completed RLEs,
-instead of all polygons plus all RLEs.
+instead of all polygons plus all RLEs. Compact file inputs need neither the GIL
+nor this pipeline; see [Compact file inputs](#compact-file-inputs).
 
 ## Rejected optimization: skip unused masks
 
@@ -192,7 +222,8 @@ bbox (no masks at all)        0.070     0.011    0.042      0.000         0.000
 ```
 
 The difference is about 0.030 s against 1.655 s for single-thread segmentation
-evaluation, or 1.8%. A real implementation would first need grouping to identify
+evaluation, or 1.8%. Compact file inputs now skip this conversion anyway: their
+masks are decoded inside `compute_iou`, which never runs for a one-sided cell. A real implementation would first need grouping to identify
 empty cells, requiring another annotation traversal and reducing the benefit.
 Rasterization already overlaps reading (`read_blocked` is 0.026 s), so most of
 the remaining saving is only a portion of Python detection-field extraction.
@@ -404,6 +435,9 @@ DT-only images, and polygons with duplicate vertices.
 | Evaluation made 21.76 million allocations | Match buffers reallocated per area range | Reuse within a category; reduced to 6.66 million and 2.22 → 0.83 s for that phase |
 | Mask memory was twice the estimate | Spare capacity in `cnts` built with `Vec::push` | Apply `shrink_to_fit` |
 | Objects365 `loadRes` used 1,148 MB | Four-corner polygon created per box prediction | Rasterize boxes on demand; historical `derive_segmentation=False` measurement saved 320 MB and 2.1 s; omission is the default in 0.1.1 |
+| COCO segm extraction held 370 MB of decoded runs | Every compact mask was decoded before evaluation, after re-parsing the whole file | Record segmentation spans at load, keep counts strings in the snapshot and decode inside `compute_iou`; peak RSS 838 → 555 MB |
+| Accumulation was 0.46 CPU s for COCO bbox | Per (maxDets, threshold, detection) reads of per-image match tables | One outcome byte per detection and threshold, gathered once per area; curves built from true positives; 0.46 → 0.13 s |
+| Loading was the largest bbox/keypoint phase | One sequential serde pass over the result array | Parallel chunks verified by exact record alignment; bbox `loadRes` 0.28 → 0.18 s |
 
 Dropping `abi3` is a packaging decision: wheels must be built for each Python
 version. The limited API turns `PyFloat_AS_DOUBLE` and `PyList_GET_ITEM` into

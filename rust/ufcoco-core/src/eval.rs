@@ -101,6 +101,12 @@ pub enum GeomStore {
     /// Immutable file geometry shared with the input handle.
     SharedBboxes(Arc<Vec<[f64; 4]>>),
     Masks(Vec<Rle>),
+    /// Masks whose compressed COCO `counts` strings stay in the immutable
+    /// input snapshot until an IoU needs them. See [`MaskRef`].
+    EncodedMasks {
+        raw: Arc<Vec<u8>>,
+        masks: Vec<MaskRef>,
+    },
     Boundaries {
         masks: Vec<Rle>,
         boundaries: Vec<Rle>,
@@ -116,7 +122,66 @@ pub enum GeomStore {
     },
 }
 
+/// One mask of [`GeomStore::EncodedMasks`].
+///
+/// Every annotation lies in exactly one `(image, category)` cell (one image
+/// cell with `useCats = 0`), and `compute_iou` runs once per cell, so an
+/// encoded mask is decoded at most once per evaluation: the same work as
+/// decoding every mask up front, without holding all decoded runs at once.
+/// Decoding uses the same `Rle::from_str` as the eager path.
+#[derive(Clone, Debug)]
+pub enum MaskRef {
+    /// Already decoded or rasterised (polygons, run lists, escaped strings,
+    /// box fallbacks, and unused placeholders).
+    Ready(Rle),
+    /// `counts` bytes at `raw[start..start + len]` for an `h x w` image.
+    /// `escaped` marks JSON text whose only escapes are `\\` pairs (the RLE
+    /// alphabet includes a backslash); each pair stands for one backslash.
+    Encoded {
+        start: usize,
+        len: u32,
+        h: u32,
+        w: u32,
+        escaped: bool,
+    },
+}
+
+impl MaskRef {
+    fn resolve<'a>(&'a self, raw: &[u8]) -> std::borrow::Cow<'a, Rle> {
+        match self {
+            Self::Ready(rle) => std::borrow::Cow::Borrowed(rle),
+            &Self::Encoded {
+                start,
+                len,
+                h,
+                w,
+                escaped,
+            } => {
+                let text = &raw[start..start + len as usize];
+                std::borrow::Cow::Owned(Rle::from_json_counts(text, escaped, h, w))
+            }
+        }
+    }
+}
+
 impl GeomStore {
+    /// Plain masks for the selected annotations, decoding encoded ones.
+    fn mask_refs(&self, idx: &[u32]) -> Option<Vec<std::borrow::Cow<'_, Rle>>> {
+        match self {
+            Self::Masks(masks) => Some(
+                idx.iter()
+                    .map(|&i| std::borrow::Cow::Borrowed(&masks[i as usize]))
+                    .collect(),
+            ),
+            Self::EncodedMasks { raw, masks } => Some(
+                idx.iter()
+                    .map(|&i| masks[i as usize].resolve(raw))
+                    .collect(),
+            ),
+            _ => None,
+        }
+    }
+
     fn bbox_slice(&self) -> Option<&[[f64; 4]]> {
         match self {
             Self::Bboxes(v) => Some(v),
@@ -132,8 +197,10 @@ pub struct Instances {
     pub ids: Vec<i64>,
     pub scores: Vec<f64>,
     pub areas: Vec<f64>,
+    /// Read for ground truth only; may be empty for detections.
     pub iscrowd: Vec<bool>,
     /// Ground truth only: the `ignore` flag pycocotools derives in `_prepare`.
+    /// May be empty for detections.
     pub ignore: Vec<bool>,
     /// LVIS extension: a detection of a category that is not exhaustively
     /// annotated in this image is ignored rather than counted as a false
@@ -351,6 +418,9 @@ struct CatImage<'a> {
     /// Row-major `D x G`; empty when either side is empty, which is the `[]`
     /// pycocotools' `computeIoU` returns.
     ious: Vec<f64>,
+    /// Per detection, the largest IoU over all ground truths, or NaN if any is
+    /// NaN; empty with `ious`. See `evaluate_img_into`.
+    best_iou: Vec<f64>,
 }
 
 /// Per-image match result for one area range, in the compact form
@@ -358,10 +428,12 @@ struct CatImage<'a> {
 #[derive(Default)]
 struct ImgMatch {
     dt_scores: Vec<f64>,
-    /// `T * D`, ground-truth slot or -1.
+    /// `T * D`, ground-truth slot or -1. Kept only for the APIs that report
+    /// matches (`evalImgs`, `per_instance`); otherwise the matcher uses scratch.
     dt_match: Vec<i32>,
-    /// `T * D`
-    dt_ignore: Vec<bool>,
+    /// `D * T` (detection-major): `IGNORED`, `TRUE_POSITIVE` or
+    /// `FALSE_POSITIVE` at each IoU threshold. All that accumulation reads.
+    outcome: Vec<u8>,
     /// `G`, in ignore-sorted order.
     gt_ignore: Vec<bool>,
     /// Permutation applied to the ground truth (ignore-sorted, stable).
@@ -472,11 +544,27 @@ impl Evaluator {
                     dt_idx.truncate(max_det);
                 }
                 let ious = self.compute_iou(&dt_idx, gt_idx);
+                let best_iou = if ious.is_empty() {
+                    Vec::new()
+                } else {
+                    ious.chunks_exact(gt_idx.len())
+                        .map(|row| {
+                            row.iter().fold(f64::NEG_INFINITY, |best, &v| {
+                                if best.is_nan() || v.is_nan() || v > best {
+                                    v
+                                } else {
+                                    best
+                                }
+                            })
+                        })
+                        .collect()
+                };
                 CatImage {
                     img_slot,
                     gt_idx,
                     dt_idx,
                     ious,
+                    best_iou,
                 }
             })
             .collect()
@@ -521,12 +609,16 @@ impl Evaluator {
         };
         let floor = self.match_floor();
 
+        if let (Some(dv), Some(gv)) = (
+            self.dt.geom.mask_refs(dt_idx),
+            self.gt.geom.mask_refs(gt_idx),
+        ) {
+            let d: Vec<&Rle> = dv.iter().map(|m| m.as_ref()).collect();
+            let g: Vec<&Rle> = gv.iter().map(|m| m.as_ref()).collect();
+            rle::rle_iou_refs_above(&d, &g, &iscrowd, floor, &mut out);
+            return out;
+        }
         match (&self.dt.geom, &self.gt.geom) {
-            (GeomStore::Masks(dv), GeomStore::Masks(gv)) => {
-                let d: Vec<&Rle> = dt_idx.iter().map(|&i| &dv[i as usize]).collect();
-                let g: Vec<&Rle> = gt_idx.iter().map(|&i| &gv[i as usize]).collect();
-                rle::rle_iou_refs_above(&d, &g, &iscrowd, floor, &mut out);
-            }
             (
                 GeomStore::Boundaries {
                     masks: dm,
@@ -644,7 +736,7 @@ impl Evaluator {
     fn evaluate_img(&self, ci: &CatImage<'_>, area_idx: usize) -> Option<ImgMatch> {
         let mut out = ImgMatch::default();
         let mut scratch = MatchScratch::default();
-        self.evaluate_img_into(ci, area_idx, &mut out, &mut scratch)
+        self.evaluate_img_into(ci, area_idx, &mut out, &mut scratch, true)
             .then_some(out)
     }
 
@@ -655,13 +747,14 @@ impl Evaluator {
     /// Reusing `out` across area ranges is what keeps this off the allocator:
     /// at Objects365 scale the per-image vectors were 20 million allocations,
     /// and sixteen threads contending for the heap costs more than the
-    /// matching itself.
+    /// matching itself. `keep_matches` retains `dt_match` in `out`.
     fn evaluate_img_into(
         &self,
         ci: &CatImage<'_>,
         area_idx: usize,
         out: &mut ImgMatch,
         scratch: &mut MatchScratch,
+        keep_matches: bool,
     ) -> bool {
         // RunJoin already excludes groups with neither GT nor detections.
         // A zero maxDets may empty a real detection-only group afterwards;
@@ -675,10 +768,17 @@ impl Evaluator {
         let ImgMatch {
             dt_scores,
             dt_match,
-            dt_ignore,
+            outcome,
             gt_ignore,
             gt_perm,
         } = out;
+        let dt_match = if keep_matches {
+            dt_match
+        } else {
+            dt_match.clear();
+            dt_match.shrink_to_fit();
+            &mut scratch.dt_match
+        };
 
         // Ignore flags, then a stable partition that puts them last.
         let ignore = &mut scratch.ignore;
@@ -707,6 +807,11 @@ impl Evaluator {
                     // pycocotools clamps the floor so a threshold of exactly
                     // 1.0 can still match a pair whose IoU rounds just below.
                     let mut best = f64::min(thr, 1.0 - 1e-10);
+                    // No ground truth can pass `v >= best`: the scan below would
+                    // leave `m` at -1 and change nothing. NaN never skips.
+                    if ci.best_iou[dind] < best {
+                        continue;
+                    }
                     let mut m: i32 = -1;
                     for gind in 0..g_n {
                         let gsrc = gt_perm[gind] as usize;
@@ -740,17 +845,25 @@ impl Evaluator {
 
         // Unmatched detections outside the area range (or LVIS-marked) are
         // ignored rather than counted as false positives.
-        dt_ignore.clear();
-        dt_ignore.resize(t_n * d_n, false);
-        for tind in 0..t_n {
-            for dind in 0..d_n {
-                let src = ci.dt_idx[dind] as usize;
+        outcome.clear();
+        outcome.resize(d_n * t_n, IGNORED);
+        for dind in 0..d_n {
+            let src = ci.dt_idx[dind] as usize;
+            let a = self.dt.areas[src];
+            let unmatched_ignored = a < a_rng[0] || a > a_rng[1] || self.dt.lvis_mark[src];
+            for tind in 0..t_n {
                 let m = dt_match[tind * d_n + dind];
-                dt_ignore[tind * d_n + dind] = if m >= 0 {
+                let ignored = if m >= 0 {
                     gt_ignore[m as usize]
                 } else {
-                    let a = self.dt.areas[src];
-                    a < a_rng[0] || a > a_rng[1] || self.dt.lvis_mark[src]
+                    unmatched_ignored
+                };
+                outcome[dind * t_n + tind] = if ignored {
+                    IGNORED
+                } else if m >= 0 {
+                    TRUE_POSITIVE
+                } else {
+                    FALSE_POSITIVE
                 };
             }
         }
@@ -808,6 +921,8 @@ impl Evaluator {
                 // on a dense detector is most of the accumulate cost.
                 let mut order: Vec<(f64, u32, u32)> = Vec::new();
                 let mut order_ready = false;
+                // Per-area outcomes of `order`, threshold-major; see `gather_outcomes`.
+                let mut outcomes: Vec<u8> = Vec::new();
                 for a in 0..a_n {
                     let t = Instant::now();
                     if matches.is_empty() {
@@ -823,7 +938,7 @@ impl Evaluator {
                         .for_each_init(MatchScratch::default, |scratch, (slot, ci)| {
                             let mut buf = slot.take().unwrap_or_default();
                             *slot = self
-                                .evaluate_img_into(ci, a, &mut buf, scratch)
+                                .evaluate_img_into(ci, a, &mut buf, scratch, collect_eval_imgs)
                                 .then_some(buf);
                         });
                     Timings::add(&self.timings.match_ns, t);
@@ -832,10 +947,20 @@ impl Evaluator {
                         Self::build_order(&matches, max_det_all, &mut order);
                         order_ready = true;
                     }
-                    for (m, &max_det) in p.max_dets.iter().enumerate() {
-                        self.accumulate_slice(
-                            &matches, &order, max_det, a, m, t_n, r_n, a_n, m_n, &mut buf, &mut out,
-                        );
+                    let npig: usize = matches
+                        .iter()
+                        .flatten()
+                        .map(|mm| mm.gt_ignore.iter().filter(|&&ig| !ig).count())
+                        .sum();
+                    if npig > 0 {
+                        Self::gather_outcomes(&matches, &order, t_n, &mut outcomes);
+                        Self::recall_sample_counts(&p.rec_thrs, npig, &mut buf.sample_tp);
+                        for (m, &max_det) in p.max_dets.iter().enumerate() {
+                            self.accumulate_slice(
+                                &order, &outcomes, npig, max_det, a, m, t_n, r_n, a_n, m_n,
+                                &mut buf, &mut out,
+                            );
+                        }
                     }
                     Timings::add(&self.timings.accumulate_ns, t);
                     if collect_eval_imgs {
@@ -924,7 +1049,9 @@ impl Evaluator {
                 gt_ignore: mm.gt_ignore.clone(),
                 dt_matches,
                 gt_matches,
-                dt_ignore: mm.dt_ignore.clone(),
+                dt_ignore: (0..t_n * d_n)
+                    .map(|i| mm.outcome[(i % d_n) * t_n + i / d_n] == IGNORED)
+                    .collect(),
             });
         }
         out
@@ -956,12 +1083,70 @@ impl Evaluator {
         order.sort_by(|x, y| cmp_desc_score(x.0, y.0));
     }
 
+    /// Transpose every ranked detection's outcomes into
+    /// `outcomes[t * order.len() + n]`, once per area range.
+    ///
+    /// The curves for each maxDets limit then read these bytes in order, instead
+    /// of fetching them from a different per-image vector for every (maxDets,
+    /// threshold, detection). The values are the same, so the tp/fp counts and
+    /// every division are unchanged.
+    fn gather_outcomes(
+        matches: &[Option<ImgMatch>],
+        order: &[(f64, u32, u32)],
+        t_n: usize,
+        outcomes: &mut Vec<u8>,
+    ) {
+        let nd = order.len();
+        outcomes.clear();
+        outcomes.resize(t_n * nd, IGNORED);
+        for (n, &(_, i, d)) in order.iter().enumerate() {
+            let mm = matches[i as usize].as_ref().unwrap();
+            let row = &mm.outcome[d as usize * t_n..(d as usize + 1) * t_n];
+            for (t, &outcome) in row.iter().enumerate() {
+                outcomes[t * nd + n] = outcome;
+            }
+        }
+    }
+
+    /// For each recall sample `i`, the true-positive count at which the curve
+    /// is sampled: the fewest `tp` for which `!(tp as f64 / npig as f64 < r)`
+    /// holds for `r = rec_thrs[i]` and every earlier threshold, or `npig + 1`
+    /// if none does.
+    ///
+    /// The comparison is the one made on each recall value, and it is monotone
+    /// in `tp` because correctly rounded division is. Samples are assigned in
+    /// threshold order, so a sample never precedes an earlier one; the running
+    /// maximum keeps that for unsorted custom grids. NaN thresholds give 0, as
+    /// `!(x < NaN)` is always true.
+    fn recall_sample_counts(rec_thrs: &[f64], npig: usize, out: &mut Vec<usize>) {
+        let npig_f = npig as f64;
+        out.clear();
+        let mut previous = 0;
+        out.extend(rec_thrs.iter().map(|&r| {
+            let (mut lo, mut hi) = (0usize, npig + 1);
+            while lo < hi {
+                let mid = lo + (hi - lo) / 2;
+                if !((mid as f64 / npig_f) < r) {
+                    hi = mid;
+                } else {
+                    lo = mid + 1;
+                }
+            }
+            previous = previous.max(lo);
+            previous
+        }));
+    }
+
     /// The body of pycocotools' `accumulate` for one (category, area, maxDet).
+    ///
+    /// `npig` is the number of non-ignored ground truths, which must be
+    /// positive; the caller skips the slice otherwise, as pycocotools does.
     #[allow(clippy::too_many_arguments)]
     fn accumulate_slice(
         &self,
-        matches: &[Option<ImgMatch>],
         order: &[(f64, u32, u32)],
+        outcomes: &[u8],
+        npig: usize,
         max_det: usize,
         a: usize,
         m: usize,
@@ -972,90 +1157,100 @@ impl Evaluator {
         buf: &mut AccumBuf,
         out: &mut CatOut,
     ) {
-        let mut npig = 0usize;
-        let mut any = false;
-        for mm in matches.iter() {
-            let Some(mm) = mm else { continue };
-            any = true;
-            npig += mm.gt_ignore.iter().filter(|&&ig| !ig).count();
-        }
-        if !any || npig == 0 {
-            return;
-        }
         // `d` is the detection's rank inside its own image, so keeping
         // `d < max_det` is exactly pycocotools' per-image `[0:maxDet]` cut.
-        // The largest limit uses the existing sorted slice directly. Only smaller
-        // per-image prefixes need a filtered buffer, whose capacity stays small.
-        let flat = if max_det >= self.params.max_dets.last().copied().unwrap_or(0) {
-            order
-        } else {
-            buf.flat.clear();
-            buf.flat.extend(
+        // The largest limit uses the gathered outcomes directly. Smaller
+        // per-image prefixes keep the positions of their detections in `order`.
+        let nd_all = order.len();
+        let full = max_det >= self.params.max_dets.last().copied().unwrap_or(0);
+        if !full {
+            buf.selected.clear();
+            buf.selected.extend(
                 order
                     .iter()
-                    .copied()
-                    .filter(|&(_, _, d)| (d as usize) < max_det),
+                    .enumerate()
+                    .filter(|(_, &(_, _, d))| (d as usize) < max_det)
+                    .map(|(n, _)| n as u32),
             );
-            &buf.flat
-        };
-        let nd = flat.len();
-        buf.pr.clear();
-        buf.pr.resize(nd, 0.0);
-
-        let rec_thrs = &self.params.rec_thrs;
+        }
+        let nd = if full { nd_all } else { buf.selected.len() };
         let npig_f = npig as f64;
+        let need = &buf.sample_tp;
 
         for t in 0..t_n {
-            let (mut tp, mut fp) = (0i64, 0i64);
-            let mut recall = 0.0;
-            let mut next_sample = 0;
-            buf.rec_indices.clear();
-            buf.rec_indices.resize(r_n, nd);
-            for (n, (precision, &(_, i, d))) in buf.pr.iter_mut().zip(flat).enumerate() {
-                let mm = matches[i as usize].as_ref().unwrap();
-                let d_full = mm.dt_scores.len();
-                let idx = t * d_full + d as usize;
-                if !mm.dt_ignore[idx] {
-                    if mm.dt_match[idx] >= 0 {
-                        tp += 1;
+            let row = &outcomes[t * nd_all..(t + 1) * nd_all];
+            let row = if full {
+                row
+            } else {
+                buf.row.clear();
+                buf.row
+                    .extend(buf.selected.iter().map(|&n| row[n as usize]));
+                &buf.row
+            };
+            let sample = |ri: usize| (t * r_n + ri) * a_n * m_n + a * m_n + m;
+            // `(false positives so far, position)` at each true positive.
+            buf.hits.clear();
+            let mut fp = 0usize;
+            for (n, &outcome) in row.iter().enumerate() {
+                if outcome == TRUE_POSITIVE {
+                    buf.hits.push((fp as u32, n as u32));
+                }
+                fp += usize::from(outcome == FALSE_POSITIVE);
+            }
+            let tp = buf.hits.len();
+            out.recall[(t * a_n + a) * m_n + m] = if nd == 0 { 0.0 } else { tp as f64 / npig_f };
+
+            // Samples beyond the final recall read zero, as in pycocotools.
+            let mut pending = r_n;
+            while pending > 0 && (nd == 0 || need[pending - 1] > tp) {
+                pending -= 1;
+                out.precision[sample(pending)] = 0.0;
+                out.scores[sample(pending)] = 0.0;
+            }
+            if nd == 0 {
+                continue;
+            }
+
+            // pycocotools' envelope is the suffix maximum of the precision
+            // `tp / (fp + tp + EPS)` over detections. Between true positives
+            // `tp` is fixed and the denominator never decreases, so precision
+            // never rises there: every suffix maximum is attained at a true
+            // positive. Walking the true positives from the last one therefore
+            // yields the envelope at each of them. Sample `i` sits on the
+            // `need[i]`-th true positive, or on the first detection when
+            // `need[i]` is 0, where the envelope is the maximum overall (all
+            // zeros when there is no true positive).
+            // `+ EPS` is np.spacing(1) in the reference. Dropping it changes
+            // the first point of every curve by one ULP.
+            let mut envelope = if tp == 0 {
+                0.0 / (fp as f64 + 0.0 + EPS)
+            } else {
+                f64::NEG_INFINITY
+            };
+            for k in (1..=tp).rev() {
+                let (fp_k, n) = buf.hits[k - 1];
+                let value = k as f64 / (fp_k as f64 + k as f64 + EPS);
+                if value > envelope {
+                    envelope = value;
+                }
+                if pending > 0 && need[pending - 1] == k {
+                    let position = if full {
+                        n as usize
                     } else {
-                        fp += 1;
+                        buf.selected[n as usize] as usize
+                    };
+                    while pending > 0 && need[pending - 1] == k {
+                        pending -= 1;
+                        out.precision[sample(pending)] = envelope;
+                        out.scores[sample(pending)] = order[position].0;
                     }
                 }
-                let tpf = tp as f64;
-                let fpf = fp as f64;
-                recall = tpf / npig_f;
-                // Record searchsorted's first eligible index while recall is produced.
-                // Keep the original comparison, including unusual threshold values.
-                while next_sample < r_n && !(recall < rec_thrs[next_sample]) {
-                    buf.rec_indices[next_sample] = n;
-                    next_sample += 1;
-                }
-                // `+ EPS` is np.spacing(1) in the reference. Dropping it
-                // changes the first point of every curve by one ULP.
-                *precision = tpf / (fpf + tpf + EPS);
             }
-
-            out.recall[(t * a_n + a) * m_n + m] = recall;
-
-            // Make precision monotonically non-increasing in recall.
-            for i in (1..nd).rev() {
-                if buf.pr[i] > buf.pr[i - 1] {
-                    buf.pr[i - 1] = buf.pr[i];
-                }
-            }
-
-            // Apply the recorded indices after the backward precision envelope.
-            // This needs O(R) index storage instead of O(D) recall values.
-            for (ri, &pi) in buf.rec_indices.iter().enumerate() {
-                let dst = (t * r_n + ri) * a_n * m_n + a * m_n + m;
-                if pi < nd {
-                    out.precision[dst] = buf.pr[pi];
-                    out.scores[dst] = flat[pi].0;
-                } else {
-                    out.precision[dst] = 0.0;
-                    out.scores[dst] = 0.0;
-                }
+            let first = if full { 0 } else { buf.selected[0] as usize };
+            while pending > 0 {
+                pending -= 1;
+                out.precision[sample(pending)] = envelope;
+                out.scores[sample(pending)] = order[first].0;
             }
         }
     }
@@ -1111,7 +1306,7 @@ impl Evaluator {
                             score: self.dt.scores[di],
                             gt_id,
                             iou,
-                            ignore: mm.dt_ignore[t_idx * d_full + d],
+                            ignore: mm.outcome[d * p.iou_thrs.len() + t_idx] == IGNORED,
                         });
                     }
                     for (slot, &perm) in mm.gt_perm.iter().enumerate() {
@@ -1143,14 +1338,26 @@ impl Evaluator {
 struct MatchScratch {
     ignore: Vec<bool>,
     gt_matched: Vec<bool>,
+    /// `dt_match` when the caller does not keep it.
+    dt_match: Vec<i32>,
 }
 
 #[derive(Default)]
 struct AccumBuf {
-    flat: Vec<(f64, u32, u32)>,
-    pr: Vec<f64>,
-    rec_indices: Vec<usize>,
+    /// Positions in `order` kept by a maxDets limit below the largest.
+    selected: Vec<u32>,
+    /// One threshold's outcomes for `selected`.
+    row: Vec<u8>,
+    /// `(false positives before it, position)` for each true positive.
+    hits: Vec<(u32, u32)>,
+    /// `Evaluator::recall_sample_counts` for the current category and area.
+    sample_tp: Vec<usize>,
 }
+
+/// Outcomes gathered by `Evaluator::gather_outcomes`.
+const IGNORED: u8 = 0;
+const TRUE_POSITIVE: u8 = 1;
+const FALSE_POSITIVE: u8 = 2;
 
 struct CatOut {
     precision: Vec<f64>,

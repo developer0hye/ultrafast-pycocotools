@@ -114,3 +114,59 @@ fn unused_plain_decimals_are_bounded_and_still_type_checked() {
         assert!(!pose_numbers::decode(raw, &mut [], 1));
     }
 }
+
+fn serde_polygons(raw: &str) -> (Vec<f64>, Vec<u32>) {
+    let rings: Vec<Vec<f64>> = serde_json::from_str(raw).unwrap();
+    let mut coords = Vec::new();
+    let mut ends = Vec::new();
+    for ring in rings {
+        coords.extend(ring);
+        ends.push(coords.len() as u32);
+    }
+    (coords, ends)
+}
+
+#[test]
+fn polygons_match_serde_bits() {
+    for raw in [
+        "[]",
+        " [ ] ",
+        "[[]]",
+        "[[1, 2, 3, 4, 5, 6]]",
+        "[[1.5,2.25,3e2,-0,-0.0,32002.703],[ 9007199254740993 , 0.1 ]]",
+        "[\n[ 18446744073709551616,\t-9223372036854775809 ]\n,[1,2]]",
+        "[[1,2],[],[3,4]]",
+    ] {
+        let (expected_coords, expected_ends) = serde_polygons(raw);
+        let (coords, ends) = pose_numbers::decode_polygons(raw.as_bytes()).expect(raw);
+        assert_eq!(ends, expected_ends, "{raw}");
+        assert_eq!(coords.len(), expected_coords.len(), "{raw}");
+        for (a, b) in coords.iter().zip(&expected_coords) {
+            assert_eq!(a.to_bits(), b.to_bits(), "{raw}");
+        }
+    }
+    assert_eq!(
+        pose_numbers::decode_polygons(b"[[true, false]]"),
+        Some((vec![1.0, 0.0], vec![2]))
+    );
+}
+
+#[test]
+fn polygons_defer_everything_else_to_serde() {
+    for raw in [
+        "{}",
+        "[1, 2]",
+        "[[1, [2]]]",
+        "[[1, \"2\"]]",
+        "[[1, null]]",
+        "[[1, 2],]",
+        "[[1, 2] [3]]",
+        "[[1e400]]",
+        "[[1, 2]] x",
+    ] {
+        assert!(
+            pose_numbers::decode_polygons(raw.as_bytes()).is_none(),
+            "{raw}"
+        );
+    }
+}
