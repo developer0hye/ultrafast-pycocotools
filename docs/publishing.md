@@ -53,7 +53,7 @@ the tested wheels from the run's `distribution-*` artifacts and install with:
 
 ```bash
 python -m pip install --only-binary=ultrafast-pycocotools \
-  --find-links=dist ultrafast-pycocotools==0.1.11
+  --find-links=dist ultrafast-pycocotools==0.1.12
 ```
 
 Installing a compatible wheel requires no Rust compiler. Installing the source
@@ -67,12 +67,12 @@ After the build and Library CI pass, and the PyPI publisher is configured:
 2. Create and push `v<version>` at the tested commit on main.
 3. Explicitly run the release workflow on that tag with `publish=true`.
 
-For example, for version 0.1.11:
+For example, for version 0.1.12:
 
 ```bash
-git tag v0.1.11
-git push origin v0.1.11
-gh workflow run release.yml --ref v0.1.11 -f publish=true
+git tag v0.1.12
+git push origin v0.1.12
+gh workflow run release.yml --ref v0.1.12 -f publish=true
 ```
 
 The upload job publishes the exact artifacts that passed the build/test jobs in
@@ -81,7 +81,7 @@ not allow overwriting a released distribution: fixes require a new version.
 After publication, verify installation from PyPI in a fresh environment:
 
 ```bash
-python -m pip install --only-binary=ultrafast-pycocotools ultrafast-pycocotools==0.1.11
+python -m pip install --only-binary=ultrafast-pycocotools ultrafast-pycocotools==0.1.12
 python -c "import importlib.metadata as m; import ultrafast_pycocotools._ufcoco; print(m.version('ultrafast-pycocotools'))"
 ```
 
@@ -122,4 +122,14 @@ unused plain decimals with a proven finite bound avoid conversion. Unsupported
 forms retain the checked serde fallback and OKS arithmetic is unchanged.
 The [source-build comparison](hotcoco-performance-goal.md) records both hosts,
 all 24 configurations, complete output parity, host load and raw evidence.
+Those timings were measured before the version bump, not from the PyPI wheels.
+
+Version 0.1.12 optimizes the three largest operations of bbox, segmentation and
+keypoint evaluation, decodes segmentation masks lazily from recorded file spans,
+parses large result files in parallel chunks, and loads NumPy result arrays
+straight into compact columns. Complete `precision`/`recall`/`scores` arrays
+stay byte-identical to pycocotools 2.0.11. Against source builds of 0.1.11 every
+task and pool size 1/2 is faster on both the Apple M2 and the i5-10400, and
+segmentation peak RSS falls by a third; see the
+[per-task report](task-bottleneck-optimization.md) and [NumPy arrays](numpy-results.md).
 Those timings were measured before the version bump, not from the PyPI wheels.

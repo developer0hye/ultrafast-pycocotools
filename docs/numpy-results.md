@@ -1,4 +1,7 @@
-# NumPy result arrays (unreleased)
+# NumPy result arrays
+
+The optimizations measured here are included in version 0.1.12. The results
+below remain measurements of source builds, not of the release wheels.
 
 `loadRes` accepts an `Nx7` NumPy array of
 `[image_id, x, y, w, h, score, category_id]` besides result files and lists,
