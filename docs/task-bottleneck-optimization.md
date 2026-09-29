@@ -1,4 +1,7 @@
-# Per-task bottleneck optimization (unreleased)
+# Per-task bottleneck optimization
+
+The optimizations measured here are included in version 0.1.12. The results
+below remain measurements of source builds, not of the release wheels.
 
 Each task was profiled on the headline workload, then its three largest
 operations were optimized for time and memory together. The complete
@@ -193,8 +196,23 @@ Every row is faster in all 6 rounds and every run's output digests are
 identical. Median host CPU was 21% (a terminal rendering another session;
 the arms alternate every round, so it affects both builds alike). Raw rows and
 the pre-run load samples: [before the fix](../bench/results/task-bottlenecks-m2-20260930/ab-main.json),
-[after](../bench/results/task-bottlenecks-m2-20260930/ab-fix.json). The fix
-itself has not been re-measured on the i5-10400.
+[after](../bench/results/task-bottlenecks-m2-20260930/ab-fix.json).
+
+On the i5-10400 the fix also shortens keypoint extraction, by 49.5 ms at one
+thread and 25.8 ms at two (median of 8 alternating runs, before → after the
+fix). Against a source build of v0.1.11, with median host CPU 8.5%:
+
+| Task | Threads | Wall s (0.1.11 → this) | CPU s | Peak RSS MB |
+| --- | ---: | ---: | ---: | ---: |
+| bbox | 2 | 0.876 → 0.518 (-40.8%) | 1.270 → 0.819 | 272.9 → 262.1 (-4.0%) |
+| bbox | 1 | 1.233 → 0.787 (-36.2%) | 1.233 → 0.787 | 265.9 → 256.4 (-3.5%) |
+| segm | 2 | 2.365 → 1.644 (-30.5%) | 4.010 → 2.893 | 838.1 → 555.5 (-33.7%) |
+| segm | 1 | 3.389 → 2.845 (-16.1%) | 3.947 → 2.844 | 833.3 → 548.9 (-34.1%) |
+| keypoints | 2 | 0.554 → 0.405 (-26.9%) | 0.725 → 0.651 | 256.5 → 248.8 (-3.0%) |
+| keypoints | 1 | 0.718 → 0.640 (-10.9%) | 0.718 → 0.640 | 256.6 → 248.8 (-3.0%) |
+
+Every row is faster in all 6 rounds with identical digests
+([raw rows](../bench/results/task-bottlenecks-i5-20260930/ab-fix.json)).
 
 ## Workload and host
 
