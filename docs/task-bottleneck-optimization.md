@@ -165,6 +165,37 @@ Measured and not adopted:
   faster-coco-eval protocol tests; the RF-DETR integration test is skipped
   here and runs in CI.
 
+## Apple M2 check
+
+The same A/B against a source build of v0.1.11 on the Apple M2 (4 performance
++ 4 efficiency cores, 16 GiB, macOS 26.6.2, CPython 3.12.13, NumPy 2.4.4,
+rustc 1.98.0, `maturin build --release --locked`) found one regression:
+keypoints at one thread were 0.459 → 0.466 s (+1.5%, slower in 6 of 6 rounds).
+The engine was 17 ms faster, but native pose extraction was 23 ms slower
+although its source had not changed. Sampling showed that in the 0.1.11 build
+the coordinate decoder was inlined whole, while on `main` it called
+`str::pattern::CharSearcher::next_match` and `memcmp` per token. `1951064`
+added a polygon decoder to the same module that also splits `str` on a
+character, and the shared std helpers were no longer inlined into the pose
+decoder. The pose decoder now splits on commas with a local byte scan and
+matches `true`/`false` as byte patterns; its tests are unchanged and pass.
+
+| Task | Threads | Wall s (0.1.11 → this) | CPU s | Peak RSS MB |
+| --- | ---: | ---: | ---: | ---: |
+| bbox | 2 | 0.526 → 0.300 (-42.9%) | 0.761 → 0.484 | 300.8 → 289.3 (-3.8%) |
+| bbox | 1 | 0.744 → 0.468 (-37.2%) | 0.744 → 0.468 | 295.2 → 271.0 (-8.2%) |
+| segm | 2 | 1.411 → 1.012 (-28.3%) | 2.281 → 1.821 | 1014.7 → 623.3 (-38.6%) |
+| segm | 1 | 1.952 → 1.769 (-9.4%) | 2.235 → 1.769 | 1008.5 → 596.6 (-40.8%) |
+| keypoints | 2 | 0.366 → 0.266 (-27.5%) | 0.473 → 0.451 | 268.9 → 255.9 (-4.8%) |
+| keypoints | 1 | 0.464 → 0.439 (-5.4%) | 0.464 → 0.439 | 268.9 → 255.5 (-5.0%) |
+
+Every row is faster in all 6 rounds and every run's output digests are
+identical. Median host CPU was 21% (a terminal rendering another session;
+the arms alternate every round, so it affects both builds alike). Raw rows and
+the pre-run load samples: [before the fix](../bench/results/task-bottlenecks-m2-20260930/ab-main.json),
+[after](../bench/results/task-bottlenecks-m2-20260930/ab-fix.json). The fix
+itself has not been re-measured on the i5-10400.
+
 ## Workload and host
 
 - Inputs: the [PR #26101 evidence archive](https://github.com/developer0hye/ultrafast-pycocotools/releases/download/v0.1.7/ultralytics-pr26101-evidence-20260909.tar.gz)
