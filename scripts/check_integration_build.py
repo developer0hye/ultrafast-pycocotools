@@ -29,8 +29,13 @@ def main() -> None:
     import torch
     assert torch.version.cuda is None, 'expected the CPU build of torch'
     if project == 'rfdetr':
-        from rfdetr.training import coco_map
-        assert 'ufcoco' in coco_map._SUPPORTED_BACKENDS, 'RF-DETR revision has no ufcoco backend'
+        from rfdetr.training.coco_map import OnePassCocoMeanAveragePrecision
+        # The constructor rejects unknown backends; its private registry has
+        # been renamed upstream, so do not read it directly.
+        try:
+            OnePassCocoMeanAveragePrecision(backend='ufcoco')
+        except ValueError as error:
+            raise AssertionError('RF-DETR revision has no ufcoco backend') from error
         upstream = importlib.metadata.version('rfdetr')
     elif project == 'ultralytics':
         from ultralytics.models.yolo.detect import DetectionValidator

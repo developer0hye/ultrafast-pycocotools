@@ -39,6 +39,12 @@ _MASK_TOOLS = _MaskTools()
 class _UltrafastBackend(CocoBackend):
     """Retain TorchMetrics' format conversion and substitute local COCO tools."""
 
+    # Capability flags RF-DETR reads directly off the active backend since
+    # roboflow/rf-detr#1491; the values are its shared defaults.
+    requires_bbox = False
+    unused_backend_methods = ()
+    uses_coco_evaluator = True
+
     @property
     def coco(self):
         return COCO
