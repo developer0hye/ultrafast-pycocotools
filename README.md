@@ -13,9 +13,9 @@ multithreaded Rust core (Rayon), exposed to Python through PyO3.
 - **Bit-exact metrics.** The complete `precision`, `recall` and `scores`
   arrays are **bit-identical** to pycocotools on every tested input, not only
   the rounded AP/AR summary.
-- **Fast.** On COCO val2017, **18–54× lower wall-clock time than pycocotools**,
-  7–9× lower than faster-coco-eval and 1.8–2.6× lower than hotcoco.
-- **Memory-efficient.** **58–86% lower peak RSS** than pycocotools, and the
+- **Fast.** On COCO val2017, **25–91× lower wall-clock time than pycocotools**,
+  10–15× lower than faster-coco-eval and 2.5–4.4× lower than hotcoco.
+- **Memory-efficient.** **59–86% lower peak RSS** than pycocotools, and the
   lowest of all four evaluators on every task.
 - **Drop-in.** The same `COCO` / `COCOeval` API for `bbox`, `segm` and
   `keypoints`, plus the LVIS federated protocol. Prebuilt wheels for Linux,
@@ -77,17 +77,17 @@ YOLO26n-pose detections: 733,070 boxes, 724,953 instance masks and 134,663
 pose instances. Model inference is excluded; the timed region covers JSON
 parsing, ground-truth indexing, matching, accumulation and summarization.
 
-| Task | pycocotools 2.0.11 | faster-coco-eval 1.8.0 | hotcoco 1.0.1 | **ultrafast 0.1.11** |
+| Task | pycocotools 2.0.11 | faster-coco-eval 1.8.0 | hotcoco 1.0.1 | **ultrafast 0.1.12** |
 | --- | ---: | ---: | ---: | ---: |
-| bbox | 47.55 s · 1,925 MB | 7.51 s · 1,781 MB | 2.33 s · 2,307 MB | **0.89 s · 272 MB** |
-| segm | 49.38 s · 2,191 MB | 15.94 s · 2,629 MB | 5.30 s · 3,403 MB | **2.33 s · 838 MB** |
-| keypoints | 9.83 s · 603 MB | 4.54 s · 603 MB | 0.99 s · 642 MB | **0.54 s · 256 MB** |
+| bbox | 46.54 s · 1,926 MB | 7.40 s · 1,781 MB | 2.26 s · 2,308 MB | **0.51 s · 262 MB** |
+| segm | 50.88 s · 2,192 MB | 16.39 s · 2,630 MB | 5.43 s · 3,404 MB | **1.66 s · 556 MB** |
+| keypoints | 10.05 s · 604 MB | 4.66 s · 603 MB | 1.01 s · 643 MB | **0.41 s · 249 MB** |
 | Bit-identical to pycocotools | reference | ✗ (`precision` ≤ 2.2e-16 off on bbox/segm) | ✗ (`scores` differ on bbox/segm) | **✓ all tasks** |
 
 Wall-clock time · peak RSS; median of 6 runs, each in a fresh process, on an
 Intel Core i5-10400 with a 2-thread pool (pycocotools is single-threaded),
-measured 2026-09-24.
-[Full report, method and raw data](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/benchmarks/i5-10400-v0111.md)
+measured 2026-09-30.
+[Full report, method and raw data](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/benchmarks/i5-10400-v0112.md)
 · [All benchmarks, other hosts and historical results](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/benchmarks/README.md)
 
 ## Used by

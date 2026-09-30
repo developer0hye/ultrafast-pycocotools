@@ -7,9 +7,10 @@ results from different reports should not be combined into one comparison.
 
 ## Current headline
 
-- [COCO val2017 on i5-10400, 0.1.11](i5-10400-v0111.md): pycocotools,
+- [COCO val2017 on i5-10400, 0.1.12](i5-10400-v0112.md): pycocotools,
   faster-coco-eval, hotcoco and ultrafast on identical YOLO26n bbox,
   segmentation and pose predictions. This is the source of the README table.
+  The same measurement for [0.1.11](i5-10400-v0111.md) is kept for comparison.
 
 ## Comparisons with other evaluators
 
