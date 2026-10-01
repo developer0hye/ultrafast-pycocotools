@@ -48,8 +48,7 @@ def captured(monkeypatch):
     original = ultrafast_pycocotools.COCOeval
 
     def recording(*args, **options):
-        # Return the real class: a subclass would take the dictionary route,
-        # because only exact COCOeval instances use compact file inputs.
+        # Return the real class so the evaluator Ultralytics builds is the one tested.
         evaluator = original(*args, **options)
         evaluators.append(evaluator)
         return evaluator

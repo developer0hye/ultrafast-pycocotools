@@ -74,6 +74,64 @@ def test_array_results_match_pycocotools(dtype, iou_type):
     assert_bit_identical(_reference(data, rows, iou_type), actual, f'{iou_type} {np.dtype(dtype)}')
 
 
+class _SummaryOnly(ufc.COCOeval):
+    """RF-DETR's shape: a subclass that only changes the summary."""
+
+    def summarize(self):
+        super().summarize()
+
+
+def _assigned_ground_truth(data):
+    """Ground truth built the way TorchMetrics adapters build it."""
+    gt = ufc.COCO()
+    gt.dataset = copy.deepcopy(data)
+    with contextlib.redirect_stdout(io.StringIO()):
+        gt.createIndex()
+    return gt
+
+
+@pytest.mark.parametrize('iou_type', ['bbox', 'segm'])
+def test_subclass_keeping_collect_evaluates_array_results_compactly(monkeypatch, iou_type):
+    data, rows = _inputs()
+    gt = _assigned_ground_truth(data)
+    with contextlib.redirect_stdout(io.StringIO()):
+        dt = gt.loadRes(rows)
+
+    def dictionary_route(self):
+        raise AssertionError('took the dictionary route')
+
+    monkeypatch.setattr(ufc.COCOeval, '_collect', dictionary_route)
+    ev = _SummaryOnly(gt, dt, iou_type, print_function=lambda *_: None)
+    with contextlib.redirect_stdout(io.StringIO()):
+        ev.evaluate()
+        ev.accumulate()
+        ev.summarize()
+    monkeypatch.undo()
+    assert dt._compact is not None  # Evaluation did not materialize the rows.
+    assert_bit_identical(_reference(data, rows, iou_type), ev, f'{iou_type} subclass')
+
+
+def test_subclass_overriding_collect_keeps_its_override():
+    data, rows = _inputs()
+    gt = _assigned_ground_truth(data)
+    with contextlib.redirect_stdout(io.StringIO()):
+        dt = gt.loadRes(rows)
+    calls = []
+
+    class Collecting(_SummaryOnly):
+        def _collect(self):
+            calls.append(1)
+            return super()._collect()
+
+    ev = Collecting(gt, dt, 'bbox', print_function=lambda *_: None)
+    with contextlib.redirect_stdout(io.StringIO()):
+        ev.evaluate()
+        ev.accumulate()
+        ev.summarize()
+    assert calls
+    assert_bit_identical(_reference(data, rows, 'bbox'), ev, 'overridden _collect')
+
+
 @pytest.mark.parametrize('dtype', [np.float64, np.float32])
 def test_array_views_equal_the_dictionary_route(dtype):
     data, rows = _inputs()

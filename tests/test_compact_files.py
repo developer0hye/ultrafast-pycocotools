@@ -60,6 +60,24 @@ def test_input_snapshot_survives_file_changes_and_deletion(tmp_path):
     assert_bit_identical(ref, evaluate(gt, dt), 'immutable snapshot')
     assert gt.dataset == data
     assert dt.anns[1]['bbox'] == dets[0]['bbox']
+
+
+def test_subclass_keeping_collect_reads_compact_files(tmp_path, monkeypatch):
+    gp, dp, data, dets = write_inputs(tmp_path)
+
+    class SummaryOnly(ufc.COCOeval):
+        def summarize(self):
+            super().summarize()
+
+    def dictionary_route(self):
+        raise AssertionError('took the dictionary route')
+
+    gt = ufc.COCO(gp, verbose=False);dt = gt.loadRes(dp)
+    ev = SummaryOnly(gt, dt, 'bbox', print_function=lambda *_: None)
+    monkeypatch.setattr(ufc.COCOeval, '_collect', dictionary_route)
+    ev.run()
+    monkeypatch.undo()
+    assert_bit_identical(run_reference(gp, dp, 'bbox'), ev, 'subclass')
     assert dt.anns[1]['id'] == 1 and dt.anns[1]['area'] == 168
 
 

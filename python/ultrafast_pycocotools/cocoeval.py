@@ -479,7 +479,9 @@ class COCOeval:
         self.params = p
 
         array_results = self.cocoDt._compact is not None and self.cocoDt._compact.from_array
-        if (type(self) is COCOeval and not self.lvis_style
+        # `_collect` is the only hook this branch bypasses, so subclasses that
+        # keep it (e.g. ones that only override `summarize`) take it too.
+        if (type(self)._collect is COCOeval._collect and not self.lvis_style
                 and type(self.cocoGt) is COCO and type(self.cocoDt) is COCO
                 and (self.cocoGt._compact is not None or self.cocoDt._compact is not None)
                 # Array results hold boxes only; other types read them as dictionaries.
