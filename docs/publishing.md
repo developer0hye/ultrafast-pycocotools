@@ -53,7 +53,7 @@ the tested wheels from the run's `distribution-*` artifacts and install with:
 
 ```bash
 python -m pip install --only-binary=ultrafast-pycocotools \
-  --find-links=dist ultrafast-pycocotools==0.1.12
+  --find-links=dist ultrafast-pycocotools==0.1.13
 ```
 
 Installing a compatible wheel requires no Rust compiler. Installing the source
@@ -67,12 +67,12 @@ After the build and Library CI pass, and the PyPI publisher is configured:
 2. Create and push `v<version>` at the tested commit on main.
 3. Explicitly run the release workflow on that tag with `publish=true`.
 
-For example, for version 0.1.12:
+For example, for version 0.1.13:
 
 ```bash
-git tag v0.1.12
-git push origin v0.1.12
-gh workflow run release.yml --ref v0.1.12 -f publish=true
+git tag v0.1.13
+git push origin v0.1.13
+gh workflow run release.yml --ref v0.1.13 -f publish=true
 ```
 
 The upload job publishes the exact artifacts that passed the build/test jobs in
@@ -81,7 +81,7 @@ not allow overwriting a released distribution: fixes require a new version.
 After publication, verify installation from PyPI in a fresh environment:
 
 ```bash
-python -m pip install --only-binary=ultrafast-pycocotools ultrafast-pycocotools==0.1.12
+python -m pip install --only-binary=ultrafast-pycocotools ultrafast-pycocotools==0.1.13
 python -c "import importlib.metadata as m; import ultrafast_pycocotools._ufcoco; print(m.version('ultrafast-pycocotools'))"
 ```
 
@@ -133,3 +133,11 @@ task and pool size 1/2 is faster on both the Apple M2 and the i5-10400, and
 segmentation peak RSS falls by a third; see the
 [per-task report](task-bottleneck-optimization.md) and [NumPy arrays](numpy-results.md).
 Those timings were measured before the version bump, not from the PyPI wheels.
+
+Version 0.1.13 lets `COCOeval` subclasses that keep `_collect`, such as ones
+that only override `summarize`, evaluate compact file inputs and NumPy result
+arrays without materializing them, as plain `COCOeval` already did. RF-DETR's
+ufcoco evaluator and this package's RF-DETR adapter are such subclasses. Metrics
+are unchanged; with box-only RF-DETR state loaded from an array, `compute()` on
+733,070 COCO val2017 detections takes 0.81 s instead of 2.65 s on the dictionary
+path. See [#24](https://github.com/developer0hye/ultrafast-pycocotools/pull/24).
