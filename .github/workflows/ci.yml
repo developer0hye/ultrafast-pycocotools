@@ -109,11 +109,12 @@ jobs:
     # upstream-canary.yml runs the same jobs weekly against the latest ones.
     uses: ./.github/workflows/upstream-integrations.yml
     with:
-      # roboflow/rf-detr#1449 merge commit: the ufcoco evaluation backend.
-      rfdetr-ref: c25bb5249b7c80b464c801bd25e8a8a1cdb60a59
+      # rf-detr develop after the ufcoco backend (#1449), the backend registry (#1474)
+      # and backend capability flags (#1491).
+      rfdetr-ref: f765186e79ac063b358cc279c361ef0cf4cb82fd
       # Head of ultralytics/ultralytics#26101, which evaluates with ultrafast-pycocotools.
       ultralytics-repository: developer0hye/ultralytics
-      ultralytics-ref: 2ab106bb33fa3325e3ddba147ea4b616ea45dc91
+      ultralytics-ref: 45f70fdfe4c3229f2dfa520a12499ccf41c4bf5d
 
   ci:
     name: CI
