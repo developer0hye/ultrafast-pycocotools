@@ -113,6 +113,36 @@ existing one) or a Python runtime dependency:
 Upgrades follow the same steps for the versions in between: read the
 changelog and the diff of anything that runs at build time.
 
+## Releases and keeping documentation current
+
+A release is three things: the PyPI upload, the GitHub release and
+documentation that matches both. Versions 0.1.12 and 0.1.13 reached PyPI
+without GitHub releases, and the README still listed SAHI as under review a
+week after its integration was merged and shipped. Do not report a release or
+an integration as done until all of these hold.
+
+- **Every published version gets a GitHub release.** After the release
+  workflow uploads to PyPI, create the GitHub release on the same tag in the
+  same session, following
+  [docs/publishing.md](docs/publishing.md#publish-the-github-release).
+  Before preparing a new version, check that `gh release list` has an entry
+  for every `v*` tag on PyPI and fill any gap first.
+- **Release notes claim only what was checked.** Numbers come from the
+  release-preparation pull request or a `docs/` report, with host and build
+  type. Validation lines (wheel tests, checksum matches, fresh installs) are
+  written only for checks that ran for that version; do not copy them from an
+  earlier release.
+- **Integration status in the README follows upstream.** When starting
+  release or documentation work, and whenever an upstream pull request
+  changes state, run `gh pr view <n> -R <owner/repo> --json state,mergedAt`
+  for every pull request the README links. A merged integration moves from
+  "Proposed integrations under review" to "Used by", with the upstream
+  release that ships it and how users turn it on. A closed one is removed.
+- **Version-specific text moves with the version.** The README benchmark,
+  `docs/publishing.md` examples and `docs/benchmarks/README.md` name versions;
+  update them in the release-preparation pull request or say in it why they
+  stay.
+
 ## Git and pull requests
 
 - Commits need a DCO sign-off (`git commit -s`); a DCO check runs on every

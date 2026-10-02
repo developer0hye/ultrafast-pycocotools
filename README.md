@@ -93,15 +93,21 @@ measured 2026-09-30.
 ## Used by
 
 - [**RF-DETR**](https://github.com/roboflow/rf-detr): optional `ufcoco`
-  backend for bbox and mask mAP during training and validation, merged in
-  [roboflow/rf-detr#1449](https://github.com/roboflow/rf-detr/pull/1449).
+  backend for bbox and mask mAP during training and validation
+  (`TrainConfig.eval_backend="ufcoco"`), merged in
+  [roboflow/rf-detr#1449](https://github.com/roboflow/rf-detr/pull/1449) and
+  released in RF-DETR 1.11.0.
   [Benchmark](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/rfdetr.md)
+- [**SAHI**](https://github.com/obss/sahi): optional backend for
+  `sahi coco evaluate` (`pip install "sahi[ultrafast]"`, then
+  `--backend ultrafast`), merged in
+  [obss/sahi#1452](https://github.com/obss/sahi/pull/1452) and released in
+  SAHI 0.12.7.
 
 Proposed integrations under review:
 [Ultralytics](https://github.com/ultralytics/ultralytics/pull/26101) ([validation](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/ultralytics-pr26101-validation.md)) ·
 [torchvision](https://github.com/pytorch/vision/pull/9666) ·
 [TorchMetrics](https://github.com/Lightning-AI/torchmetrics/pull/3500) ·
-[SAHI](https://github.com/obss/sahi/pull/1452) ·
 [SAM 3](https://github.com/facebookresearch/sam3/pull/620) ·
 [RT-DETR](https://github.com/lyuwenyu/RT-DETR/pull/689) ·
 [DEIMv2](https://github.com/Intellindust-AI-Lab/DEIMv2/pull/170)
