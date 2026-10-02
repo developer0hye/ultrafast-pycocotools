@@ -85,6 +85,34 @@ python -m pip install --only-binary=ultrafast-pycocotools ultrafast-pycocotools=
 python -c "import importlib.metadata as m; import ultrafast_pycocotools._ufcoco; print(m.version('ultrafast-pycocotools'))"
 ```
 
+## Publish the GitHub release
+
+A version is not released until its GitHub release exists. Publishing to PyPI
+does not create one, and versions 0.1.12 and 0.1.13 went without one for days.
+Create it right after the upload succeeds, on the same tag:
+
+1. Download the run's `release-checksums` artifact (`SHA256SUMS`) and compare
+   every public PyPI file against it (PyPI JSON API `digests.sha256`). Record
+   the result in `pypi-verification.json` with the same fields as earlier
+   releases.
+2. Write the notes from the release-preparation pull request: what changed,
+   measured numbers with their host and build type, a pinned
+   `pip install ultrafast-pycocotools==<version>`, links to the pull requests
+   and to `docs/` reports at `blob/v<version>/`, a validation paragraph that
+   claims only what was checked, and the publication workflow link.
+3. Create it, attaching both files:
+
+   ```bash
+   gh release create v0.1.13 --verify-tag --latest \
+     -t "v0.1.13: <one-line summary>" --notes-file notes.md \
+     SHA256SUMS pypi-verification.json
+   ```
+
+   When filling in an older missing release, pass `--latest=false` so the
+   newest version stays marked as latest.
+4. Confirm with `gh release list` that every `v*` tag published to PyPI has a
+   release.
+
 ## Release history
 
 Version 0.1.4 published all 24 wheels, but PyPI rejected its source archive
