@@ -1,7 +1,7 @@
 name: Upstream canary
 
-# Weekly check of this repository's main branch against the latest RF-DETR
-# and Ultralytics revisions. Not a required check: a failure here means an
+# Weekly check of this repository's main branch against the latest RF-DETR,
+# Ultralytics and SAHI revisions. Not a required check: a failure here means an
 # upstream change needs attention (or the pins in ci.yml need updating), not
 # that a pull request here broke something.
 
@@ -23,3 +23,4 @@ jobs:
       # Ultralytics revision that evaluates with ultrafast-pycocotools.
       ultralytics-repository: ultralytics/ultralytics
       ultralytics-ref: refs/pull/26101/head
+      sahi-ref: main

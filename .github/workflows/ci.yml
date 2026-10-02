@@ -115,6 +115,8 @@ jobs:
       # Head of ultralytics/ultralytics#26101, which evaluates with ultrafast-pycocotools.
       ultralytics-repository: developer0hye/ultralytics
       ultralytics-ref: 45f70fdfe4c3229f2dfa520a12499ccf41c4bf5d
+      # SAHI 0.12.8, which ships the ultrafast backend from obss/sahi#1452.
+      sahi-ref: 80ebdb699851facf87def03c0597e1aeb87a9a2d
 
   ci:
     name: CI

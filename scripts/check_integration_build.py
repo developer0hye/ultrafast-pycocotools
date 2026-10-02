@@ -4,7 +4,8 @@ The upstream projects depend on the released ultrafast-pycocotools wheel, which
 the workflow replaces with a build of this checkout. Fail early if the
 replacement did not happen, if the framework is not the CPU build, or if the
 upstream revision no longer evaluates with ultrafast-pycocotools, so a green
-run always means this revision was exercised.
+run always means this revision was exercised. SAHI's evaluation path does not
+use torch, so its job does not install one.
 """
 
 import importlib.metadata
@@ -26,8 +27,12 @@ def installed_from_checkout() -> str:
 def main() -> None:
     project = sys.argv[1]
     version = installed_from_checkout()
-    import torch
-    assert torch.version.cuda is None, 'expected the CPU build of torch'
+    if project in ('rfdetr', 'ultralytics'):
+        import torch
+        assert torch.version.cuda is None, 'expected the CPU build of torch'
+        framework = f'; torch {torch.__version__}'
+    else:
+        framework = ''
     if project == 'rfdetr':
         from rfdetr.training.coco_map import OnePassCocoMeanAveragePrecision
         # The constructor rejects unknown backends; its private registry has
@@ -42,9 +47,14 @@ def main() -> None:
         source = inspect.getsource(DetectionValidator.coco_evaluate)
         assert 'ultrafast_pycocotools' in source, 'Ultralytics revision does not evaluate with ultrafast-pycocotools'
         upstream = importlib.metadata.version('ultralytics')
+    elif project == 'sahi':
+        from sahi.scripts.coco_evaluation import evaluate
+        source = inspect.getsource(evaluate)
+        assert 'ultrafast_pycocotools' in source, 'SAHI revision has no ultrafast evaluation backend'
+        upstream = importlib.metadata.version('sahi')
     else:
         raise SystemExit(f'unknown project {project}')
-    print(f'ultrafast-pycocotools {version} from this checkout; {project} {upstream}; torch {torch.__version__}')
+    print(f'ultrafast-pycocotools {version} from this checkout; {project} {upstream}{framework}')
 
 
 if __name__ == '__main__':

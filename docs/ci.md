@@ -7,7 +7,7 @@ Every push and pull request runs the full test suite. Weekly and manual runs
 also check that a fresh source build still works with current dependencies.
 The upstream integration jobs live in
 [upstream-integrations.yml](../.github/workflows/upstream-integrations.yml):
-`ci.yml` calls them with pinned RF-DETR and Ultralytics commits as part of the
+`ci.yml` calls them with pinned RF-DETR, Ultralytics and SAHI commits as part of the
 required `CI` status, and
 [upstream-canary.yml](../.github/workflows/upstream-canary.yml) calls them
 weekly with the latest upstream revisions. Both install the upstream project
@@ -26,9 +26,10 @@ Actions are pinned to commit SHAs, and jobs have read-only repository access.
 | Edge cases and API | Crowds, tied scores, area boundaries, RLE/masks, query ordering, subclass overrides and diagnostics |
 | Determinism | Comparison across Rayon thread counts |
 | Reproduction | Fresh synthetic inputs, both in-memory and compact file loading, isolated backend processes, published hashes on the recorded reference environment |
-| RF-DETR integration | CPU job on RF-DETR's `ufcoco` backend commit (roboflow/rf-detr#1449): this repository's adapter tests (bbox/segmentation metrics, lifecycle, two-rank Gloo merge) and RF-DETR's own COCO metric, evaluation-callback and trainer tests, with this revision replacing the released wheel |
+| RF-DETR integration | CPU job on RF-DETR `develop` with the `ufcoco` backend (roboflow/rf-detr#1449): this repository's adapter tests (bbox/segmentation metrics, lifecycle, two-rank Gloo merge) and RF-DETR's own COCO metric, evaluation-callback and trainer tests, with this revision replacing the released wheel |
 | Ultralytics integration | CPU job on the head of ultralytics/ultralytics#26101: YOLO26n detect/segment/pose validation on coco8 through Ultralytics' in-memory and file evaluation routes, with complete arrays, statistics and reported metrics compared to pycocotools, plus Ultralytics' own evaluator test. Datasets and weights are pinned by SHA-256 and Ultralytics runs offline |
-| Upstream canary | Weekly, non-blocking: the same two jobs against RF-DETR `develop` and the latest #26101 head |
+| SAHI integration | Job on SAHI 0.12.8, the release line that ships obss/sahi#1452: `sahi coco evaluate` with both backends on the bundled real COCO fixture (bbox and segmentation, `maxDets` 1/100/500, default, single and listed IoU thresholds, custom area ranges, empty results), with complete arrays, statistics, reported and exported metrics compared to pycocotools, plus SAHI's own backend parity tests. No model framework is installed |
+| Upstream canary | Weekly, non-blocking: the same three jobs against RF-DETR `develop`, the latest #26101 head and SAHI `main` |
 | Additional backend | Linux / Python 3.12 checks faster-coco-eval 1.8.0 on identical generated inputs; numerical agreement is distinct from byte identity |
 | Benchmark integrity | Changed inputs fail before scoring; one-ULP array changes fail; nested scaling subsets preserve input order and categories |
 
@@ -45,7 +46,7 @@ three operating systems, with Matplotlib using its noninteractive Agg backend. L
 hosted runners.
 
 The required **CI** check succeeds only when every Python matrix entry, both
-Rust builds and the RF-DETR integration job succeed. Failed, cancelled or skipped prerequisite jobs make that
+Rust builds and the RF-DETR, Ultralytics and SAHI integration jobs succeed. Failed, cancelled or skipped prerequisite jobs make that
 check fail. The `main` branch requires this check on an up-to-date commit;
 administrators are included in enforcement. Force pushes and branch deletion
 are disabled. Changes are tested on a branch before main is updated; pull requests use the

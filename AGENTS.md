@@ -25,6 +25,44 @@ When an exact claim rests on reasoning (for example "this skip cannot change a
 match"), write the argument in a comment and add a test that compares against
 the previous implementation or pycocotools.
 
+## Downstream projects
+
+Other projects install this package as their evaluator, and their version
+ranges pick up every new release without anyone there reviewing it: RF-DETR
+requires `>=0.1.10,<0.2`, SAHI `>=0.1.11,<0.2`, and the Ultralytics pull request
+`>=0.1.7` with no upper bound. A regression here becomes their users'
+regression on the next `pip install`. Treat compatibility with them as part of
+the one rule above.
+
+- **Verify every change against them before it merges.** The upstream
+  integration jobs in the required `CI` status run each project's own
+  evaluation path and tests against the pull request build. A change is not
+  ready until they pass. Never skip, mark optional, or loosen one of these
+  jobs or its assertions to get a change through; if one fails, fix this
+  repository or explain the upstream cause in the pull request.
+- **Keep their call patterns working.** They use the public `COCO` /
+  `COCOeval` API the way pycocotools does: loading from file paths and
+  dictionaries, `loadRes` on lists and arrays, assigning `params` fields
+  (`catIds`, `maxDets`, `iouThrs`, `areaRng`), reading `eval['precision']` and
+  `stats`, and subclassing `COCOeval`. Do not rename, remove or
+  change the defaults or return types of anything they reach, including
+  private hooks a subclass overrides (`_collect`). Optional new behavior goes
+  behind an argument that defaults to the current behavior.
+- **No breaking change inside 0.1.x.** Every downstream range allows any 0.1
+  release. A change that requires downstream code to change waits for a new
+  minor version, and the pull request says so.
+- **Before a release, run the canary.** Dispatch
+  [upstream-canary.yml](.github/workflows/upstream-canary.yml) on `main` so the
+  release candidate is checked against the latest upstream revisions, not only
+  the pins. A red canary blocks the release until it is understood.
+- **Every adopter gets a CI job.** When an upstream project merges an
+  integration, add a job to `upstream-integrations.yml` in the same week: pin
+  the upstream release commit in `ci.yml`, point the canary at its default
+  branch, run that project's own tests for the backend, and add a test here
+  that runs its real evaluation path against pycocotools on the committed
+  fixture and compares complete arrays. Move the pins forward when upstream
+  releases, so CI checks what users actually run.
+
 ## Layout
 
 | Path | Contents |
@@ -55,9 +93,10 @@ maturin refuses to run; unset one.
 
 Tests needing full COCO val2017 skip unless `bench/data/` contains
 `instances_val2017.json`, `person_keypoints_val2017.json` and the output of
-`bench/make_dets.py`. `tests/test_rfdetr_integration.py` and
-`tests/test_ultralytics_integration.py` skip without those frameworks; CI runs
-them in [upstream-integrations.yml](.github/workflows/upstream-integrations.yml).
+`bench/make_dets.py`. `tests/test_rfdetr_integration.py`,
+`tests/test_ultralytics_integration.py` and `tests/test_sahi_integration.py`
+skip without those projects; CI runs them in
+[upstream-integrations.yml](.github/workflows/upstream-integrations.yml).
 
 ## Performance work
 
@@ -149,6 +188,6 @@ an integration as done until all of these hold.
   pull request.
 - Branch from `main`; one topic per pull request. Documentation, comments and
   examples are written in English.
-- The required `CI` status includes the RF-DETR and Ultralytics integration
+- The required `CI` status includes the RF-DETR, Ultralytics and SAHI integration
   jobs, which run pinned upstream commits against the pull request build.
   `upstream-canary.yml` checks the latest upstream revisions weekly.
