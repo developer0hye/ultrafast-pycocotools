@@ -64,8 +64,11 @@ archive requires a Rust/compiler toolchain. Matching wheels are selected by pip.
 After the build and Library CI pass, and the PyPI publisher is configured:
 
 1. Ensure the Cargo workspace version and lockfile match the intended release.
-2. Create and push `v<version>` at the tested commit on main.
-3. Explicitly run the release workflow on that tag with `publish=true`.
+2. Run the upstream canary on main (`gh workflow run upstream-canary.yml --ref main`)
+   and confirm it passes, so the release is checked against the latest
+   RF-DETR, Ultralytics and SAHI revisions as well as the pinned ones.
+3. Create and push `v<version>` at the tested commit on main.
+4. Explicitly run the release workflow on that tag with `publish=true`.
 
 For example, for version 0.1.13:
 
