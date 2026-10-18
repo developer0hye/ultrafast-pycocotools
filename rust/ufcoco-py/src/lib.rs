@@ -13,6 +13,7 @@
 //! in the dataset + every RLE".
 
 mod alloc;
+mod batch;
 mod compact;
 mod json;
 mod mask;
@@ -977,21 +978,125 @@ impl Evaluator {
         max_det: usize,
     ) -> PyResult<Bound<'py, PyDict>> {
         let out = py.detach(|| self.inner.outcomes(a_idx, max_det));
-        let t_n = self.inner.params.iou_thrs.len();
-        let d_n = out.score.len();
-        let d = PyDict::new(py);
-        d.set_item("cat_slot", Array1::from_vec(out.cat_slot).into_pyarray(py))?;
-        d.set_item("image_id", Array1::from_vec(out.img_id).into_pyarray(py))?;
-        d.set_item("score", Array1::from_vec(out.score).into_pyarray(py))?;
-        d.set_item(
-            "outcome",
-            Array2::from_shape_vec((d_n, t_n), out.outcome)
-                .map_err(|e| PyValueError::new_err(e.to_string()))?
-                .into_pyarray(py),
-        )?;
-        d.set_item("npig", Array1::from_vec(out.npig).into_pyarray(py))?;
-        Ok(d)
+        outcomes_to_py(py, out, self.inner.params.iou_thrs.len())
     }
+}
+
+fn outcomes_to_py(
+    py: Python<'_>,
+    out: ufcoco_core::Outcomes,
+    t_n: usize,
+) -> PyResult<Bound<'_, PyDict>> {
+    let d_n = out.score.len();
+    let d = PyDict::new(py);
+    d.set_item("cat_slot", Array1::from_vec(out.cat_slot).into_pyarray(py))?;
+    d.set_item("image_id", Array1::from_vec(out.img_id).into_pyarray(py))?;
+    d.set_item("score", Array1::from_vec(out.score).into_pyarray(py))?;
+    d.set_item(
+        "outcome",
+        Array2::from_shape_vec((d_n, t_n), out.outcome)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?
+            .into_pyarray(py),
+    )?;
+    d.set_item("npig", Array1::from_vec(out.npig).into_pyarray(py))?;
+    Ok(d)
+}
+
+/// `ufcoco_core::metrics::summarize`: precision, recall and F1 from outcomes.
+///
+/// `cut` is `"all"`, `"at_least"` (with `threshold`) or `"best_f1"` (with
+/// `micro`). Returns a dict of numpy arrays: `category_ids`, `score_thr`, the
+/// `(T, R)` `tp` / `fp` / `fn` / `precision` / `recall` / `f1`, and `micro_*` /
+/// `macro_*` of length `T`.
+#[pyfunction]
+#[pyo3(signature = (det_cat, score, outcome, gt_cat, npig, cut, threshold=0.0, micro=false, exhaustive=false))]
+#[allow(clippy::too_many_arguments)]
+fn summarize_outcomes<'py>(
+    py: Python<'py>,
+    det_cat: numpy::PyReadonlyArray1<'py, i64>,
+    score: numpy::PyReadonlyArray1<'py, f64>,
+    outcome: numpy::PyReadonlyArray2<'py, u8>,
+    gt_cat: numpy::PyReadonlyArray1<'py, i64>,
+    npig: numpy::PyReadonlyArray1<'py, i64>,
+    cut: &str,
+    threshold: f64,
+    micro: bool,
+    exhaustive: bool,
+) -> PyResult<Bound<'py, PyDict>> {
+    use ufcoco_core::metrics::{summarize, Cut};
+    let cut = match cut {
+        "all" => Cut::All,
+        "at_least" => Cut::AtLeast(threshold),
+        "best_f1" => Cut::BestF1 { micro },
+        other => return Err(PyValueError::new_err(format!("unknown cut {other:?}"))),
+    };
+    let det_cat = det_cat.as_array();
+    let score = score.as_array();
+    let outcome = outcome.as_array();
+    let gt_cat = gt_cat.as_array();
+    let npig = npig.as_array();
+    let t_n = outcome.ncols();
+    if det_cat.len() != score.len() || outcome.nrows() != score.len() || gt_cat.len() != npig.len()
+    {
+        return Err(PyValueError::new_err(
+            "summarize_outcomes: column lengths differ",
+        ));
+    }
+    let (det_cat, score, outcome) = (
+        det_cat.as_standard_layout(),
+        score.as_standard_layout(),
+        outcome.as_standard_layout(),
+    );
+    let (gt_cat, npig) = (gt_cat.as_standard_layout(), npig.as_standard_layout());
+    let args = (
+        det_cat.as_slice().expect("standard layout"),
+        score.as_slice().expect("standard layout"),
+        outcome.as_slice().expect("standard layout"),
+        gt_cat.as_slice().expect("standard layout"),
+        npig.as_slice().expect("standard layout"),
+    );
+    let s = py.detach(|| summarize(args.0, args.1, args.2, t_n, args.3, args.4, cut, exhaustive));
+    let r_n = s.category_ids.len();
+    let grid = |v: Vec<f64>| -> PyResult<Bound<'py, numpy::PyArray2<f64>>> {
+        Ok(Array2::from_shape_vec((t_n, r_n), v)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?
+            .into_pyarray(py))
+    };
+    let counts = |v: Vec<i64>| -> PyResult<Bound<'py, numpy::PyArray2<i64>>> {
+        Ok(Array2::from_shape_vec((t_n, r_n), v)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?
+            .into_pyarray(py))
+    };
+    let d = PyDict::new(py);
+    d.set_item(
+        "category_ids",
+        Array1::from_vec(s.category_ids).into_pyarray(py),
+    )?;
+    d.set_item("score_thr", Array1::from_vec(s.score_thr).into_pyarray(py))?;
+    d.set_item("tp", counts(s.tp)?)?;
+    d.set_item("fp", counts(s.fp)?)?;
+    d.set_item("fn", counts(s.fn_)?)?;
+    d.set_item("precision", grid(s.precision)?)?;
+    d.set_item("recall", grid(s.recall)?)?;
+    d.set_item("f1", grid(s.f1)?)?;
+    for (key, value) in [
+        ("micro_tp", s.micro_tp),
+        ("micro_fp", s.micro_fp),
+        ("micro_fn", s.micro_fn),
+    ] {
+        d.set_item(key, Array1::from_vec(value).into_pyarray(py))?;
+    }
+    for (key, value) in [
+        ("micro_precision", s.micro_precision),
+        ("micro_recall", s.micro_recall),
+        ("micro_f1", s.micro_f1),
+        ("macro_precision", s.macro_precision),
+        ("macro_recall", s.macro_recall),
+        ("macro_f1", s.macro_f1),
+    ] {
+        d.set_item(key, Array1::from_vec(value).into_pyarray(py))?;
+    }
+    Ok(d)
 }
 
 fn eval_imgs_to_py<'py>(
@@ -1119,6 +1224,8 @@ fn _ufcoco(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(compact::load_compact_bbox, m)?)?;
     m.add_function(wrap_pyfunction!(compact::load_compact_array, m)?)?;
     m.add_function(wrap_pyfunction!(index_annotations, m)?)?;
+    m.add_function(wrap_pyfunction!(batch::box_batch, m)?)?;
+    m.add_function(wrap_pyfunction!(summarize_outcomes, m)?)?;
     m.add_function(wrap_pyfunction!(prepare_bbox_results, m)?)?;
     m.add_function(wrap_pyfunction!(summary::summary_values, m)?)?;
     m.add_function(wrap_pyfunction!(mask::encode, m)?)?;

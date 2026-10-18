@@ -27,6 +27,7 @@
 
 pub mod eval;
 pub mod group;
+pub mod metrics;
 pub mod rle;
 
 pub use eval::{

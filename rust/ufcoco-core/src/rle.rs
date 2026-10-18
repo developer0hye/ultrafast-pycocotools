@@ -493,6 +493,12 @@ pub fn bb_iou(dt: &[[f64; 4]], gt: &[[f64; 4]], iscrowd: &[u8], out: &mut [f64])
 
 /// IoU over borrowed columns: do not gather per-image boxes or crowd flags.
 /// Indices preserve the caller's stable order, including repeated indices.
+///
+/// Cells with many pairs go through [`overlap_rows`], which computes every
+/// pair without branches so the compiler evaluates several per instruction;
+/// the overlap tests it replaces were mispredicted often enough to cost most
+/// of the IoU time. Its results equal [`bbox_overlap`]'s bit for bit
+/// (`branch_free_bbox_iou_matches_the_scalar_kernel`).
 pub fn bb_iou_indexed(
     dt: &[[f64; 4]],
     gt: &[[f64; 4]],
@@ -501,16 +507,205 @@ pub fn bb_iou_indexed(
     iscrowd: &[bool],
     out: &mut [f64],
 ) {
-    let n = gt_idx.len();
-    for (g, &gi) in gt_idx.iter().enumerate() {
-        let gbox = &gt[gi as usize];
-        let ga = gbox[2] * gbox[3];
-        let crowd = iscrowd[gi as usize];
-        for (d, &di) in dt_idx.iter().enumerate() {
-            out[d * n + g] = bbox_overlap(&dt[di as usize], gbox, ga, crowd);
+    bb_iou_indexed_best(dt, gt, dt_idx, gt_idx, iscrowd, out, None)
+}
+
+/// The largest value of a row the way the matcher folds it: start at -inf and
+/// take each value in order when the running value is NaN, the value is NaN,
+/// or the value is larger. Only selections, so evaluating the rows' lanes in
+/// any grouping gives the same bits.
+#[inline(always)]
+fn fold_best(best: f64, v: f64) -> f64 {
+    if best.is_nan() || v.is_nan() || v > best {
+        v
+    } else {
+        best
+    }
+}
+
+/// [`bb_iou_indexed`], also writing each detection's [`fold_best`] over its
+/// row into `best` when given (`D` values).
+pub fn bb_iou_indexed_best(
+    dt: &[[f64; 4]],
+    gt: &[[f64; 4]],
+    dt_idx: &[u32],
+    gt_idx: &[u32],
+    iscrowd: &[bool],
+    out: &mut [f64],
+    best: Option<&mut Vec<f64>>,
+) {
+    let (m, n) = (dt_idx.len(), gt_idx.len());
+    debug_assert_eq!(out.len(), m * n);
+    if m * n < BRANCH_FREE_MIN_PAIRS {
+        for (g, &gi) in gt_idx.iter().enumerate() {
+            let gbox = &gt[gi as usize];
+            let ga = gbox[2] * gbox[3];
+            let crowd = iscrowd[gi as usize];
+            for (d, &di) in dt_idx.iter().enumerate() {
+                out[d * n + g] = bbox_overlap(&dt[di as usize], gbox, ga, crowd);
+            }
+        }
+        if let Some(best) = best {
+            best.clear();
+            if n > 0 {
+                best.extend(
+                    out.chunks_exact(n)
+                        .map(|row| row.iter().fold(f64::NEG_INFINITY, |b, &v| fold_best(b, v))),
+                );
+            }
+        }
+        return;
+    }
+    COLUMNS.with(|columns| {
+        let columns = &mut *columns.borrow_mut();
+        columns.gather(dt, dt_idx);
+        columns.rows.clear();
+        columns.rows.resize(m * n, 0.0);
+        let BoxColumns {
+            x1,
+            y1,
+            x2,
+            y2,
+            area,
+            rows,
+        } = columns;
+        let cols = [&x1[..], &y1[..], &x2[..], &y2[..], &area[..]];
+        #[cfg(target_arch = "x86_64")]
+        {
+            if std::is_x86_feature_detected!("avx2") {
+                // SAFETY: AVX2 is available, as just checked.
+                unsafe { overlap_rows_avx2(cols, gt, gt_idx, iscrowd, rows) };
+            } else {
+                overlap_rows(cols, gt, gt_idx, iscrowd, rows);
+            }
+        }
+        #[cfg(not(target_arch = "x86_64"))]
+        overlap_rows(cols, gt, gt_idx, iscrowd, rows);
+        // `rows` is `G x D`; the IoU matrix is `D x G`.
+        for (g, row) in rows.chunks_exact(m).enumerate() {
+            for (d, &v) in row.iter().enumerate() {
+                out[d * n + g] = v;
+            }
+        }
+        if let Some(best) = best {
+            // Lane by lane over detections, ground truths in order: the same
+            // selections as folding each detection's row.
+            best.clear();
+            best.resize(m, f64::NEG_INFINITY);
+            for row in rows.chunks_exact(m) {
+                for (b, &v) in best.iter_mut().zip(row) {
+                    *b = fold_best(*b, v);
+                }
+            }
+        }
+    });
+}
+
+/// Below this many pairs the gather into columns costs more than the branches.
+const BRANCH_FREE_MIN_PAIRS: usize = 96;
+
+/// One cell's detection boxes as columns, reused across cells.
+#[derive(Default)]
+struct BoxColumns {
+    x1: Vec<f64>,
+    y1: Vec<f64>,
+    /// `w + x` and `h + y`, as [`bbox_overlap`] computes them.
+    x2: Vec<f64>,
+    y2: Vec<f64>,
+    /// `w * h`.
+    area: Vec<f64>,
+    rows: Vec<f64>,
+}
+
+impl BoxColumns {
+    fn gather(&mut self, dt: &[[f64; 4]], dt_idx: &[u32]) {
+        for v in [
+            &mut self.x1,
+            &mut self.y1,
+            &mut self.x2,
+            &mut self.y2,
+            &mut self.area,
+        ] {
+            v.clear();
+        }
+        for &di in dt_idx {
+            let b = &dt[di as usize];
+            self.x1.push(b[0]);
+            self.y1.push(b[1]);
+            self.x2.push(b[2] + b[0]);
+            self.y2.push(b[3] + b[1]);
+            self.area.push(b[2] * b[3]);
         }
     }
-    debug_assert_eq!(out.len(), dt_idx.len() * n);
+}
+
+std::thread_local! {
+    static COLUMNS: std::cell::RefCell<BoxColumns> = std::cell::RefCell::new(BoxColumns::default());
+}
+
+/// [`overlap_rows`] compiled for AVX2: the same operations, four lanes wide.
+/// FMA is not enabled, and Rust never contracts `a * b + c` on its own.
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+unsafe fn overlap_rows_avx2(
+    cols: [&[f64]; 5],
+    gt: &[[f64; 4]],
+    gt_idx: &[u32],
+    iscrowd: &[bool],
+    rows: &mut [f64],
+) {
+    overlap_rows(cols, gt, gt_idx, iscrowd, rows)
+}
+
+/// [`bbox_overlap`] for every (ground truth, detection) pair, one row per
+/// ground truth, without branches.
+///
+/// Each lane performs the scalar function's operations in its order, on the
+/// same operands, and the overlap test only selects the result afterwards, so
+/// the selected values are the scalar ones. `f64::min` / `f64::max` keep their
+/// NaN rule when vectorized (they lower to `minnum` / `maxnum`); which zero
+/// they return for `-0.0` against `0.0` may differ between lowerings, but a
+/// zero `w` or `h` fails `> 0.0` with either sign, and a difference with a zero
+/// operand does not depend on its sign, so the result cannot.
+#[inline(always)]
+fn overlap_rows(
+    cols: [&[f64]; 5],
+    gt: &[[f64; 4]],
+    gt_idx: &[u32],
+    iscrowd: &[bool],
+    rows: &mut [f64],
+) {
+    let m = cols[0].len();
+    for (row, &gi) in rows.chunks_exact_mut(m).zip(gt_idx) {
+        let gbox = &gt[gi as usize];
+        if iscrowd[gi as usize] {
+            overlap_row::<true>(cols, gbox, row);
+        } else {
+            overlap_row::<false>(cols, gbox, row);
+        }
+    }
+}
+
+#[inline(always)]
+fn overlap_row<const CROWD: bool>(cols: [&[f64]; 5], gbox: &[f64; 4], row: &mut [f64]) {
+    let m = row.len();
+    let (x1, y1, x2, y2, da) = (
+        &cols[0][..m],
+        &cols[1][..m],
+        &cols[2][..m],
+        &cols[3][..m],
+        &cols[4][..m],
+    );
+    let ga = gbox[2] * gbox[3];
+    let gx2 = gbox[2] + gbox[0];
+    let gy2 = gbox[3] + gbox[1];
+    for d in 0..m {
+        let w = f64::min(x2[d], gx2) - f64::max(x1[d], gbox[0]);
+        let h = f64::min(y2[d], gy2) - f64::max(y1[d], gbox[1]);
+        let i = w * h;
+        let u = if CROWD { da[d] } else { da[d] + ga - i };
+        row[d] = if w > 0.0 && h > 0.0 { i / u } else { 0.0 };
+    }
 }
 
 /// `rleIou`, writing a row-major `m x n` matrix (`out[d * n + g]`).
@@ -1650,6 +1845,130 @@ mod tests {
             .collect();
         assert_eq!(fresh, reused);
     }
+    /// Every value class the arithmetic can meet, so lanes that select
+    /// against the overlap tests, NaN coordinates and signed zeros are all
+    /// compared with the scalar kernel.
+    fn awkward_boxes(n: usize, seed: u64) -> Vec<[f64; 4]> {
+        let specials = [
+            0.0,
+            -0.0,
+            f64::NAN,
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+            1e-300,
+            -1e-300,
+            1e300,
+            f64::MIN_POSITIVE / 4.0,
+            3.0,
+            -3.0,
+        ];
+        let mut state = seed;
+        let mut next = move || {
+            state = state
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            state >> 11
+        };
+        (0..n)
+            .map(|_| {
+                let mut b = [0.0; 4];
+                for v in &mut b {
+                    let r = next();
+                    *v = if r % 7 == 0 {
+                        specials[(r / 7) as usize % specials.len()]
+                    } else {
+                        // Coarse grid values make exact touches and ties common.
+                        ((r % 64) as f64 - 8.0) * 0.5
+                    };
+                }
+                b
+            })
+            .collect()
+    }
+
+    #[test]
+    fn branch_free_bbox_iou_matches_the_scalar_kernel() {
+        for seed in 0..40u64 {
+            let boxes = awkward_boxes(48, seed);
+            let crowd: Vec<bool> = (0..48).map(|i| (i * 7 + seed as usize) % 5 == 0).collect();
+            let dt_idx: Vec<u32> = (0..(seed as u32 % 23 + 1))
+                .map(|i| (i * 5 + 1) % 48)
+                .collect();
+            let gt_idx: Vec<u32> = (0..(seed as u32 % 9 + 1))
+                .map(|i| (i * 11 + 3) % 48)
+                .collect();
+            let (m, n) = (dt_idx.len(), gt_idx.len());
+            let mut expected = vec![0.0; m * n];
+            for (g, &gi) in gt_idx.iter().enumerate() {
+                let gbox = &boxes[gi as usize];
+                for (d, &di) in dt_idx.iter().enumerate() {
+                    expected[d * n + g] = bbox_overlap(
+                        &boxes[di as usize],
+                        gbox,
+                        gbox[2] * gbox[3],
+                        crowd[gi as usize],
+                    );
+                }
+            }
+            let mut got = vec![-1.0; m * n];
+            let mut best = Vec::new();
+            bb_iou_indexed_best(
+                &boxes,
+                &boxes,
+                &dt_idx,
+                &gt_idx,
+                &crowd,
+                &mut got,
+                Some(&mut best),
+            );
+            let same = |a: &[f64], b: &[f64]| {
+                a.len() == b.len() && a.iter().zip(b).all(|(x, y)| x.to_bits() == y.to_bits())
+            };
+            assert!(same(&expected, &got), "seed {seed}");
+            let folded: Vec<f64> = expected
+                .chunks_exact(n)
+                .map(|row| {
+                    row.iter().fold(f64::NEG_INFINITY, |b, &v| {
+                        if b.is_nan() || v.is_nan() || v > b {
+                            v
+                        } else {
+                            b
+                        }
+                    })
+                })
+                .collect();
+            assert!(same(&folded, &best), "best, seed {seed}");
+            // Both compiled versions of the kernel, whichever one dispatch picks.
+            let mut columns = BoxColumns::default();
+            columns.gather(&boxes, &dt_idx);
+            let cols = [
+                &columns.x1[..],
+                &columns.y1[..],
+                &columns.x2[..],
+                &columns.y2[..],
+                &columns.area[..],
+            ];
+            let transpose = |rows: &[f64]| {
+                let mut t = vec![0.0; m * n];
+                for (g, row) in rows.chunks_exact(m).enumerate() {
+                    for (d, &v) in row.iter().enumerate() {
+                        t[d * n + g] = v;
+                    }
+                }
+                t
+            };
+            let mut rows = vec![0.0; m * n];
+            overlap_rows(cols, &boxes, &gt_idx, &crowd, &mut rows);
+            assert!(same(&expected, &transpose(&rows)), "baseline, seed {seed}");
+            #[cfg(target_arch = "x86_64")]
+            if std::is_x86_feature_detected!("avx2") {
+                let mut rows = vec![0.0; m * n];
+                unsafe { overlap_rows_avx2(cols, &boxes, &gt_idx, &crowd, &mut rows) };
+                assert!(same(&expected, &transpose(&rows)), "avx2, seed {seed}");
+            }
+        }
+    }
+
     #[test]
     fn indexed_bbox_iou_preserves_permutations_repeats_and_crowds() {
         let boxes = [

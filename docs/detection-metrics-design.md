@@ -94,8 +94,9 @@ described under [Tests](#tests).
   categories with **at least one non-ignored ground truth**.
   - This matches COCO, where a category without ground truth has recall `-1`
     and is left out of AR, and Ultralytics, which averages over the classes in
-    the targets. Macro recall with no score threshold therefore equals the
-    mean of the valid `eval['recall']` entries.
+    the targets. Macro recall with no score threshold is therefore the mean
+    of the valid `eval['recall']` entries (summed left to right, so compare
+    it with that sum rather than with `np.mean`).
   - False-positive-only categories still lower micro precision and are reported
     per category, so they are not hidden.
   - Macro F1 is the mean of per-category F1, not the harmonic mean of macro
@@ -121,6 +122,13 @@ described under [Tests](#tests).
   - The sweep computes counts with cumulative sums and the ratios with the same
     function as a fixed threshold, so `score_thr="best_f1"` and
     `score_thr=<the chosen value>` give bit-identical results.
+  - The macro sweep does not evaluate every cut. A running sum, changed only
+    by the category of each added detection, is within a proven rounding bound
+    of the left-to-right sum at every cut; only cuts within twice that bound of
+    the maximum, and only the first of any run of cuts that add no detection of
+    a category with ground truth, are evaluated exactly. Cost is
+    O(D log D + candidates x categories) instead of O(D x categories); the
+    tests compare it with evaluating every cut.
   - Unlike Ultralytics, F1 is not smoothed or interpolated on a confidence
     grid; values are exact at real score cuts.
 
@@ -155,19 +163,22 @@ pub struct Outcomes {
 - Unlike calling `per_instance` once per threshold, this matches once for all
   IoU thresholds.
 
-### Python: `ultrafast_pycocotools/_detection_metrics.py`
+### Summary: `ufcoco_core::metrics` and `_detection_metrics.py`
 
-A private module with one function used by both public entry points:
+`ufcoco_core::metrics::summarize` takes the outcome arrays (possibly
+concatenated over batches) with each detection's category id, applies the
+score threshold or the sweep, and returns every value described below. The
+private Python module `_detection_metrics.py` wraps it for both public entry
+points (`summarize_ids`, and `summarize_outcomes` for category slots) and
+builds the result dictionaries.
 
-```python
-def summarize_outcomes(cat_slot, score, outcome, npig, cat_ids, *,
-                       score_thr, optimize) -> dict
-```
-
-It takes the outcome arrays (possibly concatenated over batches), applies the
-score threshold or sweep, and builds the result described below. All
-aggregation is NumPy (`np.bincount` over category slots, a stable `argsort`
-for the sweep); no Python loop over detections.
+The summary was first written in NumPy (`np.bincount` over category slots, a
+stable `argsort` for the sweep). That code is kept as
+`tests/reference_detection_metrics.py`, and the tests compare the Rust summary
+with it bit for bit on random outcomes and on the committed COCO slice. The
+sweep sorts once for all IoU thresholds on integer keys whose order is
+`cmp_desc_score`'s, gathers the sorted columns so each threshold's pass reads
+sequentially, and runs the thresholds in parallel.
 
 ### PR 1: `COCOeval.detection_metrics`
 
@@ -196,7 +207,7 @@ from ultrafast_pycocotools.metrics import DetectionMetrics
 
 m = DetectionMetrics(
     iou_type="bbox",        # "bbox" | "segm" | "keypoints" (COCO input only)
-    iou_thrs=(0.5,),        # caller's values, passed to the engine as given
+    iou_thrs=0.5,           # a value or a sequence, passed to the engine as given
     score_thr=None,         # None | float | "best_f1"
     optimize="macro",
     class_agnostic=False,
@@ -244,12 +255,20 @@ duplicate check.
 
 Per update, internally:
 
-1. Build GT and DT handles (array input: a GT dictionary and an `Nx7` result
-   array for bbox, which takes the existing `load_compact_array` route).
+1. Box arrays: `_ufcoco.box_batch` (`rust/ufcoco-py/src/batch.rs`) reads the
+   per-image dicts, converts boxes, fills the engine's instances exactly as
+   the dictionary path would (crowded ground truth is ignored, detection area
+   is `w * h`, per-image input order breaks score ties), matches, and returns
+   the counted outcomes without building `COCO` handles or the accumulated
+   curves; then go to step 4. NumPy arrays of common dtypes are read in place;
+   other values go through a Python converter so NumPy's conversion rules
+   apply. The tests compare it with COCO input bit for bit, and each dtype and
+   layout with float64 / int64 input. Masks and COCO input build GT and DT
+   handles and continue with step 2.
 2. Evaluate with narrowed `Params`: `imgIds` of this batch, `catIds` = labels
-   seen in the batch, `iouThrs = iou_thrs`, one area range (`area_range`, or
-   `[0, inf]` when `None`), `maxDets = [max_dets]` or the batch's detection
-   count (at least 1) when `None`, `useCats = not class_agnostic`.
+   seen in the batch (the dataset's categories for `update_coco`), `iouThrs = iou_thrs`, one area range (`area_range`, or
+   `[0, inf]` when `None`), `maxDets = [max_dets]` or `2**31 - 1` when `None`
+   (the engine only compares against it), `useCats = not class_agnostic`.
 3. Call `outcomes(0, max_det)`; drop detections ignored at every threshold;
    map category slots to global category ids.
 4. Append `(category id, score, outcome rows)` to the accumulated store and add
@@ -366,7 +385,10 @@ PR 2 (`tests/test_detection_metrics.py`):
   the reference tie order at the end. Its exactness argument is larger than
   the ones here, and the issue asks for precision, recall and F1, so it is a
   separate design after PR 2.
-- A dedicated Rust path that builds instances from NumPy columns without the
-  `COCO` layer. Revisit only if PR 2's profile shows the `COCO` layer, not
-  matching, dominating per-batch time.
+- A column path for masks. Box batches skip the `COCO` layer (step 1 above)
+  because the profile showed it, not matching, dominating per-batch time;
+  masks still go through RLE dictionaries.
+- A columnar `update` (`boxes`, `scores`, `labels` for the whole batch plus an
+  image index) that would skip reading per-image dicts, 13–18% of a 16-image
+  update now.
 - Per-category best-F1 thresholds and smoothed F1 curves.

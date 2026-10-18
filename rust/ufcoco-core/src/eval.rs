@@ -84,6 +84,20 @@ pub const EPS: f64 = f64::EPSILON;
 /// get spread across idle workers.
 const PAR_MIN_IMAGES: usize = 64;
 
+/// Below this many ground truths plus detections, `outcomes()` and the
+/// best-F1 sweep run on the calling thread.
+const SEQUENTIAL_MAX_INSTANCES: usize = 1 << 10;
+
+/// Whether work over `instances` annotations should stay on the calling
+/// thread. Handing a job to the pool costs the hand-off and wakes the workers,
+/// which then spin: below about a thousand annotations that cost more wall
+/// time than the split saved, and several times the CPU time; with a
+/// one-thread pool the hand-off buys nothing at all. Each unit writes only its
+/// own slots, so the thread layout never changes a result.
+pub(crate) fn run_on_caller(instances: usize) -> bool {
+    instances < SEQUENTIAL_MAX_INSTANCES || rayon::current_num_threads() == 1
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IouType {
     Segm,
@@ -332,12 +346,51 @@ pub struct ImgEval {
 /// for `-0.0`, which compares equal to `0.0` either way — and numpy puts NaN
 /// last.
 #[inline]
-fn cmp_desc_score(a: f64, b: f64) -> Ordering {
+pub(crate) fn cmp_desc_score(a: f64, b: f64) -> Ordering {
     match (a.is_nan(), b.is_nan()) {
         (true, true) => Ordering::Equal,
         (true, false) => Ordering::Greater,
         (false, true) => Ordering::Less,
         (false, false) => b.partial_cmp(&a).unwrap(),
+    }
+}
+
+/// A key whose ascending order is [`cmp_desc_score`]'s order: descending
+/// score, `-0.0` equal to `0.0`, NaN last and equal to NaN.
+#[inline]
+pub(crate) fn desc_key(score: f64) -> u64 {
+    if score.is_nan() {
+        return u64::MAX;
+    }
+    // `+ 0.0` turns -0.0 into 0.0. The bit flip makes the integer order the
+    // numeric order; the final `!` reverses it. No finite score maps to MAX.
+    let bits = (score + 0.0).to_bits();
+    let ascending = if bits >> 63 == 1 {
+        !bits
+    } else {
+        bits | 1 << 63
+    };
+    !ascending
+}
+
+/// Sort detection indices stably into [`cmp_desc_score`] order.
+///
+/// Detector output usually arrives in score order, which a stable sort leaves
+/// as it is, so that is checked first. Otherwise the sort runs on
+/// [`desc_key`]s, whose order is `cmp_desc_score`'s; a stable sort by keys
+/// that order the same gives the same permutation.
+fn sort_by_score(scores: &[f64], idx: &mut [u32], keys: &mut Vec<(u64, u32)>) {
+    if idx
+        .windows(2)
+        .all(|w| cmp_desc_score(scores[w[0] as usize], scores[w[1] as usize]) != Ordering::Greater)
+    {
+        return;
+    }
+    keys.clear();
+    keys.extend(idx.iter().map(|&i| (desc_key(scores[i as usize]), i)));
+    keys.sort_by_key(|&(key, _)| key);
+    for (slot, &(_, i)) in idx.iter_mut().zip(keys.iter()) {
+        *slot = i;
     }
 }
 
@@ -439,6 +492,21 @@ struct CatImage<'a> {
     /// Per detection, the largest IoU over all ground truths, or NaN if any is
     /// NaN; empty with `ious`. See `evaluate_img_into`.
     best_iou: Vec<f64>,
+    /// Scratch for [`sort_by_score`].
+    keys: Vec<(u64, u32)>,
+}
+
+impl CatImage<'_> {
+    fn empty() -> Self {
+        CatImage {
+            img_slot: 0,
+            gt_idx: &[],
+            dt_idx: Vec::new(),
+            ious: Vec::new(),
+            best_iou: Vec::new(),
+            keys: Vec::new(),
+        }
+    }
 }
 
 /// Per-image match result for one area range, in the compact form
@@ -549,43 +617,70 @@ impl Evaluator {
             .par_iter()
             .with_min_len(PAR_MIN_IMAGES)
             .map(|&(img_slot, gr, dr)| {
-                let gt_idx: &[u32] = gr
-                    .map(|r: Run| self.gt_groups.indices(&r))
-                    .unwrap_or_default();
-                let mut dt_idx: Vec<u32> = dr
-                    .map(|r: Run| self.dt_groups.indices(&r).to_vec())
-                    .unwrap_or_default();
-                dt_idx.sort_by(|&a, &b| {
-                    cmp_desc_score(self.dt.scores[a as usize], self.dt.scores[b as usize])
-                });
-                if dt_idx.len() > max_det {
-                    dt_idx.truncate(max_det);
-                }
-                let ious = self.compute_iou(&dt_idx, gt_idx);
-                let best_iou = if ious.is_empty() {
-                    Vec::new()
-                } else {
-                    ious.chunks_exact(gt_idx.len())
-                        .map(|row| {
-                            row.iter().fold(f64::NEG_INFINITY, |best, &v| {
-                                if best.is_nan() || v.is_nan() || v > best {
-                                    v
-                                } else {
-                                    best
-                                }
-                            })
-                        })
-                        .collect()
-                };
-                CatImage {
-                    img_slot,
-                    gt_idx,
-                    dt_idx,
-                    ious,
-                    best_iou,
-                }
+                let mut cell = CatImage::empty();
+                self.fill_cell(img_slot, gr, dr, max_det, &mut cell);
+                cell
             })
             .collect()
+    }
+
+    /// One image of one category: its detections in stable score order cut
+    /// to `max_det`, and their IoU with its ground truth. Fills `cell`'s
+    /// buffers in place so a caller can reuse them across images.
+    fn fill_cell<'a>(
+        &'a self,
+        img_slot: u32,
+        gr: Option<Run>,
+        dr: Option<Run>,
+        max_det: usize,
+        cell: &mut CatImage<'a>,
+    ) {
+        cell.img_slot = img_slot;
+        cell.gt_idx = gr
+            .map(|r: Run| self.gt_groups.indices(&r))
+            .unwrap_or_default();
+        cell.dt_idx.clear();
+        if let Some(r) = dr {
+            cell.dt_idx.extend_from_slice(self.dt_groups.indices(&r));
+        }
+        sort_by_score(&self.dt.scores, &mut cell.dt_idx, &mut cell.keys);
+        if cell.dt_idx.len() > max_det {
+            cell.dt_idx.truncate(max_det);
+        }
+        if let (Some(dv), Some(gv), false, false) = (
+            self.dt.geom.bbox_slice(),
+            self.gt.geom.bbox_slice(),
+            cell.dt_idx.is_empty(),
+            cell.gt_idx.is_empty(),
+        ) {
+            // Boxes compute each detection's best IoU with the matrix.
+            cell.ious.clear();
+            cell.ious.resize(cell.dt_idx.len() * cell.gt_idx.len(), 0.0);
+            rle::bb_iou_indexed_best(
+                dv,
+                gv,
+                &cell.dt_idx,
+                cell.gt_idx,
+                &self.gt.iscrowd,
+                &mut cell.ious,
+                Some(&mut cell.best_iou),
+            );
+            return;
+        }
+        self.compute_iou_into(&cell.dt_idx, cell.gt_idx, &mut cell.ious);
+        cell.best_iou.clear();
+        if !cell.ious.is_empty() {
+            cell.best_iou
+                .extend(cell.ious.chunks_exact(cell.gt_idx.len()).map(|row| {
+                    row.iter().fold(f64::NEG_INFINITY, |best, &v| {
+                        if best.is_nan() || v.is_nan() || v > best {
+                            v
+                        } else {
+                            best
+                        }
+                    })
+                }));
+        }
     }
 
     /// Row-major `D x G` IoU, or empty when either side has no entries.
@@ -606,15 +701,17 @@ impl Evaluator {
             .max(0.0)
     }
 
-    fn compute_iou(&self, dt_idx: &[u32], gt_idx: &[u32]) -> Vec<f64> {
+    fn compute_iou_into(&self, dt_idx: &[u32], gt_idx: &[u32], out: &mut Vec<f64>) {
+        out.clear();
         if dt_idx.is_empty() || gt_idx.is_empty() {
-            return Vec::new();
+            return;
         }
         let (m, n) = (dt_idx.len(), gt_idx.len());
-        let mut out = vec![0.0f64; m * n];
+        out.resize(m * n, 0.0);
+        let out = &mut out[..];
         if let (Some(dv), Some(gv)) = (self.dt.geom.bbox_slice(), self.gt.geom.bbox_slice()) {
-            rle::bb_iou_indexed(dv, gv, dt_idx, gt_idx, &self.gt.iscrowd, &mut out);
-            return out;
+            rle::bb_iou_indexed(dv, gv, dt_idx, gt_idx, &self.gt.iscrowd, out);
+            return;
         }
         // Pose never consumes crowd flags in the OKS kernel.
         let iscrowd: Vec<u8> = if self.params.iou_type == IouType::Keypoints {
@@ -633,8 +730,8 @@ impl Evaluator {
         ) {
             let d: Vec<&Rle> = dv.iter().map(|m| m.as_ref()).collect();
             let g: Vec<&Rle> = gv.iter().map(|m| m.as_ref()).collect();
-            rle::rle_iou_refs_above(&d, &g, &iscrowd, floor, &mut out);
-            return out;
+            rle::rle_iou_refs_above(&d, &g, &iscrowd, floor, out);
+            return;
         }
         match (&self.dt.geom, &self.gt.geom) {
             (
@@ -649,7 +746,7 @@ impl Evaluator {
             ) => {
                 let d: Vec<&Rle> = dt_idx.iter().map(|&i| &dm[i as usize]).collect();
                 let g: Vec<&Rle> = gt_idx.iter().map(|&i| &gm[i as usize]).collect();
-                rle::rle_iou_refs_above(&d, &g, &iscrowd, floor, &mut out);
+                rle::rle_iou_refs_above(&d, &g, &iscrowd, floor, out);
                 let d: Vec<&Rle> = dt_idx.iter().map(|&i| &db[i as usize]).collect();
                 let g: Vec<&Rle> = gt_idx.iter().map(|&i| &gb[i as usize]).collect();
                 let mut bout = vec![0.0f64; m * n];
@@ -676,11 +773,10 @@ impl Evaluator {
                     data: gd, visible, ..
                 },
             ) => {
-                self.compute_oks(dt_idx, gt_idx, dd, gd, visible, offsets, *k, &mut out);
+                self.compute_oks(dt_idx, gt_idx, dd, gd, visible, offsets, *k, out);
             }
             _ => panic!("ground truth and detection geometry kinds disagree"),
         }
-        out
     }
 
     /// `computeOks`, following pycocotools' exact operation order.
@@ -820,7 +916,42 @@ impl Evaluator {
         gt_matched.resize(t_n * g_n, false);
 
         if !ci.ious.is_empty() {
-            for (tind, &thr) in self.params.iou_thrs.iter().enumerate() {
+            let thrs = &self.params.iou_thrs;
+            // The ground truths each detection scans, in ignore-sorted order.
+            // With several thresholds, only those whose IoU is not below the
+            // lowest effective threshold `floor` (NaN included), listed once
+            // instead of rescanned per threshold. A ground truth left out has
+            // `v < floor <= best` at every threshold, and `best` only grows
+            // during a scan, so the full scan would reach `continue` at it or
+            // the `break`. The break fires at the first ignored ground truth
+            // while a real match is held, and every later ground truth is
+            // ignored too, so each later candidate either `continue`s as
+            // matched or fires the same break: `m` ends the same.
+            let (scan, scan_at) = (&mut scratch.scan, &mut scratch.scan_at);
+            scan.clear();
+            scan_at.clear();
+            scan_at.push(0);
+            if thrs.len() > 1 {
+                let floor = thrs
+                    .iter()
+                    .fold(f64::INFINITY, |f, &t| f64::min(f, f64::min(t, 1.0 - 1e-10)));
+                for dind in 0..d_n {
+                    // Below `floor` the detection is skipped at every threshold.
+                    let best = ci.best_iou[dind];
+                    if best >= floor || best.is_nan() {
+                        let row = &ci.ious[dind * g_n..(dind + 1) * g_n];
+                        scan.extend((0..g_n as u32).filter(|&gind| {
+                            let v = row[gt_perm[gind as usize] as usize];
+                            v >= floor || v.is_nan()
+                        }));
+                    }
+                    scan_at.push(scan.len() as u32);
+                }
+            } else {
+                scan.extend(0..g_n as u32);
+            }
+            let every = thrs.len() <= 1;
+            for (tind, &thr) in thrs.iter().enumerate() {
                 for dind in 0..d_n {
                     // pycocotools clamps the floor so a threshold of exactly
                     // 1.0 can still match a pair whose IoU rounds just below.
@@ -831,7 +962,13 @@ impl Evaluator {
                         continue;
                     }
                     let mut m: i32 = -1;
-                    for gind in 0..g_n {
+                    let ginds = if every {
+                        &scan[..]
+                    } else {
+                        &scan[scan_at[dind] as usize..scan_at[dind + 1] as usize]
+                    };
+                    for &gind in ginds {
+                        let gind = gind as usize;
                         let gsrc = gt_perm[gind] as usize;
                         // Already claimed by a higher-scoring detection, and
                         // not a crowd region (which may absorb many).
@@ -1357,42 +1494,150 @@ impl Evaluator {
     /// thresholds. `max_det` above `max_dets.last()` keeps nothing more: the
     /// engine truncates to that before matching.
     pub fn outcomes(&self, a_idx: usize, max_det: usize) -> Outcomes {
+        let sequential = run_on_caller(self.gt.len() + self.dt.len());
+        self.outcomes_on(a_idx, max_det, sequential)
+    }
+
+    /// [`Self::outcomes`], on the calling thread or on the pool.
+    fn outcomes_on(&self, a_idx: usize, max_det: usize, sequential: bool) -> Outcomes {
         let p = &self.params;
         let t_n = p.iou_thrs.len();
-        // Ordered collect, so the concatenation below is in category order
-        // whatever the thread count.
-        let parts: Vec<Outcomes> = (0..self.n_groups)
-            .into_par_iter()
-            .map(|k| {
-                let work = self.prepare_category(k);
-                let mut part = Outcomes {
-                    npig: vec![0],
-                    ..Outcomes::default()
-                };
-                let mut mm = ImgMatch::default();
-                let mut scratch = MatchScratch::default();
-                for ci in &work {
-                    if !self.evaluate_img_into(ci, a_idx, &mut mm, &mut scratch, false) {
-                        continue;
+        let max_det_all = p.max_dets.last().copied().unwrap_or(0);
+        // A cell reports its first `min(detections, cap)` detections: the
+        // engine cuts to `max_dets.last()` before matching, then to `max_det`.
+        let cap = max_det_all.min(max_det);
+        let a_rng = p.area_rng[a_idx];
+
+        // Every cell in category, then image order, in units of at most
+        // PAR_MIN_IMAGES cells of one category. Each unit's detections are a
+        // known contiguous range of the output, so units fill it in parallel
+        // without per-unit buffers, and the order does not depend on threads.
+        let mut cells: Vec<(u32, Option<Run>, Option<Run>)> = Vec::new();
+        let mut units: Vec<(usize, std::ops::Range<usize>, usize)> = Vec::new();
+        let mut total = 0usize;
+        for k in 0..self.n_groups {
+            let start = cells.len();
+            cells.extend(RunJoin::new(
+                self.gt_groups.group(k),
+                self.dt_groups.group(k),
+            ));
+            for c0 in (start..cells.len()).step_by(PAR_MIN_IMAGES) {
+                let c1 = (c0 + PAR_MIN_IMAGES).min(cells.len());
+                let len: usize = cells[c0..c1]
+                    .iter()
+                    .map(|&(_, _, dr)| dr.map_or(0, |r| (r.len as usize).min(cap)))
+                    .sum();
+                units.push((k, c0..c1, len));
+                total += len;
+            }
+        }
+        let mut out = Outcomes {
+            cat_slot: vec![0; total],
+            img_id: vec![0; total],
+            score: vec![0.0; total],
+            outcome: vec![IGNORED; total * t_n],
+            npig: vec![0; self.n_groups],
+        };
+        let mut work = Vec::with_capacity(units.len());
+        {
+            let mut cat_slot = &mut out.cat_slot[..];
+            let mut img_id = &mut out.img_id[..];
+            let mut score = &mut out.score[..];
+            let mut outcome = &mut out.outcome[..];
+            for (k, range, len) in units {
+                let (a, rest) = std::mem::take(&mut cat_slot).split_at_mut(len);
+                cat_slot = rest;
+                let (b, rest) = std::mem::take(&mut img_id).split_at_mut(len);
+                img_id = rest;
+                let (c, rest) = std::mem::take(&mut score).split_at_mut(len);
+                score = rest;
+                let (d, rest) = std::mem::take(&mut outcome).split_at_mut(len * t_n);
+                outcome = rest;
+                work.push((k, range, a, b, c, d));
+            }
+        }
+        type Unit<'a> = (
+            usize,
+            std::ops::Range<usize>,
+            &'a mut [u32],
+            &'a mut [i64],
+            &'a mut [f64],
+            &'a mut [u8],
+        );
+        let unit = |(k, range, cat_slot, img_id, score, outcome): Unit<'_>| {
+            let mut cell = CatImage::empty();
+            let mut mm = ImgMatch::default();
+            let mut scratch = MatchScratch::default();
+            let (mut at, mut npig) = (0usize, 0u64);
+            for &(img_slot, gr, dr) in &cells[range] {
+                let id = p.img_ids[img_slot as usize];
+                // One-sided cells, which are most cells, take the outcome
+                // `evaluate_img_into` gives them without IoU or matching:
+                // ground truth without detections contributes its count of
+                // non-ignored ground truth, and detections without ground
+                // truth are false positives unless ignored as unmatched.
+                // `outcomes_agree_with_per_instance_at_every_threshold`
+                // compares both with the general path.
+                match (gr, dr) {
+                    (Some(g), None) => {
+                        npig += self
+                            .gt_groups
+                            .indices(&g)
+                            .iter()
+                            .filter(|&&g| {
+                                let g = g as usize;
+                                let a = self.gt.areas[g];
+                                !(self.gt.ignore[g] || a < a_rng[0] || a > a_rng[1])
+                            })
+                            .count() as u64;
                     }
-                    part.npig[0] += mm.gt_ignore.iter().filter(|&&ig| !ig).count() as u64;
-                    let img_id = p.img_ids[ci.img_slot as usize];
-                    let d_n = ci.dt_idx.len().min(max_det);
-                    part.cat_slot.resize(part.cat_slot.len() + d_n, k as u32);
-                    part.img_id.resize(part.img_id.len() + d_n, img_id);
-                    part.score.extend_from_slice(&mm.dt_scores[..d_n]);
-                    part.outcome.extend_from_slice(&mm.outcome[..d_n * t_n]);
+                    (None, Some(r)) => {
+                        let order = &mut cell.dt_idx;
+                        order.clear();
+                        order.extend_from_slice(self.dt_groups.indices(&r));
+                        sort_by_score(&self.dt.scores, order, &mut cell.keys);
+                        let d_n = order.len().min(cap);
+                        for (j, &src) in order[..d_n].iter().enumerate() {
+                            let src = src as usize;
+                            let a = self.dt.areas[src];
+                            let ignored = a < a_rng[0] || a > a_rng[1] || self.dt.lvis_mark[src];
+                            cat_slot[at + j] = k as u32;
+                            img_id[at + j] = id;
+                            score[at + j] = self.dt.scores[src];
+                            outcome[(at + j) * t_n..(at + j + 1) * t_n].fill(if ignored {
+                                IGNORED
+                            } else {
+                                FALSE_POSITIVE
+                            });
+                        }
+                        at += d_n;
+                    }
+                    _ => {
+                        self.fill_cell(img_slot, gr, dr, max_det_all, &mut cell);
+                        if !self.evaluate_img_into(&cell, a_idx, &mut mm, &mut scratch, false) {
+                            continue;
+                        }
+                        npig += mm.gt_ignore.iter().filter(|&&ig| !ig).count() as u64;
+                        let d_n = cell.dt_idx.len().min(max_det);
+                        cat_slot[at..at + d_n].fill(k as u32);
+                        img_id[at..at + d_n].fill(id);
+                        score[at..at + d_n].copy_from_slice(&mm.dt_scores[..d_n]);
+                        outcome[at * t_n..(at + d_n) * t_n]
+                            .copy_from_slice(&mm.outcome[..d_n * t_n]);
+                        at += d_n;
+                    }
                 }
-                part
-            })
-            .collect();
-        let mut out = Outcomes::default();
-        for part in parts {
-            out.cat_slot.extend(part.cat_slot);
-            out.img_id.extend(part.img_id);
-            out.score.extend(part.score);
-            out.outcome.extend(part.outcome);
-            out.npig.extend(part.npig);
+            }
+            debug_assert_eq!(at, score.len(), "a unit filled its whole range");
+            (k, npig)
+        };
+        let npig: Vec<(usize, u64)> = if sequential {
+            work.into_iter().map(unit).collect()
+        } else {
+            work.into_par_iter().map(unit).collect()
+        };
+        for (k, v) in npig {
+            out.npig[k] += v;
         }
         out
     }
@@ -1405,6 +1650,10 @@ struct MatchScratch {
     gt_matched: Vec<bool>,
     /// `dt_match` when the caller does not keep it.
     dt_match: Vec<i32>,
+    /// Ground-truth positions each detection scans; see `evaluate_img_into`.
+    scan: Vec<u32>,
+    /// `D + 1` offsets into `scan`.
+    scan_at: Vec<u32>,
 }
 
 #[derive(Default)]
@@ -2158,40 +2407,62 @@ mod tests {
     fn outcomes_agree_with_per_instance_at_every_threshold() {
         // Two categories, a crowd region, one detection outside the second
         // area range and a maxDets cut, so every outcome kind appears.
-        let gt = boxes(
-            &[1, 2, 3],
-            &[0.0; 3],
-            &[UNIT, [50.0, 0.0, 50.0, 50.0], [0.0, 0.0, 4.0, 4.0]],
-            &[0, 0, 1],
-            &[false, true, false],
+        // Category 2 has only ground truth (one crowd), category 3 only
+        // detections (tied scores, one outside the second area range), so
+        // the one-sided paths are compared with `per_instance` too.
+        let mut gt = boxes(
+            &[1, 2, 3, 4, 5],
+            &[0.0; 5],
+            &[
+                UNIT,
+                [50.0, 0.0, 50.0, 50.0],
+                [0.0, 0.0, 4.0, 4.0],
+                [0.0, 0.0, 9.0, 9.0],
+                [5.0, 5.0, 3.0, 3.0],
+            ],
+            &[0, 0, 1, 2, 2],
+            &[false, true, false, false, true],
         );
-        let dt = boxes(
-            &[11, 12, 13, 14, 15],
-            &[0.9, 0.8, 0.7, 0.6, 0.6],
+        gt.img_slot = vec![0, 0, 0, 0, 1];
+        let mut dt = boxes(
+            &[11, 12, 13, 14, 15, 16, 17, 18],
+            &[0.9, 0.8, 0.7, 0.6, 0.6, 0.5, 0.5, 0.95],
             &[
                 [0.0, 0.0, 10.0, 8.0],
                 [60.0, 10.0, 10.0, 10.0],
                 [200.0, 0.0, 9.0, 9.0],
                 [0.0, 0.0, 4.0, 3.0],
                 [0.0, 0.0, 4.0, 4.0],
+                [0.0, 0.0, 20.0, 20.0],
+                [0.0, 0.0, 2.0, 2.0],
+                [1.0, 1.0, 5.0, 5.0],
             ],
-            &[0, 0, 0, 1, 1],
-            &[false; 5],
+            &[0, 0, 0, 1, 1, 3, 3, 3],
+            &[false; 8],
         );
+        dt.img_slot = vec![0, 0, 0, 0, 0, 0, 0, 1];
         let mut p = params();
-        p.cat_ids = vec![7, 8];
+        p.img_ids = vec![100, 101];
+        p.cat_ids = vec![7, 8, 9, 10];
         p.iou_thrs = vec![0.5, 0.75, 0.95];
         p.area_rng = vec![[0.0, 1e10], [0.0, 90.0]];
         let ev = Evaluator::new(p, gt, dt);
         for a in 0..2 {
             for max_det in [1, 2, 10] {
                 let out = ev.outcomes(a, max_det);
-                assert_eq!(out.npig, if a == 0 { vec![1, 1] } else { vec![0, 1] });
+                assert_eq!(
+                    out.npig,
+                    if a == 0 {
+                        vec![1, 1, 1, 0]
+                    } else {
+                        vec![0, 1, 1, 0]
+                    }
+                );
                 for t in 0..3 {
                     let (dets, _) = ev.per_instance(t, a, max_det);
                     assert_eq!(dets.len(), out.score.len());
                     for (n, d) in dets.iter().enumerate() {
-                        assert_eq!(d.cat_id, [7, 8][out.cat_slot[n] as usize]);
+                        assert_eq!(d.cat_id, [7, 8, 9, 10][out.cat_slot[n] as usize]);
                         assert_eq!(d.img_id, out.img_id[n]);
                         assert_eq!(d.score.to_bits(), out.score[n].to_bits());
                         let expected = if d.ignore {
@@ -2220,6 +2491,184 @@ mod tests {
         let _ = ev.run(false);
         let [_group, iou, matching, accumulate] = ev.timings().as_secs();
         assert!(iou >= 0.0 && matching >= 0.0 && accumulate >= 0.0);
+    }
+
+    #[test]
+    fn outcomes_do_not_depend_on_the_thread_layout() {
+        // Large enough for many units of one category and many categories.
+        let mut seed = 5u64;
+        let mut next = |m: u64| {
+            seed = seed
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            (seed >> 33) % m
+        };
+        let (g_n, d_n, imgs) = (3000usize, 9000usize, 400u64);
+        let rect = |next: &mut dyn FnMut(u64) -> u64| -> [f64; 4] {
+            [
+                next(60) as f64,
+                next(60) as f64,
+                2.0 + next(30) as f64,
+                2.0 + next(30) as f64,
+            ]
+        };
+        let g_rects: Vec<_> = (0..g_n).map(|_| rect(&mut next)).collect();
+        let d_rects: Vec<_> = (0..d_n).map(|_| rect(&mut next)).collect();
+        let g_cat: Vec<u32> = (0..g_n).map(|_| next(5) as u32).collect();
+        let d_cat: Vec<u32> = (0..d_n).map(|_| next(5) as u32).collect();
+        let crowd: Vec<bool> = (0..g_n).map(|_| next(9) == 0).collect();
+        let scores: Vec<f64> = (0..d_n).map(|_| next(50) as f64 / 50.0).collect();
+        let mut gt = boxes(
+            &(1..=g_n as i64).collect::<Vec<_>>(),
+            &vec![0.0; g_n],
+            &g_rects,
+            &g_cat,
+            &crowd,
+        );
+        gt.img_slot = (0..g_n).map(|_| next(imgs) as u32).collect();
+        let mut dt = boxes(
+            &(1..=d_n as i64).collect::<Vec<_>>(),
+            &scores,
+            &d_rects,
+            &d_cat,
+            &vec![false; d_n],
+        );
+        dt.img_slot = (0..d_n).map(|_| next(imgs) as u32).collect();
+        let mut p = params();
+        p.img_ids = (0..imgs as i64).collect();
+        p.cat_ids = vec![1, 2, 3, 4, 5];
+        p.iou_thrs = vec![0.5, 0.75];
+        p.area_rng = vec![[0.0, 1e10], [0.0, 400.0]];
+        p.max_dets = vec![100];
+        let ev = Evaluator::new(p, gt, dt);
+        for a in 0..2 {
+            let seq = ev.outcomes_on(a, 100, true);
+            let par = ev.outcomes_on(a, 100, false);
+            assert_eq!(seq.cat_slot, par.cat_slot);
+            assert_eq!(seq.img_id, par.img_id);
+            assert_eq!(seq.outcome, par.outcome);
+            assert_eq!(seq.npig, par.npig);
+            assert!(seq
+                .score
+                .iter()
+                .zip(&par.score)
+                .all(|(x, y)| x.to_bits() == y.to_bits()));
+        }
+    }
+
+    #[test]
+    fn several_thresholds_match_like_one_threshold_each() {
+        // With several thresholds the matcher scans only candidate ground
+        // truths; one threshold scans them all. Matching at each threshold is
+        // independent, so the two must agree on every output bit. Crowds,
+        // area-range ignores, tied scores, touching boxes and NaN boxes.
+        struct Rng(u64);
+        impl Rng {
+            fn next(&mut self, m: u64) -> u64 {
+                self.0 = self
+                    .0
+                    .wrapping_mul(6364136223846793005)
+                    .wrapping_add(1442695040888963407);
+                (self.0 >> 33) % m
+            }
+            fn rect(&mut self, nan: bool) -> [f64; 4] {
+                if nan && self.next(30) == 0 {
+                    return [f64::NAN, 1.0, 5.0, 5.0];
+                }
+                [
+                    self.next(40) as f64,
+                    self.next(40) as f64,
+                    1.0 + self.next(20) as f64,
+                    1.0 + self.next(20) as f64,
+                ]
+            }
+        }
+        let mut rng = Rng(11);
+        for round in 0..30 {
+            let (g_n, d_n) = (3 + rng.next(12) as usize, 5 + rng.next(40) as usize);
+            let g_rects: Vec<_> = (0..g_n).map(|_| rng.rect(round % 3 == 0)).collect();
+            let d_rects: Vec<_> = (0..d_n).map(|_| rng.rect(round % 3 == 0)).collect();
+            let crowd: Vec<bool> = (0..g_n).map(|_| rng.next(6) == 0).collect();
+            let g_cat: Vec<u32> = (0..g_n).map(|_| rng.next(2) as u32).collect();
+            let g_img: Vec<u32> = (0..g_n).map(|_| rng.next(2) as u32).collect();
+            let scores: Vec<f64> = (0..d_n).map(|_| rng.next(8) as f64 / 8.0).collect();
+            let d_cat: Vec<u32> = (0..d_n).map(|_| rng.next(2) as u32).collect();
+            let d_img: Vec<u32> = (0..d_n).map(|_| rng.next(2) as u32).collect();
+            let make = || {
+                let g_ids: Vec<i64> = (1..=g_n as i64).collect();
+                let d_ids: Vec<i64> = (1..=d_n as i64).collect();
+                let mut gt = boxes(&g_ids, &vec![0.0; g_n], &g_rects, &g_cat, &crowd);
+                gt.img_slot = g_img.clone();
+                let mut dt = boxes(&d_ids, &scores, &d_rects, &d_cat, &vec![false; d_n]);
+                dt.img_slot = d_img.clone();
+                (gt, dt)
+            };
+            let mut p = params();
+            p.img_ids = vec![100, 101];
+            p.cat_ids = vec![7, 8];
+            p.area_rng = vec![[0.0, 1e10], [0.0, 64.0]];
+            p.max_dets = vec![3, 100];
+            let thrs = [0.05, 0.3, 0.5, 0.75, 1.0];
+            let several = {
+                let mut q = p.clone();
+                q.iou_thrs = thrs.to_vec();
+                let (gt, dt) = make();
+                Evaluator::new(q, gt, dt).run(false).0
+            };
+            let [t_n, r_n, k_n, a_n, m_n] = several.counts;
+            for (t, &thr) in thrs.iter().enumerate() {
+                let mut q = p.clone();
+                q.iou_thrs = vec![thr];
+                let (gt, dt) = make();
+                let one = Evaluator::new(q, gt, dt).run(false).0;
+                let rest = r_n * k_n * a_n * m_n;
+                assert_eq!(t_n, thrs.len());
+                let same =
+                    |a: &[f64], b: &[f64]| a.iter().zip(b).all(|(x, y)| x.to_bits() == y.to_bits());
+                assert!(
+                    same(&several.precision[t * rest..(t + 1) * rest], &one.precision),
+                    "round {round} t {t}"
+                );
+                assert!(
+                    same(&several.scores[t * rest..(t + 1) * rest], &one.scores),
+                    "round {round} t {t}"
+                );
+                let rest = k_n * a_n * m_n;
+                assert!(
+                    same(&several.recall[t * rest..(t + 1) * rest], &one.recall),
+                    "round {round} t {t}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn sort_by_score_gives_the_comparison_sort_permutation() {
+        let scores = [
+            0.5,
+            f64::NAN,
+            0.9,
+            0.5,
+            -0.0,
+            0.0,
+            0.9,
+            f64::NAN,
+            f64::INFINITY,
+            -1.0,
+        ];
+        let mut keys = Vec::new();
+        for start in 0..scores.len() {
+            // Rotations, and the already-sorted fast path.
+            let mut idx: Vec<u32> = (0..scores.len() as u32)
+                .map(|i| (i + start as u32) % 10)
+                .collect();
+            let mut expected = idx.clone();
+            expected.sort_by(|&a, &b| cmp_desc_score(scores[a as usize], scores[b as usize]));
+            sort_by_score(&scores, &mut idx, &mut keys);
+            assert_eq!(idx, expected);
+            sort_by_score(&scores, &mut idx, &mut keys);
+            assert_eq!(idx, expected);
+        }
     }
 
     #[test]
