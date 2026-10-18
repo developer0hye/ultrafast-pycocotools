@@ -292,7 +292,12 @@ Plain dictionaries of NumPy arrays, like the other extensions:
 }
 ```
 
-`COCOeval.detection_metrics` with a scalar `iou_thr` drops the `T` axis.
+`COCOeval.detection_metrics` with a scalar `iou_thr` drops the `T` axis and
+reports `iou_thr` (a float) in place of `iou_thrs`.
+
+The macro mean sums categories one at a time, left to right, rather than with
+`np.mean`, whose summation order depends on the array shape: the same row
+rounded one ULP differently alone than inside a multi-threshold result.
 
 ## Errors
 

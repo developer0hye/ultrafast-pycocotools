@@ -432,11 +432,45 @@ ev.pr_curve(cat_id=1, iou_thr=0.5)   # {"recall", "precision", "score"}
 ev.matches(iou_thr=0.5)     # Columns: image_id/category_id/dt_id/gt_id/score/iou.
 ev.confusion_matrix()       # Includes a background row and column.
 ev.mean_iou()               # Mean IoU of matched pairs, describing localization quality.
+ev.detection_metrics()      # Per-class, micro and macro precision/recall/F1.
 ```
 
 `matches()` returns column-wise NumPy arrays instead of a list of dictionaries.
 Hundreds of thousands of matching records can otherwise cost more to materialize
 than evaluation itself.
+
+### Precision, recall and F1
+
+`detection_metrics(iou_thr=0.5, score_thr=None, optimize="macro", area="all",
+max_dets=None)` counts the engine's per-detection outcomes, the same bytes
+accumulation reads, at one IoU threshold or a sequence of them:
+
+- TP and FP are detections with that outcome and `score >= score_thr`
+  (`score_thr=None` keeps every detection up to `max_dets`). FN is
+  non-ignored ground truth minus TP. Detections matched to a crowd region, or
+  unmatched and outside the area range, are neither, as in AP.
+- With no score threshold, per-category recall is bit-identical to
+  `eval["recall"]`.
+- A threshold applied after matching gives the same counts as evaluating
+  only the detections that pass it. Matching visits detections in stable
+  descending score order and each match depends only on earlier detections;
+  `score >= s` keeps a prefix of that order, and a prefix matches the same
+  without the rest. The tests compare both on crowds, area boundaries and tied
+  scores.
+- Zero denominators give 0 (precision with no kept detections, recall with
+  no ground truth, F1 when both are 0). `EPS` from the PR curve is not added.
+- `per_category` lists categories with non-ignored ground truth or a counted
+  detection. `micro` sums their counts, so every false positive counts.
+  `macro` averages precision, recall and F1 over categories with ground
+  truth, as COCO leaves categories without ground truth out of AR; macro F1
+  is the mean of per-category F1.
+- `score_thr="best_f1"` picks, per IoU threshold, the score cut that
+  maximizes macro (or, with `optimize="micro"`, micro) F1 and reports every
+  value at that one cut. Cuts fall between distinct scores only; equal F1
+  goes to the higher threshold; with nothing to keep the threshold is `inf`.
+  The values are exact at real score cuts, without the smoothing or
+  confidence grid some trainers use.
+- `useCats=0` gives one class-agnostic category, id `-1`.
 
 Custom evaluation grids are supported and covered by reference comparisons:
 

@@ -56,7 +56,7 @@ from typing import Any
 
 import numpy as np
 
-from . import _ufcoco
+from . import _detection_metrics, _ufcoco
 from . import mask as maskUtils
 from .coco import COCO
 
@@ -870,6 +870,78 @@ class COCOeval:
                 cm[n, k] += 1
         labels = [str(c) for c in cat_ids] + ["background"]
         return cm, labels
+
+    def detection_metrics(
+        self,
+        iou_thr: float | Any = 0.5,
+        score_thr: float | str | None = None,
+        optimize: str = "macro",
+        area: str = "all",
+        max_dets: int | None = None,
+    ) -> dict:
+        """Precision, recall and F1 from the matching behind AP.
+
+        Args:
+            iou_thr: one value of ``params.iouThrs``, or a sequence of them.
+                For another threshold, set ``params.iouThrs`` before
+                ``evaluate()``.
+            score_thr: ``None`` counts every detection up to ``max_dets``; a
+                number keeps ``score >= score_thr``; ``"best_f1"`` picks, per
+                IoU threshold, the score cut that maximizes F1.
+            optimize: the F1 ``"best_f1"`` maximizes, ``"macro"`` or
+                ``"micro"``. Every reported value uses that one cut.
+            area: an ``params.areaRngLbl`` label.
+            max_dets: detections kept per (image, category); at most
+                ``params.maxDets[-1]``, which is the default.
+
+        Returns a dict with ``category_ids``, ``score_thr`` and the groups
+        ``per_category`` (``tp``, ``fp``, ``fn``, ``precision``, ``recall``,
+        ``f1``, one entry per category), ``micro`` (counts summed over
+        categories) and ``macro`` (mean over categories with ground truth).
+        A scalar ``iou_thr`` gives ``iou_thr`` and per-threshold values
+        without a threshold axis; a sequence gives ``iou_thrs`` and a leading
+        threshold axis.
+
+        Counts follow COCO: detections matched to a crowd region, or
+        unmatched and outside the area range, are neither true nor false
+        positives, and ignored ground truth is never a false negative.
+        Categories are reported when they have non-ignored ground truth or a
+        counted detection. Zero denominators give 0.
+        """
+        if self._engine is None:
+            raise Exception("Please run evaluate() first")
+        _detection_metrics.check_options(score_thr, optimize)
+        p = self._paramsEval if self._paramsEval is not None else self.params
+        grid = np.asarray(p.iouThrs, dtype=np.float64)
+        scalar = np.ndim(iou_thr) == 0
+        wanted = [iou_thr] if scalar else list(iou_thr)
+        if not wanted:
+            raise ValueError("iou_thr must not be empty")
+        t_idx = []
+        for value in wanted:
+            hit = np.flatnonzero(np.isclose(grid, value))
+            if hit.size == 0:
+                raise ValueError(
+                    f"iou_thr {value} is not in params.iouThrs {grid.tolist()}; "
+                    "set params.iouThrs before evaluate() to use other thresholds"
+                )
+            t_idx.append(int(hit[0]))
+        if area not in p.areaRngLbl:
+            raise ValueError(f"area {area!r} is not in params.areaRngLbl {list(p.areaRngLbl)}")
+        aind = list(p.areaRngLbl).index(area)
+        mdet = p.maxDets[-1] if max_dets is None else int(max_dets)
+        if not 0 <= mdet <= p.maxDets[-1]:
+            raise ValueError(
+                f"max_dets must be between 0 and params.maxDets[-1] ({p.maxDets[-1]}), not {mdet}"
+            )
+
+        out = self._engine.outcomes(aind, mdet)
+        result = _detection_metrics.summarize_outcomes(
+            out["cat_slot"], out["score"], out["outcome"][:, t_idx], out["npig"],
+            list(p.catIds) if p.useCats else [-1], grid[t_idx],
+            score_thr=score_thr, optimize=optimize,
+        )
+        return _detection_metrics.drop_threshold_axis(result) if scalar else result
 
     def mean_iou(self, iou_thr: float = 0.5, area: str = "all") -> float:
         """Mean IoU over true positives — localisation quality, independent of
