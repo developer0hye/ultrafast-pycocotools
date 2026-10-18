@@ -13,6 +13,7 @@
 //! in the dataset + every RLE".
 
 mod alloc;
+mod batch;
 mod compact;
 mod json;
 mod mask;
@@ -1001,124 +1002,101 @@ fn outcomes_to_py(
     Ok(d)
 }
 
-/// `Evaluator(...).outcomes(0, max_det)` for box columns, without building
-/// annotation dicts, `COCO` handles or the accumulated curves.
+/// `ufcoco_core::metrics::summarize`: precision, recall and F1 from outcomes.
 ///
-/// Instances are filled exactly as `read_annotations` fills them from the
-/// dicts `loadRes` and a ground-truth file would hold: ground truth is ignored
-/// when crowded, detection areas are `w * h`, and the input order within each
-/// image is the annotation order that breaks score ties. Slots index
-/// `img_ids` and `cat_ids`; one area range and one `maxDets`.
+/// `cut` is `"all"`, `"at_least"` (with `threshold`) or `"best_f1"` (with
+/// `micro`). Returns a dict of numpy arrays: `category_ids`, `score_thr`, the
+/// `(T, R)` `tp` / `fp` / `fn` / `precision` / `recall` / `f1`, and `micro_*` /
+/// `macro_*` of length `T`.
 #[pyfunction]
-#[pyo3(signature = (
-    gt_img, gt_cat, gt_boxes, gt_area, gt_crowd, dt_img, dt_cat, dt_boxes, dt_score,
-    img_ids, cat_ids, iou_thrs, area_rng, max_det, use_cats,
-))]
+#[pyo3(signature = (det_cat, score, outcome, gt_cat, npig, cut, threshold=0.0, micro=false, exhaustive=false))]
 #[allow(clippy::too_many_arguments)]
-fn box_outcomes<'py>(
+fn summarize_outcomes<'py>(
     py: Python<'py>,
-    gt_img: numpy::PyReadonlyArray1<'py, u32>,
-    gt_cat: numpy::PyReadonlyArray1<'py, u32>,
-    gt_boxes: numpy::PyReadonlyArray2<'py, f64>,
-    gt_area: numpy::PyReadonlyArray1<'py, f64>,
-    gt_crowd: numpy::PyReadonlyArray1<'py, bool>,
-    dt_img: numpy::PyReadonlyArray1<'py, u32>,
-    dt_cat: numpy::PyReadonlyArray1<'py, u32>,
-    dt_boxes: numpy::PyReadonlyArray2<'py, f64>,
-    dt_score: numpy::PyReadonlyArray1<'py, f64>,
-    img_ids: Vec<i64>,
-    cat_ids: Vec<i64>,
-    iou_thrs: Vec<f64>,
-    area_rng: [f64; 2],
-    max_det: usize,
-    use_cats: bool,
+    det_cat: numpy::PyReadonlyArray1<'py, i64>,
+    score: numpy::PyReadonlyArray1<'py, f64>,
+    outcome: numpy::PyReadonlyArray2<'py, u8>,
+    gt_cat: numpy::PyReadonlyArray1<'py, i64>,
+    npig: numpy::PyReadonlyArray1<'py, i64>,
+    cut: &str,
+    threshold: f64,
+    micro: bool,
+    exhaustive: bool,
 ) -> PyResult<Bound<'py, PyDict>> {
-    let column = |name: &str, len: usize, want: usize| -> PyResult<()> {
-        if len == want {
-            Ok(())
-        } else {
-            Err(PyValueError::new_err(format!(
-                "{name} has {len} rows, expected {want}"
-            )))
-        }
+    use ufcoco_core::metrics::{summarize, Cut};
+    let cut = match cut {
+        "all" => Cut::All,
+        "at_least" => Cut::AtLeast(threshold),
+        "best_f1" => Cut::BestF1 { micro },
+        other => return Err(PyValueError::new_err(format!("unknown cut {other:?}"))),
     };
-    let boxes =
-        |name: &str, array: &numpy::PyReadonlyArray2<'py, f64>| -> PyResult<Vec<[f64; 4]>> {
-            let view = array.as_array();
-            if view.ncols() != 4 {
-                return Err(PyValueError::new_err(format!(
-                    "{name} must have 4 columns, not {}",
-                    view.ncols()
-                )));
-            }
-            Ok(view
-                .rows()
-                .into_iter()
-                .map(|r| [r[0], r[1], r[2], r[3]])
-                .collect())
-        };
-    let slots =
-        |name: &str, array: &numpy::PyReadonlyArray1<'py, u32>, n: usize| -> PyResult<Vec<u32>> {
-            let v = array.as_array().to_vec();
-            if v.iter().any(|&s| s as usize >= n) {
-                return Err(PyValueError::new_err(format!(
-                    "{name} has a slot out of range"
-                )));
-            }
-            Ok(v)
-        };
-    let gt_geom = boxes("gt_boxes", &gt_boxes)?;
-    let dt_geom = boxes("dt_boxes", &dt_boxes)?;
-    let (g_n, d_n) = (gt_geom.len(), dt_geom.len());
-    column("gt_img", gt_img.len()?, g_n)?;
-    column("gt_cat", gt_cat.len()?, g_n)?;
-    column("gt_area", gt_area.len()?, g_n)?;
-    column("gt_crowd", gt_crowd.len()?, g_n)?;
-    column("dt_img", dt_img.len()?, d_n)?;
-    column("dt_cat", dt_cat.len()?, d_n)?;
-    column("dt_score", dt_score.len()?, d_n)?;
-    let crowd = gt_crowd.as_array().to_vec();
-    let gt = Instances {
-        ids: (1..=g_n as i64).collect(),
-        scores: vec![0.0; g_n],
-        areas: gt_area.as_array().to_vec(),
-        ignore: crowd.clone(),
-        iscrowd: crowd,
-        lvis_mark: vec![false; g_n],
-        bboxes: Vec::new(),
-        img_slot: slots("gt_img", &gt_img, img_ids.len())?,
-        cat_slot: slots("gt_cat", &gt_cat, cat_ids.len())?,
-        geom: GeomStore::Bboxes(gt_geom),
+    let det_cat = det_cat.as_array();
+    let score = score.as_array();
+    let outcome = outcome.as_array();
+    let gt_cat = gt_cat.as_array();
+    let npig = npig.as_array();
+    let t_n = outcome.ncols();
+    if det_cat.len() != score.len() || outcome.nrows() != score.len() || gt_cat.len() != npig.len()
+    {
+        return Err(PyValueError::new_err(
+            "summarize_outcomes: column lengths differ",
+        ));
+    }
+    let (det_cat, score, outcome) = (
+        det_cat.as_standard_layout(),
+        score.as_standard_layout(),
+        outcome.as_standard_layout(),
+    );
+    let (gt_cat, npig) = (gt_cat.as_standard_layout(), npig.as_standard_layout());
+    let args = (
+        det_cat.as_slice().expect("standard layout"),
+        score.as_slice().expect("standard layout"),
+        outcome.as_slice().expect("standard layout"),
+        gt_cat.as_slice().expect("standard layout"),
+        npig.as_slice().expect("standard layout"),
+    );
+    let s = py.detach(|| summarize(args.0, args.1, args.2, t_n, args.3, args.4, cut, exhaustive));
+    let r_n = s.category_ids.len();
+    let grid = |v: Vec<f64>| -> PyResult<Bound<'py, numpy::PyArray2<f64>>> {
+        Ok(Array2::from_shape_vec((t_n, r_n), v)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?
+            .into_pyarray(py))
     };
-    let dt = Instances {
-        ids: (1..=d_n as i64).collect(),
-        scores: dt_score.as_array().to_vec(),
-        // `prepare_bbox_results` / loadRes: `area = bb[2] * bb[3]`.
-        areas: dt_geom.iter().map(|b| b[2] * b[3]).collect(),
-        iscrowd: vec![false; d_n],
-        ignore: vec![false; d_n],
-        lvis_mark: vec![false; d_n],
-        bboxes: Vec::new(),
-        img_slot: slots("dt_img", &dt_img, img_ids.len())?,
-        cat_slot: slots("dt_cat", &dt_cat, cat_ids.len())?,
-        geom: GeomStore::Bboxes(dt_geom),
+    let counts = |v: Vec<i64>| -> PyResult<Bound<'py, numpy::PyArray2<i64>>> {
+        Ok(Array2::from_shape_vec((t_n, r_n), v)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?
+            .into_pyarray(py))
     };
-    let t_n = iou_thrs.len();
-    let params = EvalParams {
-        img_ids,
-        cat_ids,
-        iou_thrs,
-        // Only `run` reads the recall grid; outcomes do not.
-        rec_thrs: vec![0.0],
-        max_dets: vec![max_det],
-        area_rng: vec![area_rng],
-        use_cats,
-        iou_type: IouType::Bbox,
-        kpt_sigmas: Vec::new(),
-        use_area: true,
-    };
-    let out = py.detach(|| CoreEvaluator::new(params, gt, dt).outcomes(0, max_det));
-    outcomes_to_py(py, out, t_n)
+    let d = PyDict::new(py);
+    d.set_item(
+        "category_ids",
+        Array1::from_vec(s.category_ids).into_pyarray(py),
+    )?;
+    d.set_item("score_thr", Array1::from_vec(s.score_thr).into_pyarray(py))?;
+    d.set_item("tp", counts(s.tp)?)?;
+    d.set_item("fp", counts(s.fp)?)?;
+    d.set_item("fn", counts(s.fn_)?)?;
+    d.set_item("precision", grid(s.precision)?)?;
+    d.set_item("recall", grid(s.recall)?)?;
+    d.set_item("f1", grid(s.f1)?)?;
+    for (key, value) in [
+        ("micro_tp", s.micro_tp),
+        ("micro_fp", s.micro_fp),
+        ("micro_fn", s.micro_fn),
+    ] {
+        d.set_item(key, Array1::from_vec(value).into_pyarray(py))?;
+    }
+    for (key, value) in [
+        ("micro_precision", s.micro_precision),
+        ("micro_recall", s.micro_recall),
+        ("micro_f1", s.micro_f1),
+        ("macro_precision", s.macro_precision),
+        ("macro_recall", s.macro_recall),
+        ("macro_f1", s.macro_f1),
+    ] {
+        d.set_item(key, Array1::from_vec(value).into_pyarray(py))?;
+    }
+    Ok(d)
 }
 
 fn eval_imgs_to_py<'py>(
@@ -1246,7 +1224,8 @@ fn _ufcoco(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(compact::load_compact_bbox, m)?)?;
     m.add_function(wrap_pyfunction!(compact::load_compact_array, m)?)?;
     m.add_function(wrap_pyfunction!(index_annotations, m)?)?;
-    m.add_function(wrap_pyfunction!(box_outcomes, m)?)?;
+    m.add_function(wrap_pyfunction!(batch::box_batch, m)?)?;
+    m.add_function(wrap_pyfunction!(summarize_outcomes, m)?)?;
     m.add_function(wrap_pyfunction!(prepare_bbox_results, m)?)?;
     m.add_function(wrap_pyfunction!(summary::summary_values, m)?)?;
     m.add_function(wrap_pyfunction!(mask::encode, m)?)?;

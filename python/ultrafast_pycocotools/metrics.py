@@ -59,6 +59,14 @@ def _to_numpy(value: Any) -> np.ndarray:
     return np.asarray(value)
 
 
+def _convert(value: Any, kind: str):
+    """``box_batch``'s fallback for values that are not NumPy arrays of a
+    common dtype: the conversion the dictionary path applies."""
+    if kind == "int":
+        return int(_to_numpy(value))
+    return np.asarray(_to_numpy(value), dtype=np.float64 if kind == "f64" else np.int64)
+
+
 class DetectionMetrics:
     """Per-batch and accumulated precision, recall and F1.
 
@@ -121,7 +129,8 @@ class DetectionMetrics:
         self._cats: list[np.ndarray] = []
         self._scores: list[np.ndarray] = []
         self._outcomes: list[np.ndarray] = []
-        self._npig: dict[int, int] = {}
+        self._gt_cats: list[np.ndarray] = []
+        self._npig: list[np.ndarray] = []
         self._seen: set = set()
         self._next_id = 1
 
@@ -142,9 +151,21 @@ class DetectionMetrics:
             raise ValueError("keypoints take COCO input; use update_coco()")
         if len(preds) != len(targets):
             raise ValueError(f"preds has {len(preds)} images but targets has {len(targets)}")
-        image_ids = self._image_ids(preds, targets)
+        if self.iou_type == "bbox":
+            if not len(preds):
+                return self._keep(None, [])
+            raw = _ufcoco.box_batch(
+                preds if type(preds) is list else list(preds),
+                targets if type(targets) is list else list(targets),
+                self.box_format == "xyxy", self.iou_thrs.tolist(),
+                self.area_range if self.area_range is not None else [0.0, float("inf")],
+                _UNLIMITED if self.max_dets is None else self.max_dets,
+                not self.class_agnostic, _convert,
+            )
+            return self._keep(raw, self._image_ids(raw["image_ids"]))
+        image_ids = self._image_ids(self._given_ids(preds, targets))
 
-        geometry = "masks" if self.iou_type == "segm" else "boxes"
+        geometry = "masks"
         sides = []
         for i, (pred, target) in enumerate(zip(preds, targets)):
             for name, item, keys in (("preds", pred, (geometry, "scores", "labels")),
@@ -159,21 +180,16 @@ class DetectionMetrics:
                 raise ValueError(f"preds[{i}] has {len(dt_cats)} labels but {scores.shape[0]} scores")
             sides.append((gt_geom, gt_cats, iscrowd, areas, dt_geom, dt_cats, scores))
         if not image_ids:
-            return self._store(None, None, image_ids)
-        if geometry == "boxes":
-            return self._update_boxes(sides, image_ids)
+            return self._keep(None, image_ids)
 
         images, gt_anns, dt_anns, labels = [], [], [], set()
         for i, (side, img_id) in enumerate(zip(sides, image_ids)):
             gt_geom, gt_cats, iscrowd, areas, dt_geom, dt_cats, scores = side
-            image = {"id": img_id}
-            if geometry == "masks":
-                sizes = {m.shape[1:] for m in (gt_geom, dt_geom) if m.shape[0]}
-                if len(sizes) > 1:
-                    raise ValueError(f"image {i}: preds and targets masks differ in size {sorted(sizes)}")
-                shape = sizes.pop() if sizes else gt_geom.shape[1:]
-                image["height"], image["width"] = int(shape[0]), int(shape[1])
-            images.append(image)
+            sizes = {m.shape[1:] for m in (gt_geom, dt_geom) if m.shape[0]}
+            if len(sizes) > 1:
+                raise ValueError(f"image {i}: preds and targets masks differ in size {sorted(sizes)}")
+            shape = sizes.pop() if sizes else gt_geom.shape[1:]
+            images.append({"id": img_id, "height": int(shape[0]), "width": int(shape[1])})
             labels.update(gt_cats.tolist())
             labels.update(dt_cats.tolist())
 
@@ -216,21 +232,20 @@ class DetectionMetrics:
 
     def compute(self) -> dict:
         """Metrics over every image added since construction or ``reset()``."""
-        if self._cats:
-            cats = np.concatenate(self._cats)
-            scores = np.concatenate(self._scores)
-            outcomes = np.concatenate(self._outcomes)
-        else:
-            cats = np.zeros(0, dtype=np.int64)
-            scores = np.zeros(0, dtype=np.float64)
-            outcomes = np.zeros((0, self.iou_thrs.size), dtype=np.uint8)
-        return self._summarize(cats, scores, outcomes, self._npig)
+        if not self._cats:
+            return self._summarize(None)
+        return self._summarize({
+            "det_cat": np.concatenate(self._cats), "score": np.concatenate(self._scores),
+            "outcome": np.concatenate(self._outcomes), "gt_cat": np.concatenate(self._gt_cats),
+            "npig": np.concatenate(self._npig),
+        })
 
     # ------------------------------------------------------------------
     # internals
     # ------------------------------------------------------------------
 
-    def _image_ids(self, preds, targets) -> list:
+    @staticmethod
+    def _given_ids(preds, targets) -> list:
         given = []
         for i, (pred, target) in enumerate(zip(preds, targets)):
             ids = {item["image_id"] for item in (pred, target) if "image_id" in item}
@@ -238,6 +253,10 @@ class DetectionMetrics:
             if len(ids) > 1:
                 raise ValueError(f"image {i}: preds and targets give different image_id {sorted(ids)}")
             given.append(ids.pop() if ids else None)
+        return given
+
+    def _image_ids(self, given: list) -> list:
+        """Ids for a batch's images: as given, or numbered; never one already added."""
         if all(v is None for v in given):
             start = self._next_id
             while any(i in self._seen for i in range(start, start + len(given))):
@@ -259,15 +278,8 @@ class DetectionMetrics:
         labels = np.asarray(_to_numpy(item["labels"]), dtype=np.int64).ravel()
         n = labels.shape[0]
         geom = _to_numpy(item[geometry])
-        if geometry == "boxes":
-            geom = np.asarray(geom, dtype=np.float64)
-            if geom.size == 0:
-                geom = geom.reshape(0, 4)
-            if geom.shape != (n, 4):
-                raise ValueError(f"{name}[{i}]['boxes'] must have shape ({n}, 4), not {geom.shape}")
-        else:
-            if geom.ndim != 3 or geom.shape[0] != n:
-                raise ValueError(f"{name}[{i}]['masks'] must have shape ({n}, H, W), not {geom.shape}")
+        if geom.ndim != 3 or geom.shape[0] != n:
+            raise ValueError(f"{name}[{i}]['masks'] must have shape ({n}, H, W), not {geom.shape}")
         extra = (None, None)
         if name == "targets":
             iscrowd = (np.asarray(_to_numpy(item["iscrowd"]), dtype=np.int64).ravel()
@@ -286,49 +298,10 @@ class DetectionMetrics:
             return []
         return maskUtils.encode(np.asfortranarray(masks.transpose(1, 2, 0).astype(np.uint8)))
 
-    def _update_boxes(self, sides: list, image_ids: list) -> dict:
-        """Box batches go to the engine as columns, without annotation dicts.
-
-        ``box_outcomes`` fills the engine's instances as the dict path would
-        (``test_batch_metrics`` compares the two bit for bit); only the
-        construction of dicts, ``COCO`` handles and curves is skipped.
-        """
-        def column(index, dtype, width=None):
-            parts = [side[index] for side in sides]
-            out = np.concatenate(parts).astype(dtype, copy=False)
-            return out.reshape(-1, width) if width else out
-
-        gt_boxes, dt_boxes = column(0, np.float64, 4), column(4, np.float64, 4)
-        if self.box_format == "xyxy":
-            gt_boxes, dt_boxes = (
-                np.column_stack([b[:, 0], b[:, 1], b[:, 2] - b[:, 0], b[:, 3] - b[:, 1]])
-                for b in (gt_boxes, dt_boxes)
-            )
-        gt_cats, dt_cats = column(1, np.int64), column(5, np.int64)
-        # The box area unless the target gives one, image by image.
-        given = np.concatenate([np.full(len(s[1]), s[3] is not None) for s in sides])
-        values = np.concatenate([s[3] if s[3] is not None else np.zeros(len(s[1])) for s in sides])
-        gt_area = np.where(given, values, gt_boxes[:, 2] * gt_boxes[:, 3])
-        cat_ids = np.unique(np.concatenate([gt_cats, dt_cats]))
-        slots = np.arange(len(sides), dtype=np.uint32)
-        out = _ufcoco.box_outcomes(
-            np.repeat(slots, [len(s[1]) for s in sides]),
-            np.searchsorted(cat_ids, gt_cats).astype(np.uint32),
-            np.ascontiguousarray(gt_boxes), gt_area, column(2, np.int64) != 0,
-            np.repeat(slots, [len(s[5]) for s in sides]),
-            np.searchsorted(cat_ids, dt_cats).astype(np.uint32),
-            np.ascontiguousarray(dt_boxes), column(6, np.float64),
-            [int(i) for i in image_ids], cat_ids.tolist(), self.iou_thrs.tolist(),
-            self.area_range if self.area_range is not None else [0.0, float("inf")],
-            _UNLIMITED if self.max_dets is None else self.max_dets,
-            not self.class_agnostic,
-        )
-        return self._store(out, cat_ids if not self.class_agnostic else [-1], image_ids)
-
     def _add(self, gt: COCO, dt: COCO, image_ids: list, cat_ids: list) -> dict:
         if not image_ids:
             # COCOeval reads an empty imgIds as "every image"; nothing to add.
-            return self._store(None, None, image_ids)
+            return self._keep(None, image_ids)
         ev = COCOeval(gt, dt, self.iou_type, print_function=_quiet)
         p = ev.params
         p.imgIds = list(image_ids)
@@ -342,37 +315,34 @@ class DetectionMetrics:
         p.recThrs = np.array([0.0])
         ev.evaluate()
         out = ev._engine.outcomes(0, p.maxDets[0])
-        return self._store(out, ev.params.catIds if p.useCats else [-1], image_ids)
-
-    def _store(self, out: dict | None, cat_ids, image_ids: list) -> dict:
-        """Keep a batch's outcomes and return its metrics."""
-        if out is None:
-            return self._summarize(np.zeros(0, dtype=np.int64), np.zeros(0),
-                                   np.zeros((0, self.iou_thrs.size), dtype=np.uint8), {})
-        slots = np.asarray(cat_ids, dtype=np.int64)
-        outcome = out["outcome"]
+        slots = np.asarray(ev.params.catIds if p.useCats else [-1], dtype=np.int64)
         # A detection ignored at every threshold is in no count and no cut.
-        counted = (outcome != _detection_metrics.IGNORED).any(axis=1)
-        cats = slots[out["cat_slot"].astype(np.int64)[counted]]
-        scores = out["score"][counted]
-        outcome = outcome[counted]
-        npig = {int(c): int(v) for c, v in zip(slots, out["npig"])}
+        counted = (out["outcome"] != _detection_metrics.IGNORED).any(axis=1)
+        return self._keep({
+            "det_cat": slots[out["cat_slot"].astype(np.int64)[counted]],
+            "score": out["score"][counted], "outcome": out["outcome"][counted],
+            "gt_cat": slots, "npig": out["npig"].astype(np.int64),
+        }, image_ids)
 
-        self._cats.append(cats)
-        self._scores.append(scores)
-        self._outcomes.append(outcome)
-        for c, v in npig.items():
-            self._npig[c] = self._npig.get(c, 0) + v
+    def _keep(self, batch: dict | None, image_ids: list) -> dict:
+        """Store a batch's counted outcomes and return its metrics."""
+        if batch is not None:
+            self._cats.append(batch["det_cat"])
+            self._scores.append(batch["score"])
+            self._outcomes.append(batch["outcome"])
+            self._gt_cats.append(batch["gt_cat"])
+            self._npig.append(batch["npig"])
         self._seen.update(image_ids)
-        return self._summarize(cats, scores, outcome, npig)
+        return self._summarize(batch)
 
-    def _summarize(self, cats, scores, outcomes, npig: dict) -> dict:
-        # Sorted ids, as COCOeval sorts catIds: the macro mean sums in this order.
-        ids = np.array(sorted(set(npig) | set(np.unique(cats).tolist())), dtype=np.int64)
-        result = _detection_metrics.summarize_outcomes(
-            np.searchsorted(ids, cats), scores, outcomes,
-            np.array([npig.get(int(c), 0) for c in ids], dtype=np.int64), ids, self.iou_thrs,
-            score_thr=self.score_thr, optimize=self.optimize,
+    def _summarize(self, batch: dict | None) -> dict:
+        if batch is None:
+            batch = {"det_cat": np.zeros(0, dtype=np.int64), "score": np.zeros(0),
+                     "outcome": np.zeros((0, self.iou_thrs.size), dtype=np.uint8),
+                     "gt_cat": np.zeros(0, dtype=np.int64), "npig": np.zeros(0, dtype=np.int64)}
+        result = _detection_metrics.summarize_ids(
+            batch["det_cat"], batch["score"], batch["outcome"], batch["gt_cat"], batch["npig"],
+            self.iou_thrs, score_thr=self.score_thr, optimize=self.optimize,
         )
         return _detection_metrics.drop_threshold_axis(result) if self._scalar else result
 

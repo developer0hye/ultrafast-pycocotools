@@ -208,24 +208,48 @@ def test_best_macro_f1_without_detections_of_ground_truth_categories():
     assert r["macro"]["f1"].tolist() == [0.0, 1.0]
 
 
-def test_macro_candidates_cover_every_cut_when_unbounded(monkeypatch):
-    """With an infinite tolerance every cut is evaluated exactly; the bounded
-    search must agree."""
+def test_macro_candidates_equal_evaluating_every_cut():
+    """The candidate search against an exact evaluation of every cut."""
     for seed in range(4):
         args = _random_outcomes(seed, n=4000, n_cats=30)
         ids = np.arange(args[3].size)
-        bounded = _detection_metrics.summarize_outcomes(*args, ids, [0.5, 0.75], score_thr="best_f1")
-        with monkeypatch.context() as m:
-            m.setattr(_detection_metrics, "_sweep_tolerance", lambda *_: np.inf)
-            every = _detection_metrics.summarize_outcomes(*args, ids, [0.5, 0.75], score_thr="best_f1")
-        assert np.array_equal(bounded["score_thr"], every["score_thr"])
+        for optimize in ("macro", "micro"):
+            bounded = _detection_metrics.summarize_outcomes(
+                *args, ids, [0.5, 0.75], score_thr="best_f1", optimize=optimize)
+            every = _detection_metrics.summarize_outcomes(
+                *args, ids, [0.5, 0.75], score_thr="best_f1", optimize=optimize, exhaustive=True)
+            _assert_same_result(bounded, every)
 
 
-def test_best_f1_sweep_does_not_depend_on_block_size(bbox_eval, monkeypatch):
-    whole = bbox_eval.detection_metrics(score_thr="best_f1")
-    monkeypatch.setattr(_detection_metrics, "_SWEEP_BLOCK_CELLS", 7)
-    monkeypatch.setattr(_detection_metrics, "_sweep_tolerance", lambda *_: np.inf)
-    assert whole["score_thr"] == bbox_eval.detection_metrics(score_thr="best_f1")["score_thr"]
+@pytest.mark.parametrize("seed", range(6))
+@pytest.mark.parametrize("score_thr", [None, 0.5, 0.0, "best_f1"])
+@pytest.mark.parametrize("optimize", ["macro", "micro"])
+def test_rust_summary_equals_the_numpy_implementation(seed, score_thr, optimize):
+    """``ufcoco_core::metrics`` against the NumPy code it replaced, bit for bit."""
+    import reference_detection_metrics as reference
+
+    args = _random_outcomes(seed, n=2500, n_cats=11, n_thrs=3)
+    ids = np.arange(100, 100 + args[3].size)
+    kwargs = {"score_thr": score_thr, "optimize": optimize}
+    _assert_same_result(
+        _detection_metrics.summarize_outcomes(*args, ids, [0.5, 0.6, 0.7], **kwargs),
+        reference.summarize_outcomes(*args, ids, [0.5, 0.6, 0.7], **kwargs),
+    )
+
+
+@pytest.mark.parametrize("iou_type", ["bbox", "segm"])
+def test_rust_summary_equals_the_numpy_implementation_on_coco(real_coco, iou_type):
+    import reference_detection_metrics as reference
+
+    ev = _evaluate(*_load(*real_coco), iou_type)
+    out = ev._engine.outcomes(0, 100)
+    for score_thr in (None, 0.3, "best_f1"):
+        for optimize in ("macro", "micro"):
+            kwargs = {"score_thr": score_thr, "optimize": optimize}
+            args = (out["cat_slot"], out["score"], out["outcome"], out["npig"], ev.params.catIds,
+                    ev.params.iouThrs)
+            _assert_same_result(_detection_metrics.summarize_outcomes(*args, **kwargs),
+                                reference.summarize_outcomes(*args, **kwargs))
 
 
 def test_counts_agree_with_confusion_matrix(bbox_eval):

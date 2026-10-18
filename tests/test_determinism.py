@@ -53,6 +53,29 @@ RUNNER = textwrap.dedent(
         np.ascontiguousarray(v).tobytes().hex()
         for group in ("per_category", "micro", "macro") for v in m[group].values()
     ) + m["score_thr"].tobytes().hex()
+    # DetectionMetrics fills outcome units and sweeps thresholds in parallel.
+    from ultrafast_pycocotools.metrics import DetectionMetrics
+    gt_json, dt_json = json.load(open(gt_path)), json.load(open(dt_path))
+    def arrays(image_ids):
+        preds, targets = [], []
+        for i in image_ids:
+            g = [a for a in gt_json["annotations"] if a["image_id"] == i]
+            d = [x for x in dt_json if x["image_id"] == i]
+            targets.append({"image_id": i, "boxes": np.array([a["bbox"] for a in g]).reshape(-1, 4),
+                            "labels": np.array([a["category_id"] for a in g], dtype=np.int64),
+                            "iscrowd": np.array([a["iscrowd"] for a in g], dtype=np.int64)})
+            preds.append({"boxes": np.array([x["bbox"] for x in d]).reshape(-1, 4),
+                          "scores": np.array([x["score"] for x in d]),
+                          "labels": np.array([x["category_id"] for x in d], dtype=np.int64)})
+        return preds, targets
+    image_ids = sorted(im["id"] for im in gt_json["images"])
+    metric = DetectionMetrics(iou_thrs=[0.5, 0.75], score_thr="best_f1", box_format="xywh")
+    batches = [metric.update(*arrays(image_ids[i:i + 50])) for i in range(0, len(image_ids), 50)]
+    def digest(r):
+        return "".join(np.ascontiguousarray(v).tobytes().hex()
+                       for group in ("per_category", "micro", "macro") for v in r[group].values()) + \
+            r["score_thr"].tobytes().hex()
+    out["batch_metrics"] = "".join(digest(r) for r in batches) + digest(metric.compute())
     print(json.dumps(out))
     """
 )
@@ -76,5 +99,5 @@ def test_thread_count_does_not_change_results(synthetic, iou_type):
     one = run_with_threads(1, gt_path, dt_path, iou_type)
     many = run_with_threads(8, gt_path, dt_path, iou_type)
     for key in ("precision", "recall", "scores", "stats", "per_instance", "per_instance_n",
-                "outcomes", "detection_metrics"):
+                "outcomes", "detection_metrics", "batch_metrics"):
         assert one[key] == many[key], f"{iou_type}/{key} changed with thread count"

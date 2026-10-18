@@ -157,6 +157,70 @@ def test_missing_target_area_defaults_to_the_box_area(data):
                  DetectionMetrics(**config).update_coco(batch_gt, batch_dt))
 
 
+def _variant(items, kind):
+    """The same values in another dtype or memory layout."""
+    out = []
+    for item in items:
+        item = dict(item)
+        if kind == "float32":
+            for key in ("boxes", "scores", "area"):
+                if key in item:
+                    item[key] = item[key].astype(np.float32)
+        elif kind == "int32":
+            item["labels"] = item["labels"].astype(np.int32)
+        elif kind == "small ints":
+            item["labels"] = item["labels"].astype(np.int16)
+            if "iscrowd" in item:
+                item["iscrowd"] = item["iscrowd"].astype(bool)
+        elif kind == "uint8 crowd":
+            if "iscrowd" in item:
+                item["iscrowd"] = item["iscrowd"].astype(np.uint8)
+        elif kind == "strided":
+            for key in ("boxes", "scores", "labels"):
+                if key in item:
+                    item[key] = np.repeat(item[key], 2, axis=0)[::2]
+        elif kind == "fortran":
+            item["boxes"] = np.asfortranarray(item["boxes"])
+        elif kind == "lists":
+            for key in ("boxes", "scores", "labels", "iscrowd"):
+                if key in item:
+                    item[key] = item[key].tolist()
+        elif kind == "integer boxes":
+            item["boxes"] = item["boxes"].astype(np.int64)
+        out.append(item)
+    return out
+
+
+@pytest.mark.parametrize(
+    "kind", ["float32", "int32", "small ints", "uint8 crowd", "strided", "fortran", "lists",
+             "integer boxes"])
+def test_dtypes_and_layouts_read_like_float64_and_int64(data, kind):
+    """NumPy arrays of common dtypes are read in place; each must give what the
+    same values as contiguous float64 / int64 give."""
+    gt, dets = data
+    ids = sorted(im["id"] for im in gt["images"])[:40]
+    preds, targets = _arrays(gt, dets, ids)
+    if kind == "float32":
+        # Compare with the float32 values widened, which is exact.
+        preds = [{**p, "boxes": p["boxes"].astype(np.float32).astype(np.float64),
+                  "scores": p["scores"].astype(np.float32).astype(np.float64)} for p in preds]
+        targets = [{**t, "boxes": t["boxes"].astype(np.float32).astype(np.float64),
+                    "area": t["area"].astype(np.float32).astype(np.float64)} for t in targets]
+    if kind == "integer boxes":
+        preds = [{**p, "boxes": np.trunc(p["boxes"])} for p in preds]
+        targets = [{**t, "boxes": np.trunc(t["boxes"])} for t in targets]
+    config = {"iou_thrs": [0.5, 0.75], "box_format": "xywh", "score_thr": "best_f1"}
+    _assert_same(DetectionMetrics(**config).update(preds, targets),
+                 DetectionMetrics(**config).update(_variant(preds, kind), _variant(targets, kind)))
+
+
+def test_zero_dimensional_labels(data):
+    one = {"boxes": np.array([[0.0, 0.0, 10.0, 10.0]]), "scores": np.array([0.9]), "labels": np.array([3])}
+    scalar = {**one, "labels": np.array(3)}
+    target = {"boxes": np.array([[0.0, 0.0, 10.0, 10.0]]), "labels": np.array([3])}
+    _assert_same(DetectionMetrics().update([one], [target]), DetectionMetrics().update([scalar], [target]))
+
+
 def test_xyxy_boxes_are_converted_to_xywh(data):
     gt, dets = data
     ids = sorted(im["id"] for im in gt["images"])[:30]
