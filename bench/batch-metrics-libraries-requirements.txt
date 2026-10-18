@@ -1,0 +1,15 @@
+# bench/batch_metrics_libraries.py. Install torch and torchvision from the CPU
+# index first:
+#   pip install torch==2.14.1 torchvision==0.29.1 --index-url https://download.pytorch.org/whl/cpu
+# then this file, and ultrafast-pycocotools from the tree under test.
+torchmetrics==1.9.0
+supervision==0.30.6
+ultralytics==8.4.172
+faster-coco-eval==1.8.0
+hotcoco==1.1.0
+pycocotools==2.0.11
+numpy==2.5.2
+scipy==1.18.1
+opencv-python==5.0.0.93
+lightning-utilities==0.15.3
+psutil==7.2.2

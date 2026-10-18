@@ -313,6 +313,12 @@ output bit and each has a test against the general path:
 - `outcomes()` handles cells with only ground truth or only detections without
   IoU or matching, and writes each unit of cells into its own preallocated
   range of the output (`outcomes_agree_with_per_instance_at_every_threshold`).
+- `outcomes()` and the best-F1 sweep run on the calling thread below 1,024
+  annotations or with a one-thread pool (`run_on_caller`): handing a job that
+  small to the pool cost more wall time than the split saved and several
+  times the CPU time. Each unit writes only its own slots
+  (`outcomes_do_not_depend_on_the_thread_layout`,
+  `sweep_does_not_depend_on_the_thread_layout`).
 
 ## Pairs that do not need an exact IoU
 

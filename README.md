@@ -20,6 +20,12 @@ multithreaded Rust core (Rayon), exposed to Python through PyO3.
 - **Drop-in.** The same `COCO` / `COCOeval` API for `bbox`, `segm` and
   `keypoints`, plus the LVIS federated protocol. Prebuilt wheels for Linux,
   macOS and Windows (CPython 3.8–3.14).
+- **Per-batch precision, recall and F1.** Scored from the same matching as
+  AP, per batch or accumulated over a validation loop: **0.26 ms** for a
+  16-image batch and **0.09 s** for all of COCO val2017, **52–780× and 27–580×
+  less time** than hotcoco, Ultralytics, TorchMetrics, supervision,
+  faster-coco-eval and pycocotools
+  ([comparison](#per-batch-precision-recall-and-f1)).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/developer0hye/ultrafast-pycocotools/main/docs/assets/readme-benchmark-dark.svg">
@@ -145,10 +151,12 @@ evaluator.confusion_matrix()
 evaluator.detection_metrics(iou_thr=0.5, score_thr="best_f1")
 ```
 
-For training and validation loops, `DetectionMetrics` takes per-image arrays
-or tensors (or COCO data), returns each batch's precision, recall and F1, and
-accumulates them without keeping boxes or masks. The accumulated result is
-bit-identical to one evaluation over every image:
+See the [implementation notes](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/implementation-notes.md#extensions).
+
+## Per-batch precision, recall and F1
+
+For training and validation loops, `DetectionMetrics` scores batches of
+per-image arrays or tensors (or COCO data) with the same matching as AP:
 
 ```python
 from ultrafast_pycocotools.metrics import DetectionMetrics
@@ -159,7 +167,36 @@ for images, targets in loader:
 total = metric.compute()  # per_category / micro / macro, and the chosen score_thr
 ```
 
-See the [implementation notes](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/implementation-notes.md#extensions).
+- `update()` returns the batch's metrics; `compute()` returns them over every
+  batch, bit-identical to one evaluation over all images. Only a category id,
+  a score and one byte per IoU threshold are kept per detection, never boxes
+  or masks (`batch_results=False` skips the per-batch summary).
+- Precision, recall and F1 per category, micro and macro, at any IoU
+  thresholds, with every detection, a score threshold, or the score cut that
+  maximizes F1 (`score_thr="best_f1"`). Zero denominators give 0.
+- Boxes (`xyxy` or `xywh`) or masks, class-aware or class-agnostic. COCO's
+  crowd regions are honored, and its area ranges and `maxDets` are optional.
+- NumPy arrays, lists and PyTorch tensors; CPU tensors are read in place.
+  `COCOeval.detection_metrics()` computes the same metrics after
+  `evaluate()`, with that evaluation's parameters.
+
+COCO val2017 with YOLO26n predictions, one thread, on an Intel Core i5-10400;
+each library computes its own metric (P/R/F1, F1 or AP), so the times are
+the cost of getting each library's numbers per batch:
+
+| Library | 16-image batch | All 5,000 images in batches of 16 | Peak memory added by the 5,000 images |
+| --- | ---: | ---: | ---: |
+| **ultrafast-pycocotools** | **0.26 ms** | **0.09 s** | **34 MB** |
+| hotcoco 1.1.0 | 13 ms | 2.3 s | 578 MB |
+| Ultralytics 8.4.172 | 20 ms | 2.9 s | 145 MB |
+| TorchMetrics 1.9.0 (faster-coco-eval backend) | 30 ms | 9.1 s | 1,582 MB |
+| supervision 0.30.6 | 35 ms | 10.3 s | 74 MB |
+| faster-coco-eval 1.8.0 | 170 ms | 28.3 s | 1,623 MB |
+| pycocotools 2.0.11 | 197 ms | 44.7 s | 1,728 MB |
+| TorchMetrics 1.9.0 (pycocotools backend) | 200 ms | 49.7 s | 1,697 MB |
+
+[What each library computes, method and raw data](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/batch-metrics-comparison.md)
+· [Design](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/detection-metrics-design.md)
 
 ## Development
 

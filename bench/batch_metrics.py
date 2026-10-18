@@ -3,7 +3,8 @@
 Each (arm, thread count) runs in a fresh process; arms and thread orders
 alternate every round so host drift affects them alike. An arm is a directory
 put first on ``sys.path`` (a checkout's ``python/`` with its own compiled
-module copied in), or ``.`` for the installed package.
+module copied in), a Python interpreter with its own install, or ``.`` for
+the installed package.
 
     python bench/batch_metrics.py --arm base=/tmp/base/python --arm new=. \\
         --label base=COMMIT --label new=COMMIT \\
@@ -107,7 +108,8 @@ def _time(fn, reps, warmup=10):
         fn()
         wall.append(time.perf_counter() - w)
         cpu.append(time.process_time() - c)
-    return {"wall_ms": float(np.median(wall)) * 1e3, "cpu_ms": float(np.median(cpu)) * 1e3}
+    return {"wall_ms": float(np.median(wall)) * 1e3, "cpu_ms": float(np.median(cpu)) * 1e3,
+            "p90_ms": float(np.percentile(wall, 90)) * 1e3}
 
 
 def _worker(reps: int) -> dict:
@@ -119,6 +121,10 @@ def _worker(reps: int) -> dict:
     ten = np.linspace(0.5, 0.95, 10)
     configs = {"fixed": {}, "best_f1": {"score_thr": "best_f1"}, "10_iou": {"iou_thrs": ten},
                "agnostic_10_iou": {"class_agnostic": True, "iou_thrs": ten}}
+    try:
+        import torch
+    except ImportError:
+        torch = None
     for batch, (preds, targets) in _batches().items():
         for name, config in configs.items():
             metric = DetectionMetrics(box_format="xywh", **config)
@@ -128,6 +134,17 @@ def _worker(reps: int) -> dict:
                 metric.update(preds, targets)
 
             out[f"update/{batch}/{name}"] = _time(update, reps)
+        if torch is not None:
+            # The same batch as CPU tensors, as a training loop holds it.
+            tensors = [[{k: torch.from_numpy(v) for k, v in item.items()} for item in side]
+                       for side in (preds, targets)]
+            metric = DetectionMetrics(box_format="xywh")
+
+            def update_tensors():
+                metric.reset()
+                metric.update(*tensors)
+
+            out[f"update/{batch}/torch"] = _time(update_tensors, reps)
 
     rng = np.random.default_rng(0)
     for n_cats, n_thrs in ((80, 10), (1203, 1)):
@@ -239,8 +256,8 @@ def main() -> None:
     threads = [int(t) for t in args.threads.split(",")]
     runs: dict = {}
 
-    def run(kind, env, prefix):
-        proc = subprocess.run([sys.executable, __file__, "--worker", kind, "--reps", str(args.reps)],
+    def run(kind, env, prefix, python=sys.executable):
+        proc = subprocess.run([python, __file__, "--worker", kind, "--reps", str(args.reps)],
                               env=env, capture_output=True, text=True, check=True)
         for key, value in json.loads(proc.stdout.strip().splitlines()[-1]).items():
             runs.setdefault(f"{prefix}/{key}", []).append(value)
@@ -250,14 +267,18 @@ def main() -> None:
         for t in (threads if r % 2 == 0 else threads[::-1]):
             for name in names:
                 env = dict(os.environ, RAYON_NUM_THREADS=str(t))
-                if arms[name] != ".":
+                python = sys.executable
+                if Path(arms[name]).is_file():
+                    python = arms[name]  # an interpreter with its own install
+                elif arms[name] != ".":
                     env["PYTHONPATH"] = os.pathsep.join(
                         [str(Path(arms[name]).resolve())] + [p for p in [env.get("PYTHONPATH")] if p])
-                run("metrics", env, f"{name}/{t}t")
+                run("metrics", env, f"{name}/{t}t", python)
         if args.comparators:
             run("comparators", dict(os.environ), "comparator")
     summary = {
-        key: {m: float(np.median([v[m] for v in values])) for m in ("wall_ms", "cpu_ms")}
+        key: {m: float(np.median([v[m] for v in values])) for m in ("wall_ms", "cpu_ms", "p90_ms")
+              if m in values[0]}
         for key, values in runs.items()
     }
     report = {
@@ -266,7 +287,8 @@ def main() -> None:
         "rounds": args.rounds, "reps": args.reps, "median": summary, "runs": runs,
     }
     for key, value in summary.items():
-        print(f"{key:60s} wall {value['wall_ms']:10.3f} ms  cpu {value['cpu_ms']:10.3f} ms")
+        print(f"{key:60s} wall {value['wall_ms']:10.3f} ms  cpu {value['cpu_ms']:10.3f} ms"
+              + (f"  p90 {value['p90_ms']:10.3f} ms" if "p90_ms" in value else ""))
     if args.out:
         Path(args.out).write_text(json.dumps(report, indent=1) + "\n")
 

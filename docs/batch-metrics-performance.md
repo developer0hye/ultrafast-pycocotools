@@ -129,6 +129,33 @@ every run of both builds. Median host CPU during the run was 12% (maximum
   its `arms` entries name the commits (the run recorded local paths, replaced
   afterwards; `--label` now records them directly).
 
+## Calling thread and tensor input
+
+`89030f8` keeps `outcomes()` and the best-F1 sweep on the calling thread below
+1,024 annotations or with a one-thread pool; `a878502` reads CPU tensors
+through `.numpy()`; `638d377` adds `batch_results=False`. A/B of wheels of
+`f5a28b2` and `638d377`, `bench/batch_metrics.py` with 1, 2 and 12 threads,
+5 rounds, load average 1.0–2.4 (median 1.3); wall (CPU) time, ms:
+
+| Batch | Threads | Before | After |
+| --- | ---: | ---: | ---: |
+| COCO slice, 16 images | 12 | 0.114 (0.540) | **0.093** (0.093) |
+| COCO slice, 16 images | 2 | 0.083 (0.116) | 0.094 (0.094) |
+| COCO slice, 16 images | 1 | 0.089 (0.098) | 0.094 (0.094) |
+| Detector output, 64 images | 12 | 0.448 (1.349) | 0.452 (1.357) |
+| Detector output, 64 images | 2 | 0.601 (0.718) | **0.520** (0.699) |
+| Detector output, 64 images | 1 | 0.725 (0.680) | **0.631** (0.631) |
+| COCO slice, 16 images, CPU tensors | 1 | 0.414 (0.423) | **0.215** (0.216) |
+| COCO slice, 93 images, CPU tensors | 1 | 2.015 (1.992) | **0.939** (0.940) |
+| Detector output, 64 images, CPU tensors | 1 | 1.961 (1.918) | **1.064** (1.064) |
+
+The small COCO batch on a 12-thread pool no longer spends five times its wall
+time in CPU on waking workers. On two threads it is about 10% slower than
+with the pool, which is within the run-to-run spread of the same build here
+(about 10%). A radix sort of the sweep's keys was tried and dropped: on 2,000
+keys it was slower than the comparison sort and on 750,000 only 4% faster.
+Raw data: [ab-v3.json](../bench/results/batch-metrics-20261018/ab-v3.json).
+
 ## What did not move
 
 - `update()` with masks and `update_coco()` take the `COCO` route and were not

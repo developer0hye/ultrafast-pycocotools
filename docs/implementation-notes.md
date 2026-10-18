@@ -494,11 +494,15 @@ max_dets=None)` applies the same rules to a stream of batches:
 - `update(preds, targets)` takes one dict per image: `boxes` (or `masks` for
   `segm`), `scores` and `labels` for predictions; `boxes` or `masks`,
   `labels` and optionally `iscrowd` and `area` for targets. NumPy arrays,
-  lists and tensors work; tensors are moved to the CPU by duck typing, so
-  PyTorch is not imported. `update_coco(gt, dt)` takes a `COCO` object,
-  dictionary or path and anything `loadRes` accepts, including keypoints.
+  lists and tensors work; PyTorch is not imported. A CPU tensor is read
+  through the array its `.numpy()` returns; grad-tracking and GPU tensors are
+  detached and moved to the CPU first. `update_coco(gt, dt)` takes a `COCO`
+  object, dictionary or path and anything `loadRes` accepts, including
+  keypoints.
 - Each call returns that batch's metrics; `compute()` returns the metrics over
-  every batch since construction or `reset()`.
+  every batch since construction or `reset()`. A loop that only reads
+  `compute()` can pass `batch_results=False`, and `update()` then returns
+  `None` without summarizing each batch.
 - Only one category id, one score and one outcome byte per IoU threshold are
   kept for each counted detection (17 bytes at one threshold), never the
   geometry. Matching is per image and a score threshold keeps a prefix of
