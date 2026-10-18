@@ -389,6 +389,6 @@ PR 2 (`tests/test_detection_metrics.py`):
   because the profile showed it, not matching, dominating per-batch time;
   masks still go through RLE dictionaries.
 - A columnar `update` (`boxes`, `scores`, `labels` for the whole batch plus an
-  image index) that would skip reading per-image dicts, about a third of a
-  detector-sized update now.
+  image index) that would skip reading per-image dicts, 13–18% of a 16-image
+  update now.
 - Per-category best-F1 thresholds and smoothed F1 curves.

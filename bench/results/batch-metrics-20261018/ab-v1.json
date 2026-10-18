@@ -4,8 +4,8 @@
   "coco_subset_dt.json": "b697823aeb03b78e50e8557f1f7fb8eead1843ec58f845f91fbc1e65ab685766"
  },
  "arms": {
-  "base": "/tmp/claude-1000/-home-yonghye-Documents-ultrafast-pycocotools/d9d2e6b7-e570-49a6-b150-fb56e7fc6600/scratchpad/base/python",
-  "new": "."
+  "base": "f9f2490 python/ with the compiled module of 421ff6e",
+  "new": "421ff6e"
  },
  "rounds": 5,
  "reps": 300,
