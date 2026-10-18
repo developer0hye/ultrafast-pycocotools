@@ -236,6 +236,8 @@ def test_empty_images_and_batches():
     assert r["per_category"]["fn"].tolist() == [1, 0]
     assert r["per_category"]["fp"].tolist() == [0, 1]
     assert metric.update([], [])["category_ids"].size == 0
+    # Real images with nothing on either side: no category at all.
+    assert metric.update([empty_pred, empty_pred], [empty, empty])["category_ids"].size == 0
     assert metric.compute()["micro"]["fp"] == 1
     nothing = DetectionMetrics(score_thr="best_f1").compute()
     assert nothing["score_thr"] == np.inf

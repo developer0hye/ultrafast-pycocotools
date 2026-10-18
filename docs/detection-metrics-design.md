@@ -94,8 +94,9 @@ described under [Tests](#tests).
   categories with **at least one non-ignored ground truth**.
   - This matches COCO, where a category without ground truth has recall `-1`
     and is left out of AR, and Ultralytics, which averages over the classes in
-    the targets. Macro recall with no score threshold therefore equals the
-    mean of the valid `eval['recall']` entries.
+    the targets. Macro recall with no score threshold is therefore the mean
+    of the valid `eval['recall']` entries (summed left to right, so compare
+    it with that sum rather than with `np.mean`).
   - False-positive-only categories still lower micro precision and are reported
     per category, so they are not hidden.
   - Macro F1 is the mean of per-category F1, not the harmonic mean of macro
