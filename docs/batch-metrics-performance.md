@@ -134,8 +134,9 @@ every run of both builds. Median host CPU during the run was 12% (maximum
 `89030f8` keeps `outcomes()` and the best-F1 sweep on the calling thread below
 1,024 annotations or with a one-thread pool; `a878502` reads CPU tensors
 through `.numpy()`; `638d377` adds `batch_results=False`. A/B of wheels of
-`f5a28b2` and `638d377`, `bench/batch_metrics.py` with 1, 2 and 12 threads,
-5 rounds, load average 1.0–2.4 (median 1.3); wall (CPU) time, ms:
+`f5a28b2` and `638d377` (each `maturin build --release`, CPython 3.12.3,
+NumPy 2.5.2, torch 2.14.1 CPU), `bench/batch_metrics.py` with 1, 2 and 12
+threads, 5 rounds, load average 1.0–2.4 (median 1.3); wall (CPU) time, ms:
 
 | Batch | Threads | Before | After |
 | --- | ---: | ---: | ---: |
