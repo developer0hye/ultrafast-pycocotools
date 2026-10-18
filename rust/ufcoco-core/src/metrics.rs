@@ -179,7 +179,10 @@ pub fn summarize(
         Cut::All => vec![f64::NEG_INFINITY; t_n],
         Cut::AtLeast(v) => vec![v; t_n],
         Cut::BestF1 { micro } => {
-            best_thresholds(&cat, score, outcome, t_n, &npig, micro, exhaustive)
+            let sequential = crate::eval::run_on_caller(score.len());
+            best_thresholds(
+                &cat, score, outcome, t_n, &npig, micro, exhaustive, sequential,
+            )
         }
     };
 
@@ -258,6 +261,7 @@ pub fn summarize(
 /// Candidates are the distinct scores of detections that count (not ignored,
 /// not NaN), so a cut never splits tied scores. Ties in F1 go to the highest
 /// threshold; with nothing to keep the threshold is `+inf`.
+#[allow(clippy::too_many_arguments)]
 fn best_thresholds(
     cat: &[u32],
     score: &[f64],
@@ -266,6 +270,7 @@ fn best_thresholds(
     npig: &[i64],
     micro: bool,
     exhaustive: bool,
+    sequential: bool,
 ) -> Vec<f64> {
     // Sorted once: a stable sort keeps the relative order of any subset, so
     // filtering the sorted detections equals sorting each threshold's live ones.
@@ -284,48 +289,51 @@ fn best_thresholds(
     }
     drop(keyed);
     let npig_total: i64 = npig.iter().sum();
-    // Thresholds are independent; each computes only its own value.
-    (0..t_n)
-        .into_par_iter()
-        .map(|t| {
-            let (mut scores, mut cats, mut hits) = (Vec::new(), Vec::new(), Vec::new());
-            for (i, &s) in s_score.iter().enumerate() {
-                let o = s_out[i * t_n + t];
-                if o != IGNORED && !s.is_nan() {
-                    scores.push(s);
-                    cats.push(s_cat[i]);
-                    hits.push(o == TRUE_POSITIVE);
+    // Thresholds are independent; each computes only its own value. Small
+    // inputs stay on the calling thread, as `outcomes()` does.
+    let per_threshold = |t: usize| {
+        let (mut scores, mut cats, mut hits) = (Vec::new(), Vec::new(), Vec::new());
+        for (i, &s) in s_score.iter().enumerate() {
+            let o = s_out[i * t_n + t];
+            if o != IGNORED && !s.is_nan() {
+                scores.push(s);
+                cats.push(s_cat[i]);
+                hits.push(o == TRUE_POSITIVE);
+            }
+        }
+        if scores.is_empty() {
+            return f64::INFINITY;
+        }
+        let cuts: Vec<usize> = (0..scores.len())
+            .filter(|&i| i + 1 == scores.len() || scores[i] != scores[i + 1])
+            .collect();
+        let pick = if micro {
+            let mut tp = 0i64;
+            let mut next = 0usize;
+            let (mut at, mut top) = (0usize, f64::NEG_INFINITY);
+            for (j, &c) in cuts.iter().enumerate() {
+                while next <= c {
+                    tp += i64::from(hits[next]);
+                    next += 1;
+                }
+                let fp = (c + 1) as i64 - tp;
+                let (_, _, f1) = ratios(tp, fp, npig_total - tp);
+                if f1 > top {
+                    top = f1;
+                    at = j;
                 }
             }
-            if scores.is_empty() {
-                return f64::INFINITY;
-            }
-            let cuts: Vec<usize> = (0..scores.len())
-                .filter(|&i| i + 1 == scores.len() || scores[i] != scores[i + 1])
-                .collect();
-            let pick = if micro {
-                let mut tp = 0i64;
-                let mut next = 0usize;
-                let (mut at, mut top) = (0usize, f64::NEG_INFINITY);
-                for (j, &c) in cuts.iter().enumerate() {
-                    while next <= c {
-                        tp += i64::from(hits[next]);
-                        next += 1;
-                    }
-                    let fp = (c + 1) as i64 - tp;
-                    let (_, _, f1) = ratios(tp, fp, npig_total - tp);
-                    if f1 > top {
-                        top = f1;
-                        at = j;
-                    }
-                }
-                at
-            } else {
-                best_macro_cut(&cats, &hits, &cuts, npig, exhaustive)
-            };
-            scores[cuts[pick]]
-        })
-        .collect()
+            at
+        } else {
+            best_macro_cut(&cats, &hits, &cuts, npig, exhaustive)
+        };
+        scores[cuts[pick]]
+    };
+    if sequential {
+        (0..t_n).map(per_threshold).collect()
+    } else {
+        (0..t_n).into_par_iter().map(per_threshold).collect()
+    }
 }
 
 /// Bound on |running macro-F1 sum - left-to-right sum|, with a factor 2 to
@@ -592,6 +600,30 @@ mod tests {
                     "{a} vs {b}"
                 );
             }
+        }
+    }
+
+    #[test]
+    fn sweep_does_not_depend_on_the_thread_layout() {
+        let mut seed = 9u64;
+        let mut next = |m: u64| {
+            seed = seed
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            (seed >> 33) % m
+        };
+        let n = 5000;
+        let cat: Vec<u32> = (0..n).map(|_| next(7) as u32).collect();
+        let score: Vec<f64> = (0..n).map(|_| next(200) as f64 / 200.0).collect();
+        let outcome: Vec<u8> = (0..n * 4).map(|_| [IG, TP, FP][next(3) as usize]).collect();
+        let npig: Vec<i64> = (0..7).map(|k| if k == 0 { 0 } else { 300 + k }).collect();
+        for micro in [false, true] {
+            let seq = best_thresholds(&cat, &score, &outcome, 4, &npig, micro, false, true);
+            let par = best_thresholds(&cat, &score, &outcome, 4, &npig, micro, false, false);
+            assert!(seq
+                .iter()
+                .zip(&par)
+                .all(|(x, y)| x.to_bits() == y.to_bits()));
         }
     }
 

@@ -84,6 +84,20 @@ pub const EPS: f64 = f64::EPSILON;
 /// get spread across idle workers.
 const PAR_MIN_IMAGES: usize = 64;
 
+/// Below this many ground truths plus detections, `outcomes()` and the
+/// best-F1 sweep run on the calling thread.
+const SEQUENTIAL_MAX_INSTANCES: usize = 1 << 10;
+
+/// Whether work over `instances` annotations should stay on the calling
+/// thread. Handing a job to the pool costs the hand-off and wakes the workers,
+/// which then spin: below about a thousand annotations that cost more wall
+/// time than the split saved, and several times the CPU time; with a
+/// one-thread pool the hand-off buys nothing at all. Each unit writes only its
+/// own slots, so the thread layout never changes a result.
+pub(crate) fn run_on_caller(instances: usize) -> bool {
+    instances < SEQUENTIAL_MAX_INSTANCES || rayon::current_num_threads() == 1
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IouType {
     Segm,
@@ -1480,6 +1494,12 @@ impl Evaluator {
     /// thresholds. `max_det` above `max_dets.last()` keeps nothing more: the
     /// engine truncates to that before matching.
     pub fn outcomes(&self, a_idx: usize, max_det: usize) -> Outcomes {
+        let sequential = run_on_caller(self.gt.len() + self.dt.len());
+        self.outcomes_on(a_idx, max_det, sequential)
+    }
+
+    /// [`Self::outcomes`], on the calling thread or on the pool.
+    fn outcomes_on(&self, a_idx: usize, max_det: usize, sequential: bool) -> Outcomes {
         let p = &self.params;
         let t_n = p.iou_thrs.len();
         let max_det_all = p.max_dets.last().copied().unwrap_or(0);
@@ -1536,77 +1556,86 @@ impl Evaluator {
                 work.push((k, range, a, b, c, d));
             }
         }
-        let npig: Vec<(usize, u64)> = work
-            .into_par_iter()
-            .map(|(k, range, cat_slot, img_id, score, outcome)| {
-                let mut cell = CatImage::empty();
-                let mut mm = ImgMatch::default();
-                let mut scratch = MatchScratch::default();
-                let (mut at, mut npig) = (0usize, 0u64);
-                for &(img_slot, gr, dr) in &cells[range] {
-                    let id = p.img_ids[img_slot as usize];
-                    // One-sided cells, which are most cells, take the outcome
-                    // `evaluate_img_into` gives them without IoU or matching:
-                    // ground truth without detections contributes its count of
-                    // non-ignored ground truth, and detections without ground
-                    // truth are false positives unless ignored as unmatched.
-                    // `outcomes_agree_with_per_instance_at_every_threshold`
-                    // compares both with the general path.
-                    match (gr, dr) {
-                        (Some(g), None) => {
-                            npig += self
-                                .gt_groups
-                                .indices(&g)
-                                .iter()
-                                .filter(|&&g| {
-                                    let g = g as usize;
-                                    let a = self.gt.areas[g];
-                                    !(self.gt.ignore[g] || a < a_rng[0] || a > a_rng[1])
-                                })
-                                .count() as u64;
+        type Unit<'a> = (
+            usize,
+            std::ops::Range<usize>,
+            &'a mut [u32],
+            &'a mut [i64],
+            &'a mut [f64],
+            &'a mut [u8],
+        );
+        let unit = |(k, range, cat_slot, img_id, score, outcome): Unit<'_>| {
+            let mut cell = CatImage::empty();
+            let mut mm = ImgMatch::default();
+            let mut scratch = MatchScratch::default();
+            let (mut at, mut npig) = (0usize, 0u64);
+            for &(img_slot, gr, dr) in &cells[range] {
+                let id = p.img_ids[img_slot as usize];
+                // One-sided cells, which are most cells, take the outcome
+                // `evaluate_img_into` gives them without IoU or matching:
+                // ground truth without detections contributes its count of
+                // non-ignored ground truth, and detections without ground
+                // truth are false positives unless ignored as unmatched.
+                // `outcomes_agree_with_per_instance_at_every_threshold`
+                // compares both with the general path.
+                match (gr, dr) {
+                    (Some(g), None) => {
+                        npig += self
+                            .gt_groups
+                            .indices(&g)
+                            .iter()
+                            .filter(|&&g| {
+                                let g = g as usize;
+                                let a = self.gt.areas[g];
+                                !(self.gt.ignore[g] || a < a_rng[0] || a > a_rng[1])
+                            })
+                            .count() as u64;
+                    }
+                    (None, Some(r)) => {
+                        let order = &mut cell.dt_idx;
+                        order.clear();
+                        order.extend_from_slice(self.dt_groups.indices(&r));
+                        sort_by_score(&self.dt.scores, order, &mut cell.keys);
+                        let d_n = order.len().min(cap);
+                        for (j, &src) in order[..d_n].iter().enumerate() {
+                            let src = src as usize;
+                            let a = self.dt.areas[src];
+                            let ignored = a < a_rng[0] || a > a_rng[1] || self.dt.lvis_mark[src];
+                            cat_slot[at + j] = k as u32;
+                            img_id[at + j] = id;
+                            score[at + j] = self.dt.scores[src];
+                            outcome[(at + j) * t_n..(at + j + 1) * t_n].fill(if ignored {
+                                IGNORED
+                            } else {
+                                FALSE_POSITIVE
+                            });
                         }
-                        (None, Some(r)) => {
-                            let order = &mut cell.dt_idx;
-                            order.clear();
-                            order.extend_from_slice(self.dt_groups.indices(&r));
-                            sort_by_score(&self.dt.scores, order, &mut cell.keys);
-                            let d_n = order.len().min(cap);
-                            for (j, &src) in order[..d_n].iter().enumerate() {
-                                let src = src as usize;
-                                let a = self.dt.areas[src];
-                                let ignored =
-                                    a < a_rng[0] || a > a_rng[1] || self.dt.lvis_mark[src];
-                                cat_slot[at + j] = k as u32;
-                                img_id[at + j] = id;
-                                score[at + j] = self.dt.scores[src];
-                                outcome[(at + j) * t_n..(at + j + 1) * t_n].fill(if ignored {
-                                    IGNORED
-                                } else {
-                                    FALSE_POSITIVE
-                                });
-                            }
-                            at += d_n;
+                        at += d_n;
+                    }
+                    _ => {
+                        self.fill_cell(img_slot, gr, dr, max_det_all, &mut cell);
+                        if !self.evaluate_img_into(&cell, a_idx, &mut mm, &mut scratch, false) {
+                            continue;
                         }
-                        _ => {
-                            self.fill_cell(img_slot, gr, dr, max_det_all, &mut cell);
-                            if !self.evaluate_img_into(&cell, a_idx, &mut mm, &mut scratch, false) {
-                                continue;
-                            }
-                            npig += mm.gt_ignore.iter().filter(|&&ig| !ig).count() as u64;
-                            let d_n = cell.dt_idx.len().min(max_det);
-                            cat_slot[at..at + d_n].fill(k as u32);
-                            img_id[at..at + d_n].fill(id);
-                            score[at..at + d_n].copy_from_slice(&mm.dt_scores[..d_n]);
-                            outcome[at * t_n..(at + d_n) * t_n]
-                                .copy_from_slice(&mm.outcome[..d_n * t_n]);
-                            at += d_n;
-                        }
+                        npig += mm.gt_ignore.iter().filter(|&&ig| !ig).count() as u64;
+                        let d_n = cell.dt_idx.len().min(max_det);
+                        cat_slot[at..at + d_n].fill(k as u32);
+                        img_id[at..at + d_n].fill(id);
+                        score[at..at + d_n].copy_from_slice(&mm.dt_scores[..d_n]);
+                        outcome[at * t_n..(at + d_n) * t_n]
+                            .copy_from_slice(&mm.outcome[..d_n * t_n]);
+                        at += d_n;
                     }
                 }
-                debug_assert_eq!(at, score.len(), "a unit filled its whole range");
-                (k, npig)
-            })
-            .collect();
+            }
+            debug_assert_eq!(at, score.len(), "a unit filled its whole range");
+            (k, npig)
+        };
+        let npig: Vec<(usize, u64)> = if sequential {
+            work.into_iter().map(unit).collect()
+        } else {
+            work.into_par_iter().map(unit).collect()
+        };
         for (k, v) in npig {
             out.npig[k] += v;
         }
@@ -2462,6 +2491,69 @@ mod tests {
         let _ = ev.run(false);
         let [_group, iou, matching, accumulate] = ev.timings().as_secs();
         assert!(iou >= 0.0 && matching >= 0.0 && accumulate >= 0.0);
+    }
+
+    #[test]
+    fn outcomes_do_not_depend_on_the_thread_layout() {
+        // Large enough for many units of one category and many categories.
+        let mut seed = 5u64;
+        let mut next = |m: u64| {
+            seed = seed
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            (seed >> 33) % m
+        };
+        let (g_n, d_n, imgs) = (3000usize, 9000usize, 400u64);
+        let rect = |next: &mut dyn FnMut(u64) -> u64| -> [f64; 4] {
+            [
+                next(60) as f64,
+                next(60) as f64,
+                2.0 + next(30) as f64,
+                2.0 + next(30) as f64,
+            ]
+        };
+        let g_rects: Vec<_> = (0..g_n).map(|_| rect(&mut next)).collect();
+        let d_rects: Vec<_> = (0..d_n).map(|_| rect(&mut next)).collect();
+        let g_cat: Vec<u32> = (0..g_n).map(|_| next(5) as u32).collect();
+        let d_cat: Vec<u32> = (0..d_n).map(|_| next(5) as u32).collect();
+        let crowd: Vec<bool> = (0..g_n).map(|_| next(9) == 0).collect();
+        let scores: Vec<f64> = (0..d_n).map(|_| next(50) as f64 / 50.0).collect();
+        let mut gt = boxes(
+            &(1..=g_n as i64).collect::<Vec<_>>(),
+            &vec![0.0; g_n],
+            &g_rects,
+            &g_cat,
+            &crowd,
+        );
+        gt.img_slot = (0..g_n).map(|_| next(imgs) as u32).collect();
+        let mut dt = boxes(
+            &(1..=d_n as i64).collect::<Vec<_>>(),
+            &scores,
+            &d_rects,
+            &d_cat,
+            &vec![false; d_n],
+        );
+        dt.img_slot = (0..d_n).map(|_| next(imgs) as u32).collect();
+        let mut p = params();
+        p.img_ids = (0..imgs as i64).collect();
+        p.cat_ids = vec![1, 2, 3, 4, 5];
+        p.iou_thrs = vec![0.5, 0.75];
+        p.area_rng = vec![[0.0, 1e10], [0.0, 400.0]];
+        p.max_dets = vec![100];
+        let ev = Evaluator::new(p, gt, dt);
+        for a in 0..2 {
+            let seq = ev.outcomes_on(a, 100, true);
+            let par = ev.outcomes_on(a, 100, false);
+            assert_eq!(seq.cat_slot, par.cat_slot);
+            assert_eq!(seq.img_id, par.img_id);
+            assert_eq!(seq.outcome, par.outcome);
+            assert_eq!(seq.npig, par.npig);
+            assert!(seq
+                .score
+                .iter()
+                .zip(&par.score)
+                .all(|(x, y)| x.to_bits() == y.to_bits()));
+        }
     }
 
     #[test]
