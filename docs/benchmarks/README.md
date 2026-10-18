@@ -54,6 +54,7 @@ include them, so their absolute numbers are superseded by the headline above.
 | 0.1.10 | [Evaluation input boundary fixes](../evaluation-boundary-fixes.md) |
 | 0.1.11 | [Pose input storage](../pose-input-optimization.md) · [Parallel pose loading](../pose-parallel-loading.md) |
 | 0.1.12 | [Per-task bottleneck optimization](../task-bottleneck-optimization.md) · [NumPy result arrays](../numpy-results.md) |
+| unreleased | [Per-batch detection metrics](../batch-metrics-performance.md) |
 
 ## Reproducing
 

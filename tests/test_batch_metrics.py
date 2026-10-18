@@ -127,7 +127,7 @@ def _arrays(gt, dets, image_ids, box_format="xywh"):
     return preds, targets
 
 
-@pytest.mark.parametrize("config", CONFIGS[:4] + CONFIGS[5:], ids=lambda c: ",".join(f"{k}={v}" for k, v in c.items()) or "default")
+@pytest.mark.parametrize("config", CONFIGS, ids=lambda c: ",".join(f"{k}={v}" for k, v in c.items()) or "default")
 def test_array_input_equals_coco_input(data, config):
     gt, dets = data
     from_arrays = DetectionMetrics(iou_thrs=[0.5, 0.75], box_format="xywh", **config)
@@ -136,6 +136,25 @@ def test_array_input_equals_coco_input(data, config):
         _assert_same(from_arrays.update(*_arrays(gt, dets, ids)),
                      from_coco.update_coco(*_subset(gt, dets, ids)))
     _assert_same(from_arrays.compute(), from_coco.compute())
+
+
+def test_missing_target_area_defaults_to_the_box_area(data):
+    """Images without ``area`` take ``w * h``, as the engine does for COCO
+    ground truth without an ``area`` field; other images keep theirs."""
+    gt, dets = data
+    ids = sorted(im["id"] for im in gt["images"])[:40]
+    preds, targets = _arrays(gt, dets, ids)
+    without = set(ids[::2])
+    for target in targets:
+        if target["image_id"] in without:
+            del target["area"]
+    batch_gt, batch_dt = copy.deepcopy(_subset(gt, dets, ids))
+    for ann in batch_gt["annotations"]:
+        if ann["image_id"] in without:
+            del ann["area"]
+    config = {"iou_thrs": [0.5, 0.75], "area_range": (32.0**2, 96.0**2)}
+    _assert_same(DetectionMetrics(box_format="xywh", **config).update(preds, targets),
+                 DetectionMetrics(**config).update_coco(batch_gt, batch_dt))
 
 
 def test_xyxy_boxes_are_converted_to_xywh(data):

@@ -252,8 +252,13 @@ duplicate check.
 
 Per update, internally:
 
-1. Build GT and DT handles (array input: a GT dictionary and an `Nx7` result
-   array for bbox, which takes the existing `load_compact_array` route).
+1. Box arrays: concatenate the batch into columns and call
+   `_ufcoco.box_outcomes`, which fills the engine's instances exactly as the
+   dictionary path would (crowded ground truth is ignored, detection area is
+   `w * h`, per-image input order breaks score ties) and returns the outcomes
+   without building `COCO` handles or the accumulated curves; then go to step
+   4. The tests compare it with COCO input bit for bit. Masks and COCO input
+   build GT and DT handles and continue with step 2.
 2. Evaluate with narrowed `Params`: `imgIds` of this batch, `catIds` = labels
    seen in the batch (the dataset's categories for `update_coco`), `iouThrs = iou_thrs`, one area range (`area_range`, or
    `[0, inf]` when `None`), `maxDets = [max_dets]` or `2**31 - 1` when `None`
@@ -374,7 +379,7 @@ PR 2 (`tests/test_detection_metrics.py`):
   the reference tie order at the end. Its exactness argument is larger than
   the ones here, and the issue asks for precision, recall and F1, so it is a
   separate design after PR 2.
-- A dedicated Rust path that builds instances from NumPy columns without the
-  `COCO` layer. Revisit only if PR 2's profile shows the `COCO` layer, not
-  matching, dominating per-batch time.
+- A column path for masks. Box batches skip the `COCO` layer (step 1 above)
+  because the profile showed it, not matching, dominating per-batch time;
+  masks still go through RLE dictionaries.
 - Per-category best-F1 thresholds and smoothed F1 curves.

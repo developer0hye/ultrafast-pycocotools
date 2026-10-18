@@ -977,21 +977,148 @@ impl Evaluator {
         max_det: usize,
     ) -> PyResult<Bound<'py, PyDict>> {
         let out = py.detach(|| self.inner.outcomes(a_idx, max_det));
-        let t_n = self.inner.params.iou_thrs.len();
-        let d_n = out.score.len();
-        let d = PyDict::new(py);
-        d.set_item("cat_slot", Array1::from_vec(out.cat_slot).into_pyarray(py))?;
-        d.set_item("image_id", Array1::from_vec(out.img_id).into_pyarray(py))?;
-        d.set_item("score", Array1::from_vec(out.score).into_pyarray(py))?;
-        d.set_item(
-            "outcome",
-            Array2::from_shape_vec((d_n, t_n), out.outcome)
-                .map_err(|e| PyValueError::new_err(e.to_string()))?
-                .into_pyarray(py),
-        )?;
-        d.set_item("npig", Array1::from_vec(out.npig).into_pyarray(py))?;
-        Ok(d)
+        outcomes_to_py(py, out, self.inner.params.iou_thrs.len())
     }
+}
+
+fn outcomes_to_py(
+    py: Python<'_>,
+    out: ufcoco_core::Outcomes,
+    t_n: usize,
+) -> PyResult<Bound<'_, PyDict>> {
+    let d_n = out.score.len();
+    let d = PyDict::new(py);
+    d.set_item("cat_slot", Array1::from_vec(out.cat_slot).into_pyarray(py))?;
+    d.set_item("image_id", Array1::from_vec(out.img_id).into_pyarray(py))?;
+    d.set_item("score", Array1::from_vec(out.score).into_pyarray(py))?;
+    d.set_item(
+        "outcome",
+        Array2::from_shape_vec((d_n, t_n), out.outcome)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?
+            .into_pyarray(py),
+    )?;
+    d.set_item("npig", Array1::from_vec(out.npig).into_pyarray(py))?;
+    Ok(d)
+}
+
+/// `Evaluator(...).outcomes(0, max_det)` for box columns, without building
+/// annotation dicts, `COCO` handles or the accumulated curves.
+///
+/// Instances are filled exactly as `read_annotations` fills them from the
+/// dicts `loadRes` and a ground-truth file would hold: ground truth is ignored
+/// when crowded, detection areas are `w * h`, and the input order within each
+/// image is the annotation order that breaks score ties. Slots index
+/// `img_ids` and `cat_ids`; one area range and one `maxDets`.
+#[pyfunction]
+#[pyo3(signature = (
+    gt_img, gt_cat, gt_boxes, gt_area, gt_crowd, dt_img, dt_cat, dt_boxes, dt_score,
+    img_ids, cat_ids, iou_thrs, area_rng, max_det, use_cats,
+))]
+#[allow(clippy::too_many_arguments)]
+fn box_outcomes<'py>(
+    py: Python<'py>,
+    gt_img: numpy::PyReadonlyArray1<'py, u32>,
+    gt_cat: numpy::PyReadonlyArray1<'py, u32>,
+    gt_boxes: numpy::PyReadonlyArray2<'py, f64>,
+    gt_area: numpy::PyReadonlyArray1<'py, f64>,
+    gt_crowd: numpy::PyReadonlyArray1<'py, bool>,
+    dt_img: numpy::PyReadonlyArray1<'py, u32>,
+    dt_cat: numpy::PyReadonlyArray1<'py, u32>,
+    dt_boxes: numpy::PyReadonlyArray2<'py, f64>,
+    dt_score: numpy::PyReadonlyArray1<'py, f64>,
+    img_ids: Vec<i64>,
+    cat_ids: Vec<i64>,
+    iou_thrs: Vec<f64>,
+    area_rng: [f64; 2],
+    max_det: usize,
+    use_cats: bool,
+) -> PyResult<Bound<'py, PyDict>> {
+    let column = |name: &str, len: usize, want: usize| -> PyResult<()> {
+        if len == want {
+            Ok(())
+        } else {
+            Err(PyValueError::new_err(format!(
+                "{name} has {len} rows, expected {want}"
+            )))
+        }
+    };
+    let boxes =
+        |name: &str, array: &numpy::PyReadonlyArray2<'py, f64>| -> PyResult<Vec<[f64; 4]>> {
+            let view = array.as_array();
+            if view.ncols() != 4 {
+                return Err(PyValueError::new_err(format!(
+                    "{name} must have 4 columns, not {}",
+                    view.ncols()
+                )));
+            }
+            Ok(view
+                .rows()
+                .into_iter()
+                .map(|r| [r[0], r[1], r[2], r[3]])
+                .collect())
+        };
+    let slots =
+        |name: &str, array: &numpy::PyReadonlyArray1<'py, u32>, n: usize| -> PyResult<Vec<u32>> {
+            let v = array.as_array().to_vec();
+            if v.iter().any(|&s| s as usize >= n) {
+                return Err(PyValueError::new_err(format!(
+                    "{name} has a slot out of range"
+                )));
+            }
+            Ok(v)
+        };
+    let gt_geom = boxes("gt_boxes", &gt_boxes)?;
+    let dt_geom = boxes("dt_boxes", &dt_boxes)?;
+    let (g_n, d_n) = (gt_geom.len(), dt_geom.len());
+    column("gt_img", gt_img.len()?, g_n)?;
+    column("gt_cat", gt_cat.len()?, g_n)?;
+    column("gt_area", gt_area.len()?, g_n)?;
+    column("gt_crowd", gt_crowd.len()?, g_n)?;
+    column("dt_img", dt_img.len()?, d_n)?;
+    column("dt_cat", dt_cat.len()?, d_n)?;
+    column("dt_score", dt_score.len()?, d_n)?;
+    let crowd = gt_crowd.as_array().to_vec();
+    let gt = Instances {
+        ids: (1..=g_n as i64).collect(),
+        scores: vec![0.0; g_n],
+        areas: gt_area.as_array().to_vec(),
+        ignore: crowd.clone(),
+        iscrowd: crowd,
+        lvis_mark: vec![false; g_n],
+        bboxes: Vec::new(),
+        img_slot: slots("gt_img", &gt_img, img_ids.len())?,
+        cat_slot: slots("gt_cat", &gt_cat, cat_ids.len())?,
+        geom: GeomStore::Bboxes(gt_geom),
+    };
+    let dt = Instances {
+        ids: (1..=d_n as i64).collect(),
+        scores: dt_score.as_array().to_vec(),
+        // `prepare_bbox_results` / loadRes: `area = bb[2] * bb[3]`.
+        areas: dt_geom.iter().map(|b| b[2] * b[3]).collect(),
+        iscrowd: vec![false; d_n],
+        ignore: vec![false; d_n],
+        lvis_mark: vec![false; d_n],
+        bboxes: Vec::new(),
+        img_slot: slots("dt_img", &dt_img, img_ids.len())?,
+        cat_slot: slots("dt_cat", &dt_cat, cat_ids.len())?,
+        geom: GeomStore::Bboxes(dt_geom),
+    };
+    let t_n = iou_thrs.len();
+    let params = EvalParams {
+        img_ids,
+        cat_ids,
+        iou_thrs,
+        // Only `run` reads the recall grid; outcomes do not.
+        rec_thrs: vec![0.0],
+        max_dets: vec![max_det],
+        area_rng: vec![area_rng],
+        use_cats,
+        iou_type: IouType::Bbox,
+        kpt_sigmas: Vec::new(),
+        use_area: true,
+    };
+    let out = py.detach(|| CoreEvaluator::new(params, gt, dt).outcomes(0, max_det));
+    outcomes_to_py(py, out, t_n)
 }
 
 fn eval_imgs_to_py<'py>(
@@ -1119,6 +1246,7 @@ fn _ufcoco(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(compact::load_compact_bbox, m)?)?;
     m.add_function(wrap_pyfunction!(compact::load_compact_array, m)?)?;
     m.add_function(wrap_pyfunction!(index_annotations, m)?)?;
+    m.add_function(wrap_pyfunction!(box_outcomes, m)?)?;
     m.add_function(wrap_pyfunction!(prepare_bbox_results, m)?)?;
     m.add_function(wrap_pyfunction!(summary::summary_values, m)?)?;
     m.add_function(wrap_pyfunction!(mask::encode, m)?)?;

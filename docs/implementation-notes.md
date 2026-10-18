@@ -514,6 +514,10 @@ max_dets=None)` applies the same rules to a stream of batches:
   evaluate coordinates exactly as a COCO file would hold them.
 - For array input, categories are the labels seen in the batch. For COCO
   input they are the dataset's categories, as in `COCOeval`.
+- Box arrays go to the engine as columns (`_ufcoco.box_outcomes`), without
+  annotation dictionaries, `COCO` handles or accumulated curves; the tests
+  compare the result with COCO input of the same data bit for bit. Masks are
+  encoded to RLE and take the `COCO` route.
 
 The choices behind these rules are in the
 [detection metrics design](detection-metrics-design.md).

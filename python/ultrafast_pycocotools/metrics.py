@@ -27,7 +27,7 @@ from typing import Any
 
 import numpy as np
 
-from . import _detection_metrics
+from . import _detection_metrics, _ufcoco
 from . import mask as maskUtils
 from .coco import COCO
 from .cocoeval import COCOeval
@@ -48,6 +48,8 @@ def _to_numpy(value: Any) -> np.ndarray:
 
     Duck-typed so that PyTorch is never imported.
     """
+    if type(value) is np.ndarray:
+        return value
     if hasattr(value, "detach"):
         value = value.detach()
     if hasattr(value, "cpu"):
@@ -143,18 +145,27 @@ class DetectionMetrics:
         image_ids = self._image_ids(preds, targets)
 
         geometry = "masks" if self.iou_type == "segm" else "boxes"
-        images, gt_anns, dt_anns, labels = [], [], [], set()
-        for i, (pred, target, img_id) in enumerate(zip(preds, targets, image_ids)):
+        sides = []
+        for i, (pred, target) in enumerate(zip(preds, targets)):
             for name, item, keys in (("preds", pred, (geometry, "scores", "labels")),
                                      ("targets", target, (geometry, "labels"))):
                 for key in keys:
                     if key not in item:
                         raise ValueError(f"{name}[{i}] has no {key!r}")
-            gt_geom, gt_cats, gt_extra = self._read_side(target, i, "targets", geometry)
+            gt_geom, gt_cats, (iscrowd, areas) = self._read_side(target, i, "targets", geometry)
             dt_geom, dt_cats, _ = self._read_side(pred, i, "preds", geometry)
-            scores = _to_numpy(pred["scores"]).astype(np.float64).ravel()
+            scores = np.asarray(_to_numpy(pred["scores"]), dtype=np.float64).ravel()
             if scores.shape[0] != len(dt_cats):
                 raise ValueError(f"preds[{i}] has {len(dt_cats)} labels but {scores.shape[0]} scores")
+            sides.append((gt_geom, gt_cats, iscrowd, areas, dt_geom, dt_cats, scores))
+        if not image_ids:
+            return self._store(None, None, image_ids)
+        if geometry == "boxes":
+            return self._update_boxes(sides, image_ids)
+
+        images, gt_anns, dt_anns, labels = [], [], [], set()
+        for i, (side, img_id) in enumerate(zip(sides, image_ids)):
+            gt_geom, gt_cats, iscrowd, areas, dt_geom, dt_cats, scores = side
             image = {"id": img_id}
             if geometry == "masks":
                 sizes = {m.shape[1:] for m in (gt_geom, dt_geom) if m.shape[0]}
@@ -166,27 +177,18 @@ class DetectionMetrics:
             labels.update(gt_cats.tolist())
             labels.update(dt_cats.tolist())
 
-            gt_rles = self._encode(gt_geom) if geometry == "masks" else None
-            iscrowd, areas = gt_extra
+            gt_rles = self._encode(gt_geom)
             for n in range(len(gt_cats)):
-                ann = {"id": len(gt_anns) + 1, "image_id": img_id,
-                       "category_id": int(gt_cats[n]), "iscrowd": int(iscrowd[n])}
-                if gt_rles is None:
-                    ann["bbox"] = gt_geom[n].tolist()
-                    ann["area"] = float(gt_geom[n, 2] * gt_geom[n, 3]) if areas is None else float(areas[n])
-                else:
-                    ann["segmentation"] = gt_rles[n]
-                    ann["bbox"] = maskUtils.toBbox(gt_rles[n]).tolist()
-                    ann["area"] = float(maskUtils.area(gt_rles[n])) if areas is None else float(areas[n])
-                gt_anns.append(ann)
-            dt_rles = self._encode(dt_geom) if geometry == "masks" else None
+                gt_anns.append({
+                    "id": len(gt_anns) + 1, "image_id": img_id, "category_id": int(gt_cats[n]),
+                    "iscrowd": int(iscrowd[n]), "segmentation": gt_rles[n],
+                    "bbox": maskUtils.toBbox(gt_rles[n]).tolist(),
+                    "area": float(maskUtils.area(gt_rles[n])) if areas is None else float(areas[n]),
+                })
+            dt_rles = self._encode(dt_geom)
             for n in range(len(dt_cats)):
-                ann = {"image_id": img_id, "category_id": int(dt_cats[n]), "score": float(scores[n])}
-                if dt_rles is None:
-                    ann["bbox"] = dt_geom[n].tolist()
-                else:
-                    ann["segmentation"] = dt_rles[n]
-                dt_anns.append(ann)
+                dt_anns.append({"image_id": img_id, "category_id": int(dt_cats[n]),
+                                "score": float(scores[n]), "segmentation": dt_rles[n]})
 
         gt = COCO({"images": images, "annotations": gt_anns,
                    "categories": [{"id": c} for c in sorted(labels)]}, verbose=False)
@@ -254,26 +256,24 @@ class DetectionMetrics:
         return image_ids
 
     def _read_side(self, item, i, name, geometry):
-        labels = _to_numpy(item["labels"]).astype(np.int64).ravel()
+        labels = np.asarray(_to_numpy(item["labels"]), dtype=np.int64).ravel()
         n = labels.shape[0]
         geom = _to_numpy(item[geometry])
         if geometry == "boxes":
-            geom = geom.astype(np.float64)
+            geom = np.asarray(geom, dtype=np.float64)
             if geom.size == 0:
                 geom = geom.reshape(0, 4)
             if geom.shape != (n, 4):
                 raise ValueError(f"{name}[{i}]['boxes'] must have shape ({n}, 4), not {geom.shape}")
-            if self.box_format == "xyxy":
-                geom = np.column_stack([geom[:, 0], geom[:, 1],
-                                        geom[:, 2] - geom[:, 0], geom[:, 3] - geom[:, 1]])
         else:
             if geom.ndim != 3 or geom.shape[0] != n:
                 raise ValueError(f"{name}[{i}]['masks'] must have shape ({n}, H, W), not {geom.shape}")
         extra = (None, None)
         if name == "targets":
-            iscrowd = (_to_numpy(item["iscrowd"]).astype(np.int64).ravel()
+            iscrowd = (np.asarray(_to_numpy(item["iscrowd"]), dtype=np.int64).ravel()
                        if "iscrowd" in item else np.zeros(n, dtype=np.int64))
-            areas = _to_numpy(item["area"]).astype(np.float64).ravel() if "area" in item else None
+            areas = (np.asarray(_to_numpy(item["area"]), dtype=np.float64).ravel()
+                     if "area" in item else None)
             for key, value in (("iscrowd", iscrowd), ("area", areas)):
                 if value is not None and value.shape[0] != n:
                     raise ValueError(f"targets[{i}][{key!r}] has {value.shape[0]} entries, not {n}")
@@ -286,11 +286,49 @@ class DetectionMetrics:
             return []
         return maskUtils.encode(np.asfortranarray(masks.transpose(1, 2, 0).astype(np.uint8)))
 
+    def _update_boxes(self, sides: list, image_ids: list) -> dict:
+        """Box batches go to the engine as columns, without annotation dicts.
+
+        ``box_outcomes`` fills the engine's instances as the dict path would
+        (``test_batch_metrics`` compares the two bit for bit); only the
+        construction of dicts, ``COCO`` handles and curves is skipped.
+        """
+        def column(index, dtype, width=None):
+            parts = [side[index] for side in sides]
+            out = np.concatenate(parts).astype(dtype, copy=False)
+            return out.reshape(-1, width) if width else out
+
+        gt_boxes, dt_boxes = column(0, np.float64, 4), column(4, np.float64, 4)
+        if self.box_format == "xyxy":
+            gt_boxes, dt_boxes = (
+                np.column_stack([b[:, 0], b[:, 1], b[:, 2] - b[:, 0], b[:, 3] - b[:, 1]])
+                for b in (gt_boxes, dt_boxes)
+            )
+        gt_cats, dt_cats = column(1, np.int64), column(5, np.int64)
+        # The box area unless the target gives one, image by image.
+        given = np.concatenate([np.full(len(s[1]), s[3] is not None) for s in sides])
+        values = np.concatenate([s[3] if s[3] is not None else np.zeros(len(s[1])) for s in sides])
+        gt_area = np.where(given, values, gt_boxes[:, 2] * gt_boxes[:, 3])
+        cat_ids = np.unique(np.concatenate([gt_cats, dt_cats]))
+        slots = np.arange(len(sides), dtype=np.uint32)
+        out = _ufcoco.box_outcomes(
+            np.repeat(slots, [len(s[1]) for s in sides]),
+            np.searchsorted(cat_ids, gt_cats).astype(np.uint32),
+            np.ascontiguousarray(gt_boxes), gt_area, column(2, np.int64) != 0,
+            np.repeat(slots, [len(s[5]) for s in sides]),
+            np.searchsorted(cat_ids, dt_cats).astype(np.uint32),
+            np.ascontiguousarray(dt_boxes), column(6, np.float64),
+            [int(i) for i in image_ids], cat_ids.tolist(), self.iou_thrs.tolist(),
+            self.area_range if self.area_range is not None else [0.0, float("inf")],
+            _UNLIMITED if self.max_dets is None else self.max_dets,
+            not self.class_agnostic,
+        )
+        return self._store(out, cat_ids if not self.class_agnostic else [-1], image_ids)
+
     def _add(self, gt: COCO, dt: COCO, image_ids: list, cat_ids: list) -> dict:
         if not image_ids:
             # COCOeval reads an empty imgIds as "every image"; nothing to add.
-            return self._summarize(np.zeros(0, dtype=np.int64), np.zeros(0),
-                                   np.zeros((0, self.iou_thrs.size), dtype=np.uint8), {})
+            return self._store(None, None, image_ids)
         ev = COCOeval(gt, dt, self.iou_type, print_function=_quiet)
         p = ev.params
         p.imgIds = list(image_ids)
@@ -304,8 +342,14 @@ class DetectionMetrics:
         p.recThrs = np.array([0.0])
         ev.evaluate()
         out = ev._engine.outcomes(0, p.maxDets[0])
+        return self._store(out, ev.params.catIds if p.useCats else [-1], image_ids)
 
-        slots = np.asarray(ev.params.catIds if p.useCats else [-1], dtype=np.int64)
+    def _store(self, out: dict | None, cat_ids, image_ids: list) -> dict:
+        """Keep a batch's outcomes and return its metrics."""
+        if out is None:
+            return self._summarize(np.zeros(0, dtype=np.int64), np.zeros(0),
+                                   np.zeros((0, self.iou_thrs.size), dtype=np.uint8), {})
+        slots = np.asarray(cat_ids, dtype=np.int64)
         outcome = out["outcome"]
         # A detection ignored at every threshold is in no count and no cut.
         counted = (outcome != _detection_metrics.IGNORED).any(axis=1)
