@@ -36,6 +36,34 @@ pub struct Grouping {
     group_runs: Vec<(u32, u32)>,
 }
 
+/// Stable counting sort of `order` by `key`, whose values are below
+/// `counts.len() - 1`. `scratch` must be as long as `order`.
+fn counting_sort(
+    order: &mut Vec<u32>,
+    scratch: &mut Vec<u32>,
+    counts: &mut [u32],
+    key: impl Fn(u32) -> u32,
+) {
+    // Already in key order (annotations usually arrive image by image): a
+    // stable sort leaves it as it is.
+    if order.windows(2).all(|w| key(w[0]) <= key(w[1])) {
+        return;
+    }
+    counts.fill(0);
+    for &i in order.iter() {
+        counts[key(i) as usize + 1] += 1;
+    }
+    for k in 1..counts.len() {
+        counts[k] += counts[k - 1];
+    }
+    for &i in order.iter() {
+        let slot = &mut counts[key(i) as usize];
+        scratch[*slot as usize] = i;
+        *slot += 1;
+    }
+    std::mem::swap(order, scratch);
+}
+
 impl Grouping {
     /// `img_slot` / `cat_slot` are per-annotation slot indices; `u32::MAX`
     /// means "not part of this evaluation" and is dropped.
@@ -60,13 +88,46 @@ impl Grouping {
             }
         };
         // Stable: equal keys keep annotation order, which is the JSON order.
-        order.sort_by_key(|&i| {
+        // A stable sort by a key is one permutation, so the counting sorts,
+        // least significant key first, give exactly what `sort_by_key` gives.
+        let key = |i: u32| {
             (
                 group_of(i),
                 img_slot[i as usize],
                 if use_cats { 0 } else { cat_slot[i as usize] },
             )
-        });
+        };
+        let max_img = order
+            .iter()
+            .map(|&i| img_slot[i as usize])
+            .max()
+            .unwrap_or(0) as usize;
+        let max_cat = order
+            .iter()
+            .map(|&i| cat_slot[i as usize])
+            .max()
+            .unwrap_or(0) as usize;
+        let range = max_img.max(max_cat) + 1;
+        if range <= 4 * order.len() + 1024 {
+            let mut scratch = vec![0u32; order.len()];
+            let mut counts = vec![0u32; range + 1];
+            if !use_cats {
+                counting_sort(&mut order, &mut scratch, &mut counts[..max_cat + 2], |i| {
+                    cat_slot[i as usize]
+                });
+            }
+            counting_sort(&mut order, &mut scratch, &mut counts[..max_img + 2], |i| {
+                img_slot[i as usize]
+            });
+            if use_cats {
+                counting_sort(&mut order, &mut scratch, &mut counts[..max_cat + 2], |i| {
+                    cat_slot[i as usize]
+                });
+            }
+            debug_assert!(order.windows(2).all(|w| key(w[0]) <= key(w[1])));
+        } else {
+            order.sort_by_key(|&i| key(i));
+        }
 
         // `order` is group-major, so runs come out grouped and each group's
         // slice is one contiguous range. Groups with no annotations keep
@@ -169,6 +230,41 @@ impl<'a> Iterator for RunJoin<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn counting_sort_gives_the_comparison_sort_permutation() {
+        // Both branches of `build` (dense key range and sparse fallback),
+        // with dropped annotations and both `use_cats` modes.
+        let mut seed = 3u64;
+        let mut next = |m: u32| {
+            seed = seed
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            ((seed >> 33) as u32) % m
+        };
+        for (n, n_img, n_cat) in [(500, 40, 9), (2000, 7, 300), (30, 100_000, 5), (0, 1, 1)] {
+            let img: Vec<u32> = (0..n)
+                .map(|_| if next(50) == 0 { u32::MAX } else { next(n_img) })
+                .collect();
+            let cat: Vec<u32> = (0..n).map(|_| next(n_cat)).collect();
+            for use_cats in [true, false] {
+                let n_groups = if use_cats { n_cat as usize } else { 1 };
+                let g = Grouping::build(&img, &cat, n_groups, use_cats);
+                let mut expected: Vec<u32> = (0..n as u32)
+                    .filter(|&i| img[i as usize] != u32::MAX)
+                    .collect();
+                expected.sort_by_key(|&i| {
+                    let (im, c) = (img[i as usize], cat[i as usize]);
+                    if use_cats {
+                        (c, im, 0)
+                    } else {
+                        (0, im, c)
+                    }
+                });
+                assert_eq!(g.order, expected, "n={n} use_cats={use_cats}");
+            }
+        }
+    }
 
     #[test]
     fn groups_preserve_annotation_order() {

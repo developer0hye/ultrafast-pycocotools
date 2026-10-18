@@ -263,8 +263,22 @@ Use SIMD only where it preserves rule 1. Profiling established these priorities:
    annotation. Keeping `coco.anns[id]` as a real, mutable dictionary is necessary
    for existing framework access. The loader was already 1.3–1.7× faster than
    the standard library.
-2. **The `bb_iou` inner loop:** safe element-wise arithmetic, useful for crowded
-   images and `useCats=0`.
+2. **The `bb_iou` inner loop: done for cells of 40 pairs or more.**
+   `bb_iou_indexed` gathers a cell's detection boxes into columns and computes
+   every pair without branches (`overlap_rows`): each lane performs
+   `bbox_overlap`'s operations in its order and the overlap test only selects
+   the result, so the selected values are the scalar ones. `f64::min` /
+   `f64::max` keep their NaN rule when vectorized; the zero they return for
+   `-0.0` against `0.0` cannot reach the result, because a zero `w` or `h`
+   fails `> 0.0` with either sign. An AVX2 build of the same function is chosen
+   at run time; FMA is not enabled. On a detector-like batch the scalar loop
+   cost 7–8 ns per pair on large cells, mostly mispredicted overlap tests, and
+   the branch-free one about 2.5 ns; below `BRANCH_FREE_MIN_PAIRS` (40) the
+   gather costs more than the branches. The best IoU per detection, which the
+   matcher uses to skip detections, is a lane-wise selection over the same
+   rows. `branch_free_bbox_iou_matches_the_scalar_kernel` compares both
+   compiled versions with `bbox_overlap` bit for bit on NaN, infinite, signed
+   zero, negative-size and crowd boxes.
 3. **Accumulation sorting: rejected.** Inlining each score in its sort entry
    removed two pointer dereferences from the comparator
    (`matches[i].dt_scores[d]`), but RF-DETR bbox evaluation with 1.5 million
@@ -277,6 +291,28 @@ Use SIMD only where it preserves rule 1. Profiling established these priorities:
 
 Every SIMD kernel must include a bit-identical comparison against the scalar
 reference. Tests, rather than contributor memory, must enforce the policy.
+
+## Small and multi-threshold cells
+
+Per-batch evaluation (`metrics.DetectionMetrics`) runs the engine on a few
+images at a time, where per-cell overheads dominate. These changes keep every
+output bit and each has a test against the general path:
+
+- `Grouping::build` sorts with stable counting sorts, least significant key
+  first, and skips a pass whose keys are already in order; a stable sort by a
+  key is one permutation (`counting_sort_gives_the_comparison_sort_permutation`).
+- Detections of a cell are sorted on integer keys whose order is
+  `cmp_desc_score`'s, and not at all when they already arrive in score order
+  (`sort_by_score_gives_the_comparison_sort_permutation`).
+- With several IoU thresholds, each detection scans only the ground truths
+  whose IoU is not below the lowest effective threshold (NaN included). A
+  ground truth left out would only reach `continue` in the full scan, or the
+  `break` at the first ignored ground truth, after which every candidate is
+  ignored too and cannot change the match
+  (`several_thresholds_match_like_one_threshold_each`).
+- `outcomes()` handles cells with only ground truth or only detections without
+  IoU or matching, and writes each unit of cells into its own preallocated
+  range of the output (`outcomes_agree_with_per_instance_at_every_threshold`).
 
 ## Pairs that do not need an exact IoU
 
