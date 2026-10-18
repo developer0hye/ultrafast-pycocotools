@@ -263,6 +263,13 @@ def test_empty_images_and_batches():
     assert nothing["macro"]["f1"] == 0.0
 
 
+def test_best_f1_when_no_prediction_has_a_ground_truth_label():
+    r = DetectionMetrics(score_thr="best_f1").update([_box(0, 0, 2, 0.5)], [_box(0, 0, 1)])
+    assert r["score_thr"] == 0.5
+    assert r["macro"]["f1"] == 0.0
+    assert r["per_category"]["fp"].tolist() == [0, 1]
+
+
 def test_detection_metrics_helper():
     r = detection_metrics([_box(0, 0, 1, 0.9)], [_box(0, 0, 1)], iou_thrs=0.5)
     assert r["micro"]["f1"] == 1.0

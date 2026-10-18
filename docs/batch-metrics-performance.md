@@ -22,9 +22,10 @@ with COCO input and with evaluating every score cut.
 ## Method
 
 - Baseline: `f9f2490dc0a34388b28632e53bc4352c3f650fbc` (Python package).
-  Optimized: the working tree committed as the box-column change on
-  `feat/batch-detection-metrics`, on top of
-  `3252e45ecd3e1eeff6c670ca02c0fa16d6629530` (the sweep change).
+  Optimized: `421ff6e` (the box-column change, on
+  `feat/batch-detection-metrics`), on top of
+  `3252e45ecd3e1eeff6c670ca02c0fa16d6629530` (the sweep change); measured
+  on that tree before it was committed.
 - Both arms load the same compiled module (`maturin develop --release` of the
   optimized tree; the baseline only lacks `box_outcomes`, which it does not
   call), so the arms differ only in the code under test.

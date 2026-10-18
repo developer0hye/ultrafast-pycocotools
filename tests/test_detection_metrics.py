@@ -194,6 +194,20 @@ def test_best_f1_sweep_equals_brute_force(seed, optimize):
         assert best[optimize]["f1"][t] == f1.max()
 
 
+def test_best_macro_f1_without_detections_of_ground_truth_categories():
+    """Only false positives of a category without ground truth at the first
+    threshold; every cut has macro F1 0, so the highest threshold wins."""
+    tp, fp, ign = (_detection_metrics.TRUE_POSITIVE, _detection_metrics.FALSE_POSITIVE,
+                   _detection_metrics.IGNORED)
+    cats = np.array([1, 1, 0])
+    score = np.array([0.9, 0.4, 0.6])
+    outcome = np.array([[fp, fp], [fp, fp], [ign, tp]], dtype=np.uint8)
+    r = _detection_metrics.summarize_outcomes(
+        cats, score, outcome, np.array([1, 0]), [7, 8], [0.5, 0.75], score_thr="best_f1")
+    assert r["score_thr"].tolist() == [0.9, 0.6]
+    assert r["macro"]["f1"].tolist() == [0.0, 1.0]
+
+
 def test_macro_candidates_cover_every_cut_when_unbounded(monkeypatch):
     """With an infinite tolerance every cut is evaluated exactly; the bounded
     search must agree."""

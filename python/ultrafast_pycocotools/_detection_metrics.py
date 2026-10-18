@@ -128,13 +128,15 @@ def _macro_f1_at(cats, hits, cuts, npig):
 
 
 def _sweep_tolerance(n_dets: int, n_gt: int) -> float:
-    """Bound on |running macro-F1 sum - left-to-right sum|, doubled.
+    """Bound on |running macro-F1 sum - left-to-right sum|, with a factor 2 to spare.
 
     The running sum adds ``n_dets`` differences of F1 values in [0, 1]; each
     difference rounds by at most eps/2 and each addition by at most eps/2
     times a partial sum, which stays within ``n_gt + 1``. The left-to-right
     sum of ``n_gt`` values rounds by at most ``n_gt * eps/2 * n_gt``. Both
-    are below ``(n_dets + n_gt) * (n_gt + 1) * eps / 2``.
+    are below ``(n_dets + n_gt) * (n_gt + 1) * eps / 2``; this returns twice
+    that. The caller widens the margin to ``2 * tol`` because both the best
+    cut and the running maximum carry the error.
     """
     return (n_dets + n_gt) * (n_gt + 1) * np.finfo(np.float64).eps
 
@@ -160,6 +162,9 @@ def _best_macro_cut(cats, hits, cuts, npig, grouped) -> int:
     cols = column[cats]
     # Each category's detections in order, with its running counts.
     at = grouped[cols[grouped] >= 0]
+    if at.size == 0:
+        # No detection of a category with ground truth: every cut scores 0.
+        return 0
     cat = cols[at]
     hit = hits[at].astype(np.int64)
     starts = np.flatnonzero(np.append(True, cat[1:] != cat[:-1]))
