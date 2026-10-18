@@ -378,6 +378,15 @@ def test_batch_results_off_returns_none_and_accumulates_the_same(data):
     _assert_same(with_batches.compute(), without.compute())
 
 
+def test_benchmark_worker_still_runs():
+    """``bench/batch_metrics.py``, whose numbers the reports cite, keeps working."""
+    import batch_metrics  # bench/ is on sys.path (conftest)
+
+    out = batch_metrics._worker(reps=1)
+    assert out["update/coco/16img/fixed"]["wall_ms"] > 0
+    assert out["sweep/750000det/80cat/10iou/macro"]["wall_ms"] > 0
+
+
 def test_detection_metrics_helper():
     r = detection_metrics([_box(0, 0, 1, 0.9)], [_box(0, 0, 1)], iou_thrs=0.5)
     assert r["micro"]["f1"] == 1.0

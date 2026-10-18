@@ -76,6 +76,13 @@ jobs:
           python -m pip install "faster-coco-eval==1.8.0"
           python bench/reproduce.py quick --out bench/out/ci-three-way --include-faster --verify-published quick
           python -m pytest -q tests/test_faster_lvis_protocol.py
+      - name: Tensor inputs (PyTorch CPU)
+        # DetectionMetrics reads CPU tensors through .numpy(); those tests skip
+        # without torch, so this entry installs the version the upstream jobs pin.
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12' && matrix.numpy == '2'
+        run: |
+          python -m pip install "torch==2.13.0" --index-url https://download.pytorch.org/whl/cpu
+          python -m pytest -q -rs tests/test_batch_metrics.py -k torch
       - name: Retain test reports and reproduction logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -103,6 +110,26 @@ jobs:
         run: cargo test --locked --release -p ufcoco-py --test pose_numbers
       - run: cargo test --locked --release -p ufcoco-core
 
+  msrv:
+    name: Rust MSRV
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - name: Set up the declared rust-version
+        run: |
+          msrv=$(sed -n 's/^rust-version = "\(.*\)"/\1/p' Cargo.toml)
+          rustup toolchain install "$msrv" --profile minimal && rustup default "$msrv"
+      - name: Build every crate and test target with it
+        env:
+          PYO3_PYTHON: python
+        run: cargo check --locked --workspace --all-targets
+
   upstream:
     name: Upstream
     # Pinned upstream revisions, so a failure here comes from this repository.
@@ -121,7 +148,7 @@ jobs:
   ci:
     name: CI
     if: always()
-    needs: [python, rust, upstream]
+    needs: [python, rust, msrv, upstream]
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
@@ -129,8 +156,10 @@ jobs:
         env:
           PYTHON_RESULT: ${{ needs.python.result }}
           RUST_RESULT: ${{ needs.rust.result }}
+          MSRV_RESULT: ${{ needs.msrv.result }}
           UPSTREAM_RESULT: ${{ needs.upstream.result }}
         run: |
           test "$PYTHON_RESULT" = success
           test "$RUST_RESULT" = success
+          test "$MSRV_RESULT" = success
           test "$UPSTREAM_RESULT" = success

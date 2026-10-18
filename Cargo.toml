@@ -5,7 +5,7 @@ resolver = "2"
 [workspace.package]
 version = "0.1.13"
 edition = "2021"
-rust-version = "1.75"
+rust-version = "1.83"
 license = "BSD-2-Clause"
 repository = "https://github.com/developer0hye/ultrafast-pycocotools"
 
