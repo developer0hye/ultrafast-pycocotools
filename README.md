@@ -145,6 +145,20 @@ evaluator.confusion_matrix()
 evaluator.detection_metrics(iou_thr=0.5, score_thr="best_f1")
 ```
 
+For training and validation loops, `DetectionMetrics` takes per-image arrays
+or tensors (or COCO data), returns each batch's precision, recall and F1, and
+accumulates them without keeping boxes or masks. The accumulated result is
+bit-identical to one evaluation over every image:
+
+```python
+from ultrafast_pycocotools.metrics import DetectionMetrics
+
+metric = DetectionMetrics(iou_thrs=0.5, score_thr="best_f1")  # box_format="xyxy"
+for images, targets in loader:
+    batch = metric.update(model(images), targets)  # [{"boxes", "scores", "labels"}, ...]
+total = metric.compute()  # per_category / micro / macro, and the chosen score_thr
+```
+
 See the [implementation notes](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/implementation-notes.md#extensions).
 
 ## Development

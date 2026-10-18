@@ -196,7 +196,7 @@ from ultrafast_pycocotools.metrics import DetectionMetrics
 
 m = DetectionMetrics(
     iou_type="bbox",        # "bbox" | "segm" | "keypoints" (COCO input only)
-    iou_thrs=(0.5,),        # caller's values, passed to the engine as given
+    iou_thrs=0.5,           # a value or a sequence, passed to the engine as given
     score_thr=None,         # None | float | "best_f1"
     optimize="macro",
     class_agnostic=False,
@@ -247,9 +247,9 @@ Per update, internally:
 1. Build GT and DT handles (array input: a GT dictionary and an `Nx7` result
    array for bbox, which takes the existing `load_compact_array` route).
 2. Evaluate with narrowed `Params`: `imgIds` of this batch, `catIds` = labels
-   seen in the batch, `iouThrs = iou_thrs`, one area range (`area_range`, or
-   `[0, inf]` when `None`), `maxDets = [max_dets]` or the batch's detection
-   count (at least 1) when `None`, `useCats = not class_agnostic`.
+   seen in the batch (the dataset's categories for `update_coco`), `iouThrs = iou_thrs`, one area range (`area_range`, or
+   `[0, inf]` when `None`), `maxDets = [max_dets]` or `2**31 - 1` when `None`
+   (the engine only compares against it), `useCats = not class_agnostic`.
 3. Call `outcomes(0, max_det)`; drop detections ignored at every threshold;
    map category slots to global category ids.
 4. Append `(category id, score, outcome rows)` to the accumulated store and add

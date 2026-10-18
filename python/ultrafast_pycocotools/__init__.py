@@ -31,7 +31,7 @@ from __future__ import annotations
 import sys
 from importlib.metadata import PackageNotFoundError, version as _distribution_version
 
-from . import coco, cocoeval, mask
+from . import coco, cocoeval, mask, metrics
 from .coco import COCO
 from .cocoeval import COCOeval, Params
 
@@ -61,6 +61,7 @@ __all__ = [
     "coco",
     "cocoeval",
     "mask",
+    "metrics",
     "init_as_pycocotools",
     "__version__",
 ]

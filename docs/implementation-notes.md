@@ -485,6 +485,36 @@ accumulation reads, at one IoU threshold or a sequence of them:
   confidence grid some trainers use.
 - `useCats=0` gives one class-agnostic category, id `-1`.
 
+### Batches: `metrics.DetectionMetrics`
+
+`DetectionMetrics(iou_type="bbox", iou_thrs=0.5, score_thr=None,
+optimize="macro", class_agnostic=False, box_format="xyxy", area_range=None,
+max_dets=None)` applies the same rules to a stream of batches:
+
+- `update(preds, targets)` takes one dict per image: `boxes` (or `masks` for
+  `segm`), `scores` and `labels` for predictions; `boxes` or `masks`,
+  `labels` and optionally `iscrowd` and `area` for targets. NumPy arrays,
+  lists and tensors work; tensors are moved to the CPU by duck typing, so
+  PyTorch is not imported. `update_coco(gt, dt)` takes a `COCO` object,
+  dictionary or path and anything `loadRes` accepts, including keypoints.
+- Each call returns that batch's metrics; `compute()` returns the metrics over
+  every batch since construction or `reset()`.
+- Only one category id, one score and one outcome byte per IoU threshold are
+  kept for each counted detection (17 bytes at one threshold), never the
+  geometry. Matching is per image and a score threshold keeps a prefix of
+  each image's order, so the stored outcomes are the ones one evaluation over
+  every image would count, and `compute()` equals it bit for bit, including
+  the `best_f1` sweep.
+- By default nothing is filtered by area and no `maxDets` limit applies;
+  `area_range=(lo, hi)` and `max_dets=n` apply COCO's rules. Crowd targets
+  (`iscrowd=1`) are ignored regions as in COCO.
+- Each image may be added once. Without `image_id`, images are numbered
+  across updates; an id that was already added raises `ValueError`.
+- `xyxy` boxes are converted to `[x1, y1, x2 - x1, y2 - y1]`; pass `xywh` to
+  evaluate coordinates exactly as a COCO file would hold them.
+- For array input, categories are the labels seen in the batch. For COCO
+  input they are the dataset's categories, as in `COCOeval`.
+
 The choices behind these rules are in the
 [detection metrics design](detection-metrics-design.md).
 
