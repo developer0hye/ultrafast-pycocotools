@@ -156,9 +156,61 @@ def test_best_f1_is_the_best_cut_and_matches_a_direct_call(bbox_eval, synthetic,
         assert chosen == max(s for s, v in zip(candidates, f1) if v == max(f1))
 
 
+def _random_outcomes(seed, n=1500, n_cats=9, n_thrs=2):
+    """Coarse scores (many ties), ignored detections, NaN scores and two
+    categories without ground truth (false positives only)."""
+    rng = np.random.default_rng(seed)
+    cats = rng.integers(0, n_cats, n)
+    score = np.round(rng.random(n), 2)
+    score[rng.random(n) < 0.01] = np.nan
+    outcome = rng.choice(
+        [_detection_metrics.IGNORED, _detection_metrics.TRUE_POSITIVE, _detection_metrics.FALSE_POSITIVE],
+        size=(n, n_thrs), p=[0.1, 0.4, 0.5],
+    ).astype(np.uint8)
+    npig = np.bincount(cats, minlength=n_cats) // 2 + 1
+    npig[:2] = 0
+    outcome[np.isin(cats, [0, 1])] = _detection_metrics.FALSE_POSITIVE
+    return cats, score, outcome, npig
+
+
+@pytest.mark.parametrize("seed", range(4))
+@pytest.mark.parametrize("optimize", ["macro", "micro"])
+def test_best_f1_sweep_equals_brute_force(seed, optimize):
+    """Every candidate cut through the fixed-threshold path, against the sweep."""
+    cats, score, outcome, npig = _random_outcomes(seed)
+    ids, thrs = np.arange(npig.size), [0.5, 0.75]
+    best = _detection_metrics.summarize_outcomes(
+        cats, score, outcome, npig, ids, thrs, score_thr="best_f1", optimize=optimize)
+    for t in range(len(thrs)):
+        live = (outcome[:, t] != _detection_metrics.IGNORED) & ~np.isnan(score)
+        candidates = np.unique(score[live])[::-1]
+        f1 = np.array([
+            _detection_metrics.summarize_outcomes(
+                cats, score, outcome[:, [t]], npig, ids, [thrs[t]], score_thr=float(s)
+            )[optimize]["f1"][0]
+            for s in candidates
+        ])
+        assert best["score_thr"][t] == candidates[int(np.argmax(f1))]
+        assert best[optimize]["f1"][t] == f1.max()
+
+
+def test_macro_candidates_cover_every_cut_when_unbounded(monkeypatch):
+    """With an infinite tolerance every cut is evaluated exactly; the bounded
+    search must agree."""
+    for seed in range(4):
+        args = _random_outcomes(seed, n=4000, n_cats=30)
+        ids = np.arange(args[3].size)
+        bounded = _detection_metrics.summarize_outcomes(*args, ids, [0.5, 0.75], score_thr="best_f1")
+        with monkeypatch.context() as m:
+            m.setattr(_detection_metrics, "_sweep_tolerance", lambda *_: np.inf)
+            every = _detection_metrics.summarize_outcomes(*args, ids, [0.5, 0.75], score_thr="best_f1")
+        assert np.array_equal(bounded["score_thr"], every["score_thr"])
+
+
 def test_best_f1_sweep_does_not_depend_on_block_size(bbox_eval, monkeypatch):
     whole = bbox_eval.detection_metrics(score_thr="best_f1")
     monkeypatch.setattr(_detection_metrics, "_SWEEP_BLOCK_CELLS", 7)
+    monkeypatch.setattr(_detection_metrics, "_sweep_tolerance", lambda *_: np.inf)
     assert whole["score_thr"] == bbox_eval.detection_metrics(score_thr="best_f1")["score_thr"]
 
 

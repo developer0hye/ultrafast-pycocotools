@@ -122,6 +122,13 @@ described under [Tests](#tests).
   - The sweep computes counts with cumulative sums and the ratios with the same
     function as a fixed threshold, so `score_thr="best_f1"` and
     `score_thr=<the chosen value>` give bit-identical results.
+  - The macro sweep does not evaluate every cut. A running sum, changed only
+    by the category of each added detection, is within a proven rounding bound
+    of the left-to-right sum at every cut; only cuts within twice that bound of
+    the maximum, and only the first of any run of cuts that add no detection of
+    a category with ground truth, are evaluated exactly. Cost is
+    O(D log D + candidates x categories) instead of O(D x categories); the
+    tests compare it with evaluating every cut.
   - Unlike Ultralytics, F1 is not smoothed or interpolated on a confidence
     grid; values are exact at real score cuts.
 

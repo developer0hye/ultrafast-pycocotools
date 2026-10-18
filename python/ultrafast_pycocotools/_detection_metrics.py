@@ -26,8 +26,8 @@ IGNORED = _ufcoco.OUTCOME_IGNORED
 TRUE_POSITIVE = _ufcoco.OUTCOME_TRUE_POSITIVE
 FALSE_POSITIVE = _ufcoco.OUTCOME_FALSE_POSITIVE
 
-# Cells of the (detections x categories) cumulative-count blocks the macro
-# sweep builds at once; bounds its memory for datasets with many categories.
+# Cells of the (cuts x categories) cumulative-count blocks the macro sweep
+# builds at once; bounds its memory for datasets with many categories.
 _SWEEP_BLOCK_CELLS = 1 << 20
 
 
@@ -87,40 +87,102 @@ def _counts(cat_slot, score, outcome, n_cats, thr, keep_all):
     return tp, fp
 
 
-def _macro_f1_at_cuts(cats, hits, cuts, npig):
-    """Macro F1 after each cut of the score-sorted detections.
+def _macro_f1_at(cats, hits, cuts, npig):
+    """Macro F1 after each of ``cuts``, with the arithmetic of a fixed threshold.
 
-    ``cats`` / ``hits`` are the sorted detections' category slots and
-    true-positive flags; ``cuts`` are the last positions of each score. Only
-    categories with ground truth enter the mean, so only they are tracked.
+    ``cats`` / ``hits`` are the score-sorted detections' category slots and
+    true-positive flags; ``cuts`` are ascending positions in that order. Only
+    categories with ground truth enter the mean, so only they are counted.
+    Costs O(D + len(cuts) * categories), in blocks of bounded size.
+    """
+    gt_cats = np.flatnonzero(npig > 0)
+    out = np.zeros(cuts.size, dtype=np.float64)
+    if gt_cats.size == 0 or cuts.size == 0:
+        return out
+    n_gt = gt_cats.size
+    column = np.full(npig.size, -1, dtype=np.int64)
+    column[gt_cats] = np.arange(n_gt)
+    cols = column[cats]
+    npig_gt = npig[gt_cats]
+    all_gt = np.ones(n_gt, dtype=bool)
+    # A detection counts at every cut at or after its position. `first` is
+    # non-decreasing, so each block of cuts takes a contiguous run of it.
+    first = np.searchsorted(cuts, np.arange(cats.size), side="left")
+    keep = (cols >= 0) & (first < cuts.size)
+    first, cols, hits = first[keep], cols[keep], hits[keep]
+    carry_tp = np.zeros(n_gt, dtype=np.int64)
+    carry_fp = np.zeros(n_gt, dtype=np.int64)
+    rows_per_block = max(1, _SWEEP_BLOCK_CELLS // n_gt)
+    for lo in range(0, cuts.size, rows_per_block):
+        hi = min(cuts.size, lo + rows_per_block)
+        a, b = np.searchsorted(first, [lo, hi], side="left")
+        cell = (first[a:b] - lo) * n_gt + cols[a:b]
+        hit = hits[a:b]
+        size = (hi - lo) * n_gt
+        cum_tp = np.cumsum(np.bincount(cell[hit], minlength=size).reshape(-1, n_gt), axis=0) + carry_tp
+        cum_fp = np.cumsum(np.bincount(cell[~hit], minlength=size).reshape(-1, n_gt), axis=0) + carry_fp
+        carry_tp, carry_fp = cum_tp[-1], cum_fp[-1]
+        _, _, f1 = _ratios(cum_tp, cum_fp, npig_gt - cum_tp)
+        out[lo:hi] = _macro(f1, all_gt)
+    return out
+
+
+def _sweep_tolerance(n_dets: int, n_gt: int) -> float:
+    """Bound on |running macro-F1 sum - left-to-right sum|, doubled.
+
+    The running sum adds ``n_dets`` differences of F1 values in [0, 1]; each
+    difference rounds by at most eps/2 and each addition by at most eps/2
+    times a partial sum, which stays within ``n_gt + 1``. The left-to-right
+    sum of ``n_gt`` values rounds by at most ``n_gt * eps/2 * n_gt``. Both
+    are below ``(n_dets + n_gt) * (n_gt + 1) * eps / 2``.
+    """
+    return (n_dets + n_gt) * (n_gt + 1) * np.finfo(np.float64).eps
+
+
+def _best_macro_cut(cats, hits, cuts, npig, grouped) -> int:
+    """Index into ``cuts`` of the highest cut with the largest macro F1.
+
+    Exact without evaluating every cut. A running sum, updated only by the
+    category each detection belongs to, gives every cut's macro F1 sum within
+    ``tol`` of the left-to-right sum a fixed threshold computes. The best cut's
+    running sum is then at least ``max - 2 * tol``, so only cuts within that
+    margin are evaluated with the fixed-threshold arithmetic, and the
+    largest of those, highest threshold first, is the answer.
+
+    ``grouped`` lists the positions of ``cats`` by category slot, in score
+    order within each category.
     """
     gt_cats = np.flatnonzero(npig > 0)
     if gt_cats.size == 0:
-        return np.zeros(cuts.size, dtype=np.float64)
+        return 0
     column = np.full(npig.size, -1, dtype=np.int64)
     column[gt_cats] = np.arange(gt_cats.size)
     cols = column[cats]
-    npig_gt = npig[gt_cats]
-    all_gt = np.ones(gt_cats.size, dtype=bool)
-    rows_per_block = max(1, _SWEEP_BLOCK_CELLS // gt_cats.size)
-    carry_tp = np.zeros(gt_cats.size, dtype=np.int64)
-    carry_fp = np.zeros(gt_cats.size, dtype=np.int64)
-    out = np.empty(cuts.size, dtype=np.float64)
-    for lo in range(0, cats.size, rows_per_block):
-        hi = min(cats.size, lo + rows_per_block)
-        rows = np.flatnonzero(cols[lo:hi] >= 0)
-        step_tp = np.zeros((hi - lo, gt_cats.size), dtype=np.int64)
-        step_fp = np.zeros((hi - lo, gt_cats.size), dtype=np.int64)
-        step_tp[rows, cols[lo:hi][rows]] = hits[lo:hi][rows]
-        step_fp[rows, cols[lo:hi][rows]] = ~hits[lo:hi][rows]
-        cum_tp = np.cumsum(step_tp, axis=0) + carry_tp
-        cum_fp = np.cumsum(step_fp, axis=0) + carry_fp
-        carry_tp, carry_fp = cum_tp[-1], cum_fp[-1]
-        here = (cuts >= lo) & (cuts < hi)
-        at = cuts[here] - lo
-        _, _, f1 = _ratios(cum_tp[at], cum_fp[at], npig_gt - cum_tp[at])
-        out[here] = _macro(f1, all_gt)
-    return out
+    # Each category's detections in order, with its running counts.
+    at = grouped[cols[grouped] >= 0]
+    cat = cols[at]
+    hit = hits[at].astype(np.int64)
+    starts = np.flatnonzero(np.append(True, cat[1:] != cat[:-1]))
+    group = np.cumsum(np.append(True, cat[1:] != cat[:-1])) - 1
+    tp = np.cumsum(hit)
+    fp = np.cumsum(1 - hit)
+    tp = tp - (tp - hit)[starts][group]
+    fp = fp - (fp - (1 - hit))[starts][group]
+    _, _, after = _ratios(tp, fp, npig[gt_cats][cat] - tp)
+    before = np.append(0.0, after[:-1])
+    before[starts] = 0.0
+    delta = np.zeros(cats.size, dtype=np.float64)
+    delta[at] = after - before
+    running = np.cumsum(delta)[cuts]
+    # A cut that adds no detection of a category with ground truth has the
+    # same counts, hence the same F1, as the cut before it, and a lower
+    # threshold, so it never wins; only the first cut of such a run is kept.
+    counted = np.cumsum(cols >= 0)[cuts]
+    moved = np.append(True, counted[1:] != counted[:-1])
+    tol = _sweep_tolerance(cats.size, gt_cats.size)
+    near = np.flatnonzero(moved & (running >= running.max() - 2 * tol))
+    exact = _macro_f1_at(cats, hits, cuts[near], npig)
+    return int(near[int(np.argmax(exact))])
 
 
 def _best_thresholds(cat_slot, score, outcome, npig, optimize):
@@ -131,23 +193,32 @@ def _best_thresholds(cat_slot, score, outcome, npig, optimize):
     threshold; with nothing to keep the threshold is ``+inf``.
     """
     best = np.full(outcome.shape[1], np.inf)
+    # Sorted once for every IoU threshold: a stable sort keeps the relative
+    # order of any subset, so filtering the sorted detections equals sorting
+    # each threshold's live ones.
+    order = np.argsort(-score, kind="stable")
+    score_sorted = score[order]
+    cat_sorted = cat_slot[order]
+    by_cat = np.argsort(cat_sorted, kind="stable") if optimize == "macro" else None
+    finite = ~np.isnan(score_sorted)
     for t in range(outcome.shape[1]):
-        col = outcome[:, t]
-        live = (col != IGNORED) & ~np.isnan(score)
+        col = outcome[order, t]
+        live = (col != IGNORED) & finite
         if not live.any():
             continue
-        order = np.argsort(-score[live], kind="stable")
-        scores = score[live][order]
-        cats = cat_slot[live][order]
-        hits = col[live][order] == TRUE_POSITIVE
+        scores = score_sorted[live]
+        cats = cat_sorted[live]
+        hits = col[live] == TRUE_POSITIVE
         cuts = np.flatnonzero(np.append(scores[1:] != scores[:-1], True))
         if optimize == "micro":
             tp = np.cumsum(hits)[cuts]
             fp = cuts + 1 - tp
             _, _, f1 = _ratios(tp, fp, int(npig.sum()) - tp)
+            best[t] = scores[cuts[int(np.argmax(f1))]]
         else:
-            f1 = _macro_f1_at_cuts(cats, hits, cuts, npig)
-        best[t] = scores[cuts[int(np.argmax(f1))]]
+            rank = np.cumsum(live) - 1
+            grouped = rank[by_cat[live[by_cat]]]
+            best[t] = scores[cuts[_best_macro_cut(cats, hits, cuts, npig, grouped)]]
     return best
 
 
