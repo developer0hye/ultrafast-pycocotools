@@ -14,6 +14,11 @@ on:
       rfdetr-ref:
         type: string
         required: true
+      # RF-DETR pins hotcoco in its train extra, and the pin moves between its
+      # revisions, so the caller names the version that revision accepts.
+      rfdetr-hotcoco:
+        type: string
+        default: '1.0.1'
       ultralytics-repository:
         type: string
         required: true
@@ -66,7 +71,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "torch==2.13.0" "torchvision==0.28.0" --index-url https://download.pytorch.org/whl/cpu
           python -m pip install "./upstream/rf-detr[train]" "torchmetrics==1.8.2" "faster-coco-eval==1.8.0" \
-            "hotcoco==1.0.1" "transformers==5.17.0" "supervision==0.30.5" "pytorch_lightning==2.6.6" \
+            "hotcoco==${{ inputs.rfdetr-hotcoco }}" "transformers==5.17.0" "supervision==0.30.5" "pytorch_lightning==2.6.6" \
             "pycocotools==2.0.11" "pytest==9.1.1" "pytest-doctestplus==1.7.1" "pytest-timeout==2.4.0" \
             "pytest-rerunfailures==14.0" pandas "fuse-augmentations==0.10.0.dev0"
           # rfdetr[train] pulls the released wheel; test this revision instead.

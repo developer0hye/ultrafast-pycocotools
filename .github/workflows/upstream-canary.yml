@@ -19,6 +19,8 @@ jobs:
     uses: ./.github/workflows/upstream-integrations.yml
     with:
       rfdetr-ref: develop
+      # RF-DETR develop requires hotcoco>=1.2.1,<1.3 in its train extra.
+      rfdetr-hotcoco: '1.2.1'
       # Until ultralytics/ultralytics#26101 is merged, its head is the latest
       # Ultralytics revision that evaluates with ultrafast-pycocotools.
       ultralytics-repository: ultralytics/ultralytics
