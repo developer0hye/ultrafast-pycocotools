@@ -962,6 +962,36 @@ impl Evaluator {
         )?;
         Ok((d, g))
     }
+
+    /// Every detection's outcome at every IoU threshold for one area range.
+    ///
+    /// Returns a dict of numpy arrays: `cat_slot`, `image_id`, `score` (one
+    /// entry per detection), `outcome` (`(D, T)` uint8, compare with the
+    /// module's `OUTCOME_*` constants) and `npig` (non-ignored ground truth per
+    /// category slot). One matching serves every threshold.
+    #[pyo3(signature = (a_idx=0, max_det=100))]
+    fn outcomes<'py>(
+        &self,
+        py: Python<'py>,
+        a_idx: usize,
+        max_det: usize,
+    ) -> PyResult<Bound<'py, PyDict>> {
+        let out = py.detach(|| self.inner.outcomes(a_idx, max_det));
+        let t_n = self.inner.params.iou_thrs.len();
+        let d_n = out.score.len();
+        let d = PyDict::new(py);
+        d.set_item("cat_slot", Array1::from_vec(out.cat_slot).into_pyarray(py))?;
+        d.set_item("image_id", Array1::from_vec(out.img_id).into_pyarray(py))?;
+        d.set_item("score", Array1::from_vec(out.score).into_pyarray(py))?;
+        d.set_item(
+            "outcome",
+            Array2::from_shape_vec((d_n, t_n), out.outcome)
+                .map_err(|e| PyValueError::new_err(e.to_string()))?
+                .into_pyarray(py),
+        )?;
+        d.set_item("npig", Array1::from_vec(out.npig).into_pyarray(py))?;
+        Ok(d)
+    }
 }
 
 fn eval_imgs_to_py<'py>(
@@ -1082,6 +1112,9 @@ fn append_index(
 #[pymodule(gil_used = true)]
 fn _ufcoco(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Evaluator>()?;
+    m.add("OUTCOME_IGNORED", ufcoco_core::IGNORED)?;
+    m.add("OUTCOME_TRUE_POSITIVE", ufcoco_core::TRUE_POSITIVE)?;
+    m.add("OUTCOME_FALSE_POSITIVE", ufcoco_core::FALSE_POSITIVE)?;
     m.add_class::<compact::CompactBbox>()?;
     m.add_function(wrap_pyfunction!(compact::load_compact_bbox, m)?)?;
     m.add_function(wrap_pyfunction!(compact::load_compact_array, m)?)?;

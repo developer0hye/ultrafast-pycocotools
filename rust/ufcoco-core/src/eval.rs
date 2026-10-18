@@ -287,6 +287,24 @@ pub struct GtRecord {
     pub matched: bool,
 }
 
+/// Every evaluated detection's outcome at every IoU threshold, for one area
+/// range: the bytes accumulation reads, before any score ordering.
+///
+/// Precision, recall and F1 are counted from these rather than from a matching
+/// of their own, so they cannot disagree with AP. Detections come in category
+/// slot order, then image order, then the stable score order matching used.
+#[derive(Clone, Debug, Default)]
+pub struct Outcomes {
+    pub cat_slot: Vec<u32>,
+    pub img_id: Vec<i64>,
+    pub score: Vec<f64>,
+    /// `D * T`, detection-major: `IGNORED`, `TRUE_POSITIVE` or `FALSE_POSITIVE`.
+    pub outcome: Vec<u8>,
+    /// Per category slot: ground truth that is not ignored in this area range
+    /// (`npig` in pycocotools' accumulate).
+    pub npig: Vec<u64>,
+}
+
 /// The `evalImgs` entry for one (image, category, area range), in the shape
 /// pycocotools exposes.
 #[derive(Clone, Debug)]
@@ -1331,6 +1349,53 @@ impl Evaluator {
                 },
             )
     }
+
+    /// Outcomes at every IoU threshold for area range `a_idx`, keeping the
+    /// first `max_det` detections of each (image, category).
+    ///
+    /// Extension API, like `per_instance`, but one matching serves all
+    /// thresholds. `max_det` above `max_dets.last()` keeps nothing more: the
+    /// engine truncates to that before matching.
+    pub fn outcomes(&self, a_idx: usize, max_det: usize) -> Outcomes {
+        let p = &self.params;
+        let t_n = p.iou_thrs.len();
+        // Ordered collect, so the concatenation below is in category order
+        // whatever the thread count.
+        let parts: Vec<Outcomes> = (0..self.n_groups)
+            .into_par_iter()
+            .map(|k| {
+                let work = self.prepare_category(k);
+                let mut part = Outcomes {
+                    npig: vec![0],
+                    ..Outcomes::default()
+                };
+                let mut mm = ImgMatch::default();
+                let mut scratch = MatchScratch::default();
+                for ci in &work {
+                    if !self.evaluate_img_into(ci, a_idx, &mut mm, &mut scratch, false) {
+                        continue;
+                    }
+                    part.npig[0] += mm.gt_ignore.iter().filter(|&&ig| !ig).count() as u64;
+                    let img_id = p.img_ids[ci.img_slot as usize];
+                    let d_n = ci.dt_idx.len().min(max_det);
+                    part.cat_slot.resize(part.cat_slot.len() + d_n, k as u32);
+                    part.img_id.resize(part.img_id.len() + d_n, img_id);
+                    part.score.extend_from_slice(&mm.dt_scores[..d_n]);
+                    part.outcome.extend_from_slice(&mm.outcome[..d_n * t_n]);
+                }
+                part
+            })
+            .collect();
+        let mut out = Outcomes::default();
+        for part in parts {
+            out.cat_slot.extend(part.cat_slot);
+            out.img_id.extend(part.img_id);
+            out.score.extend(part.score);
+            out.outcome.extend(part.outcome);
+            out.npig.extend(part.npig);
+        }
+        out
+    }
 }
 
 /// Working buffers for one image's match, reused across images.
@@ -1355,9 +1420,9 @@ struct AccumBuf {
 }
 
 /// Outcomes gathered by `Evaluator::gather_outcomes`.
-const IGNORED: u8 = 0;
-const TRUE_POSITIVE: u8 = 1;
-const FALSE_POSITIVE: u8 = 2;
+pub const IGNORED: u8 = 0;
+pub const TRUE_POSITIVE: u8 = 1;
+pub const FALSE_POSITIVE: u8 = 2;
 
 struct CatOut {
     precision: Vec<f64>,
@@ -2087,6 +2152,64 @@ mod tests {
         assert_eq!(gts.len(), 2);
         assert_eq!(gts.iter().filter(|g| g.ignore).count(), 1);
         assert_eq!(gts.iter().filter(|g| g.matched).count(), 2);
+    }
+
+    #[test]
+    fn outcomes_agree_with_per_instance_at_every_threshold() {
+        // Two categories, a crowd region, one detection outside the second
+        // area range and a maxDets cut, so every outcome kind appears.
+        let gt = boxes(
+            &[1, 2, 3],
+            &[0.0; 3],
+            &[UNIT, [50.0, 0.0, 50.0, 50.0], [0.0, 0.0, 4.0, 4.0]],
+            &[0, 0, 1],
+            &[false, true, false],
+        );
+        let dt = boxes(
+            &[11, 12, 13, 14, 15],
+            &[0.9, 0.8, 0.7, 0.6, 0.6],
+            &[
+                [0.0, 0.0, 10.0, 8.0],
+                [60.0, 10.0, 10.0, 10.0],
+                [200.0, 0.0, 9.0, 9.0],
+                [0.0, 0.0, 4.0, 3.0],
+                [0.0, 0.0, 4.0, 4.0],
+            ],
+            &[0, 0, 0, 1, 1],
+            &[false; 5],
+        );
+        let mut p = params();
+        p.cat_ids = vec![7, 8];
+        p.iou_thrs = vec![0.5, 0.75, 0.95];
+        p.area_rng = vec![[0.0, 1e10], [0.0, 90.0]];
+        let ev = Evaluator::new(p, gt, dt);
+        for a in 0..2 {
+            for max_det in [1, 2, 10] {
+                let out = ev.outcomes(a, max_det);
+                assert_eq!(out.npig, if a == 0 { vec![1, 1] } else { vec![0, 1] });
+                for t in 0..3 {
+                    let (dets, _) = ev.per_instance(t, a, max_det);
+                    assert_eq!(dets.len(), out.score.len());
+                    for (n, d) in dets.iter().enumerate() {
+                        assert_eq!(d.cat_id, [7, 8][out.cat_slot[n] as usize]);
+                        assert_eq!(d.img_id, out.img_id[n]);
+                        assert_eq!(d.score.to_bits(), out.score[n].to_bits());
+                        let expected = if d.ignore {
+                            IGNORED
+                        } else if d.gt_id >= 0 {
+                            TRUE_POSITIVE
+                        } else {
+                            FALSE_POSITIVE
+                        };
+                        assert_eq!(
+                            out.outcome[n * 3 + t],
+                            expected,
+                            "a={a} m={max_det} t={t} n={n}"
+                        );
+                    }
+                }
+            }
+        }
     }
 
     #[test]

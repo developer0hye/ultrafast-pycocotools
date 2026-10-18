@@ -31,6 +31,6 @@ pub mod rle;
 
 pub use eval::{
     DetRecord, EvalParams, EvalResult, Evaluator, GeomStore, GtRecord, ImgEval, Instances, IouType,
-    MaskRef, Timings, EPS,
+    MaskRef, Outcomes, Timings, EPS, FALSE_POSITIVE, IGNORED, TRUE_POSITIVE,
 };
 pub use rle::Rle;

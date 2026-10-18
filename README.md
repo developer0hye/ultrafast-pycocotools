@@ -133,7 +133,8 @@ Bit-exactness claims cover the tested inputs and configurations. See the
 ## Extras
 
 The same matching results provide per-category AP, precision–recall curves,
-per-detection TP/FP matches and a confusion matrix. Boundary IoU is available
+per-detection TP/FP matches, a confusion matrix, and precision, recall and F1
+at a score threshold or at the best-F1 cut. Boundary IoU is available
 as an additional evaluation mode (an extension, not a pycocotools metric):
 
 ```python
@@ -141,6 +142,7 @@ evaluator.per_category_stats()
 evaluator.pr_curve(cat_id=1, iou_thr=0.5)
 evaluator.matches(iou_thr=0.5)
 evaluator.confusion_matrix()
+evaluator.detection_metrics(iou_thr=0.5, score_thr="best_f1")
 ```
 
 See the [implementation notes](https://github.com/developer0hye/ultrafast-pycocotools/blob/main/docs/implementation-notes.md#extensions).
