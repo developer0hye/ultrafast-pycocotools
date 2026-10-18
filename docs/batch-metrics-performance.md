@@ -125,7 +125,9 @@ every run of both builds. Median host CPU during the run was 12% (maximum
 - Host: Intel Core i5-10400 (6 cores, 12 threads), Linux 7.0.0-38, CPython
   3.12.4, NumPy 2.5.4, rustc 1.97.1. Load average 1.0–2.7 during the run
   (median 2.2, including the benchmark's own one or two threads).
-- Raw data: [ab-v2.json](../bench/results/batch-metrics-20261018/ab-v2.json).
+- Raw data: [ab-v2.json](../bench/results/batch-metrics-20261018/ab-v2.json);
+  its `arms` entries name the commits (the run recorded local paths, replaced
+  afterwards; `--label` now records them directly).
 
 ## What did not move
 

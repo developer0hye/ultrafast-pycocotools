@@ -6,6 +6,7 @@ put first on ``sys.path`` (a checkout's ``python/`` with its own compiled
 module copied in), or ``.`` for the installed package.
 
     python bench/batch_metrics.py --arm base=/tmp/base/python --arm new=. \\
+        --label base=COMMIT --label new=COMMIT \\
         --rounds 5 --out bench/results/batch-metrics.json
 
 Batches:
@@ -218,6 +219,8 @@ def _comparators(reps: int) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--arm", action="append", default=[], help="name=path; repeatable")
+    ap.add_argument("--label", action="append", default=[],
+                    help="name=text recorded for an arm instead of its path, e.g. a commit")
     ap.add_argument("--rounds", type=int, default=5)
     ap.add_argument("--reps", type=int, default=300)
     ap.add_argument("--threads", default="1,2")
@@ -259,7 +262,8 @@ def main() -> None:
     }
     report = {
         "inputs": {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in (GT, DT)},
-        "arms": arms, "rounds": args.rounds, "reps": args.reps, "median": summary, "runs": runs,
+        "arms": {**arms, **dict(label.split("=", 1) for label in args.label)},
+        "rounds": args.rounds, "reps": args.reps, "median": summary, "runs": runs,
     }
     for key, value in summary.items():
         print(f"{key:60s} wall {value['wall_ms']:10.3f} ms  cpu {value['cpu_ms']:10.3f} ms")

@@ -45,7 +45,9 @@ fn shape_repr(shape: &[usize]) -> String {
 // meanwhile, and no Rust code holds a mutable view of any array. The crate's
 // dynamic borrow tracking, which `readonly()` adds on top of that, only tracks
 // Rust borrows: it never stopped Python code from writing to an array, so it
-// adds no guarantee here, and it cost more than reading a batch's arrays.
+// adds no guarantee here, and it cost more than reading a batch's arrays. The
+// module declares `gil_used = true`, so free-threaded interpreters keep the
+// GIL enabled while it is loaded.
 
 /// Append `value` as float64 in C order; returns its shape.
 fn read_f64(
