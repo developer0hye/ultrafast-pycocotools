@@ -49,30 +49,82 @@ fn shape_repr(shape: &[usize]) -> String {
 // module declares `gil_used = true`, so free-threaded interpreters keep the
 // GIL enabled while it is loaded.
 
-/// Append `value` as float64 in C order; returns its shape.
-fn read_f64(
-    value: &Bound<'_, PyAny>,
-    convert: &Bound<'_, PyAny>,
-    out: &mut Vec<f64>,
-) -> PyResult<Vec<usize>> {
+/// Append a NumPy array of a common dtype as float64 in C order and return
+/// its shape, or `None` for anything else.
+fn typed_f64(value: &Bound<'_, PyAny>, out: &mut Vec<f64>) -> Option<Vec<usize>> {
     if let Ok(array) = value.cast::<PyArrayDyn<f64>>() {
         let view = unsafe { array.as_array() };
         match view.as_slice() {
             Some(values) => out.extend_from_slice(values),
             None => out.extend(view.iter().copied()),
         }
-        return Ok(view.shape().to_vec());
+        return Some(view.shape().to_vec());
     }
     macro_rules! typed {
         ($($t:ty),*) => {$(
             if let Ok(array) = value.cast::<PyArrayDyn<$t>>() {
                 let view = unsafe { array.as_array() };
                 out.extend(view.iter().map(|&x| x as f64));
-                return Ok(view.shape().to_vec());
+                return Some(view.shape().to_vec());
             }
         )*};
     }
     typed!(f32, i64, i32);
+    None
+}
+
+/// Append a NumPy array of a common integer dtype as int64 in C order and
+/// return how many values were read, or `None` for anything else.
+fn typed_i64(value: &Bound<'_, PyAny>, out: &mut Vec<i64>) -> Option<usize> {
+    let before = out.len();
+    if let Ok(array) = value.cast::<PyArrayDyn<i64>>() {
+        let view = unsafe { array.as_array() };
+        match view.as_slice() {
+            Some(values) => out.extend_from_slice(values),
+            None => out.extend(view.iter().copied()),
+        }
+        return Some(out.len() - before);
+    }
+    macro_rules! typed {
+        ($($t:ty),*) => {$(
+            if let Ok(array) = value.cast::<PyArrayDyn<$t>>() {
+                out.extend(unsafe { array.as_array() }.iter().map(|&x| x as i64));
+                return Some(out.len() - before);
+            }
+        )*};
+    }
+    typed!(i32, i16, i8, u8, u16, u32, bool);
+    None
+}
+
+/// The NumPy array a tensor-like value's `.numpy()` returns, if it returns
+/// one. For a CPU PyTorch tensor that does not require grad this is a view of
+/// the same memory, read without a Python-level conversion; for anything else
+/// (grad-tracking or GPU tensors, objects without the method) the caller falls
+/// back to `convert`, which receives the original value.
+fn numpy_of<'py>(value: &Bound<'py, PyAny>) -> Option<Bound<'py, PyAny>> {
+    if value.cast::<numpy::PyUntypedArray>().is_ok() {
+        return None;
+    }
+    let array = value.call_method0(intern!(value.py(), "numpy")).ok()?;
+    array
+        .cast::<numpy::PyUntypedArray>()
+        .is_ok()
+        .then_some(array)
+}
+
+/// Append `value` as float64 in C order; returns its shape.
+fn read_f64(
+    value: &Bound<'_, PyAny>,
+    convert: &Bound<'_, PyAny>,
+    out: &mut Vec<f64>,
+) -> PyResult<Vec<usize>> {
+    if let Some(shape) = typed_f64(value, out) {
+        return Ok(shape);
+    }
+    if let Some(shape) = numpy_of(value).and_then(|array| typed_f64(&array, out)) {
+        return Ok(shape);
+    }
     let converted = convert.call1((value, intern!(value.py(), "f64")))?;
     let view = unsafe { converted.cast::<PyArrayDyn<f64>>()?.as_array() };
     out.extend(view.iter().copied());
@@ -85,24 +137,13 @@ fn read_i64(
     convert: &Bound<'_, PyAny>,
     out: &mut Vec<i64>,
 ) -> PyResult<usize> {
+    if let Some(n) = typed_i64(value, out) {
+        return Ok(n);
+    }
+    if let Some(n) = numpy_of(value).and_then(|array| typed_i64(&array, out)) {
+        return Ok(n);
+    }
     let before = out.len();
-    if let Ok(array) = value.cast::<PyArrayDyn<i64>>() {
-        let view = unsafe { array.as_array() };
-        match view.as_slice() {
-            Some(values) => out.extend_from_slice(values),
-            None => out.extend(view.iter().copied()),
-        }
-        return Ok(out.len() - before);
-    }
-    macro_rules! typed {
-        ($($t:ty),*) => {$(
-            if let Ok(array) = value.cast::<PyArrayDyn<$t>>() {
-                out.extend(unsafe { array.as_array() }.iter().map(|&x| x as i64));
-                return Ok(out.len() - before);
-            }
-        )*};
-    }
-    typed!(i32, i16, i8, u8, u16, u32, bool);
     let converted = convert.call1((value, intern!(value.py(), "i64")))?;
     out.extend(
         unsafe { converted.cast::<PyArrayDyn<i64>>()?.as_array() }
