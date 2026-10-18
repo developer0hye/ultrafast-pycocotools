@@ -44,6 +44,15 @@ RUNNER = textwrap.dedent(
     rows = sorted(zip(dets["dt_id"].tolist(), dets["gt_id"].tolist(), dets["iou"].tolist()))
     out["per_instance"] = str(rows)
     out["per_instance_n"] = f"{len(rows)}/{len(gts['gt_id'])}"
+    # outcomes() promises category, image, score order, so it is compared as
+    # returned, and so is everything detection_metrics derives from it.
+    raw = ev._engine.outcomes(0, 100)
+    out["outcomes"] = "".join(np.ascontiguousarray(raw[k]).tobytes().hex() for k in sorted(raw))
+    m = ev.detection_metrics(iou_thr=[0.5, 0.75], score_thr="best_f1")
+    out["detection_metrics"] = "".join(
+        np.ascontiguousarray(v).tobytes().hex()
+        for group in ("per_category", "micro", "macro") for v in m[group].values()
+    ) + m["score_thr"].tobytes().hex()
     print(json.dumps(out))
     """
 )
@@ -66,5 +75,6 @@ def test_thread_count_does_not_change_results(synthetic, iou_type):
     gt_path, dt_path = synthetic
     one = run_with_threads(1, gt_path, dt_path, iou_type)
     many = run_with_threads(8, gt_path, dt_path, iou_type)
-    for key in ("precision", "recall", "scores", "stats", "per_instance", "per_instance_n"):
+    for key in ("precision", "recall", "scores", "stats", "per_instance", "per_instance_n",
+                "outcomes", "detection_metrics"):
         assert one[key] == many[key], f"{iou_type}/{key} changed with thread count"

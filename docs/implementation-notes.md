@@ -439,6 +439,19 @@ ev.detection_metrics()      # Per-class, micro and macro precision/recall/F1.
 Hundreds of thousands of matching records can otherwise cost more to materialize
 than evaluation itself.
 
+Custom evaluation grids are supported and covered by reference comparisons:
+
+```python
+ev.params.areaRng    = [[0, 1e10], [0, 500], [500, 5000], [5000, 1e10]]
+ev.params.areaRngLbl = ["all", "tiny", "mid", "big"]
+ev.params.maxDets    = [3, 25, 300]
+ev.params.iouThrs    = np.linspace(0.3, 0.9, 7)
+```
+
+The additional `"boundary"` IoU mode implements Boundary IoU (Cheng et al.,
+CVPR 2021), using the minimum of mask and boundary IoU. It is useful for
+boundary-sensitive segmentation comparisons and is not a pycocotools metric.
+
 ### Precision, recall and F1
 
 `detection_metrics(iou_thr=0.5, score_thr=None, optimize="macro", area="all",
@@ -472,18 +485,8 @@ accumulation reads, at one IoU threshold or a sequence of them:
   confidence grid some trainers use.
 - `useCats=0` gives one class-agnostic category, id `-1`.
 
-Custom evaluation grids are supported and covered by reference comparisons:
-
-```python
-ev.params.areaRng    = [[0, 1e10], [0, 500], [500, 5000], [5000, 1e10]]
-ev.params.areaRngLbl = ["all", "tiny", "mid", "big"]
-ev.params.maxDets    = [3, 25, 300]
-ev.params.iouThrs    = np.linspace(0.3, 0.9, 7)
-```
-
-The additional `"boundary"` IoU mode implements Boundary IoU (Cheng et al.,
-CVPR 2021), using the minimum of mask and boundary IoU. It is useful for
-boundary-sensitive segmentation comparisons and is not a pycocotools metric.
+The choices behind these rules are in the
+[detection metrics design](detection-metrics-design.md).
 
 ## Intentional differences
 

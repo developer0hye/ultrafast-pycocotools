@@ -51,7 +51,7 @@ import copy
 import datetime
 import time
 from collections import defaultdict
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import Any
 
 import numpy as np
@@ -873,7 +873,7 @@ class COCOeval:
 
     def detection_metrics(
         self,
-        iou_thr: float | Any = 0.5,
+        iou_thr: float | Sequence[float] = 0.5,
         score_thr: float | str | None = None,
         optimize: str = "macro",
         area: str = "all",
