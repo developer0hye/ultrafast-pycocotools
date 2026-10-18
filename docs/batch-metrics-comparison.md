@@ -14,7 +14,7 @@ documentation.
 
 | Library | API used | Precision / recall / F1 | Score threshold | Matching | Accumulates |
 | --- | --- | --- | --- | --- | --- |
-| ultrafast-pycocotools (this branch) | `metrics.DetectionMetrics` | at any IoU grid; per category, micro, macro | none, fixed, or the best-F1 cut (exact, one shared cut) | COCO: score order, crowd regions, area ranges, `maxDets` | one outcome byte per detection and IoU threshold |
+| ultrafast-pycocotools 0.1.14 | `metrics.DetectionMetrics` | at any IoU grid; per category, micro, macro | none, fixed, or the best-F1 cut (exact, one shared cut) | COCO: score order, crowd regions, area ranges, `maxDets` | one outcome byte per detection and IoU threshold |
 | TorchMetrics 1.9.0 | `detection.MeanAveragePrecision` | not provided; `extended_summary` returns COCO's precision/recall curve arrays | — | COCO, through pycocotools or faster-coco-eval | every box, score, label, crowd flag and area (`detection/mean_ap.py`, `add_state` lists) |
 | supervision 0.30.6 | `metrics.F1Score` (`Precision`, `Recall` alike) | F1 at IoU 0.50:0.95 (fixed grid); macro, micro, weighted | none: every prediction | highest IoU first, no crowd handling (`metrics/utils/matching.py`) | every `Detections`; `compute()` evaluates all, small, medium and large |
 | Ultralytics 8.4.172 | `DetMetrics` with `BaseValidator.match_predictions`, as `DetectionValidator.update_metrics` does | P, R, F1 at IoU 0.5 | the confidence maximizing the mean F1 after interpolating onto 1,000 points and smoothing (`utils/metrics.py:892`) | highest IoU first, unique pairs, no crowd handling | per-detection true-positive matrices, scores and classes |
@@ -116,8 +116,8 @@ matching.
   the newest release at least two weeks old on 2026-10-18.
 - Inputs: `instances_val2017.json` sha256 `e8c7f790…8c810b6f`,
   `detect-predictions.json` `95075681…bac7c4be`.
-- Host: Intel Core i5-10400, Linux 7.0.0-38. ufcoco built from the branch at
-  `638d377` with `maturin develop --release`.
+- Host: Intel Core i5-10400, Linux 7.0.0-38. ufcoco built at `638d377`
+  (released as 0.1.14) with `maturin develop --release`.
 - Raw data: [libraries.json](../bench/results/batch-metrics-20261018/libraries.json).
 
 ```sh

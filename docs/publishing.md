@@ -53,7 +53,7 @@ the tested wheels from the run's `distribution-*` artifacts and install with:
 
 ```bash
 python -m pip install --only-binary=ultrafast-pycocotools \
-  --find-links=dist ultrafast-pycocotools==0.1.13
+  --find-links=dist ultrafast-pycocotools==0.1.14
 ```
 
 Installing a compatible wheel requires no Rust compiler. Installing the source
@@ -70,12 +70,12 @@ After the build and Library CI pass, and the PyPI publisher is configured:
 3. Create and push `v<version>` at the tested commit on main.
 4. Explicitly run the release workflow on that tag with `publish=true`.
 
-For example, for version 0.1.13:
+For example, for version 0.1.14:
 
 ```bash
-git tag v0.1.13
-git push origin v0.1.13
-gh workflow run release.yml --ref v0.1.13 -f publish=true
+git tag v0.1.14
+git push origin v0.1.14
+gh workflow run release.yml --ref v0.1.14 -f publish=true
 ```
 
 The upload job publishes the exact artifacts that passed the build/test jobs in
@@ -84,7 +84,7 @@ not allow overwriting a released distribution: fixes require a new version.
 After publication, verify installation from PyPI in a fresh environment:
 
 ```bash
-python -m pip install --only-binary=ultrafast-pycocotools ultrafast-pycocotools==0.1.13
+python -m pip install --only-binary=ultrafast-pycocotools ultrafast-pycocotools==0.1.14
 python -c "import importlib.metadata as m; import ultrafast_pycocotools._ufcoco; print(m.version('ultrafast-pycocotools'))"
 ```
 
@@ -106,8 +106,8 @@ Create it right after the upload succeeds, on the same tag:
 3. Create it, attaching both files:
 
    ```bash
-   gh release create v0.1.13 --verify-tag --latest \
-     -t "v0.1.13: <one-line summary>" --notes-file notes.md \
+   gh release create v0.1.14 --verify-tag --latest \
+     -t "v0.1.14: <one-line summary>" --notes-file notes.md \
      SHA256SUMS pypi-verification.json
    ```
 
@@ -172,3 +172,18 @@ ufcoco evaluator and this package's RF-DETR adapter are such subclasses. Metrics
 are unchanged; with box-only RF-DETR state loaded from an array, `compute()` on
 733,070 COCO val2017 detections takes 0.81 s instead of 2.65 s on the dictionary
 path. See [#24](https://github.com/developer0hye/ultrafast-pycocotools/pull/24).
+
+Version 0.1.14 adds precision, recall and F1 from the matching behind AP
+([#28](https://github.com/developer0hye/ultrafast-pycocotools/issues/28)):
+`COCOeval.detection_metrics()` and `metrics.DetectionMetrics`, which scores
+batches of arrays, tensors or COCO data and accumulates them into a result
+bit-identical to one evaluation over every image. Per category, micro and
+macro, at any IoU thresholds, with a fixed score threshold or the best-F1 cut.
+On one i5-10400 thread a 16-image COCO batch takes 0.26 ms and all of COCO
+val2017 in batches of 16 takes 0.085 s; see the
+[comparison with other libraries](batch-metrics-comparison.md) and the
+[performance report](batch-metrics-performance.md). The engine changes behind
+it make the AP path 1–8% faster on COCO val2017 with identical output digests.
+The declared Rust version is corrected to 1.83, which the locked dependencies
+already required. Those timings were measured before the version bump, not
+from the PyPI wheels.
