@@ -136,9 +136,10 @@ jobs:
     # upstream-canary.yml runs the same jobs weekly against the latest ones.
     uses: ./.github/workflows/upstream-integrations.yml
     with:
-      # rf-detr develop after the ufcoco backend (#1449), the backend registry (#1474)
-      # and backend capability flags (#1491).
-      rfdetr-ref: f765186e79ac063b358cc279c361ef0cf4cb82fd
+      # RF-DETR 1.11.2, the latest release, which ships the ufcoco backend (#1449),
+      # the backend registry (#1474) and backend capability flags (#1491), and pins
+      # hotcoco==1.0.1 (the default of rfdetr-hotcoco).
+      rfdetr-ref: 7433d5919d0f7e72cc6cb78663e0a731afd499e0
       # Head of ultralytics/ultralytics#26101, which evaluates with ultrafast-pycocotools.
       ultralytics-repository: developer0hye/ultralytics
       ultralytics-ref: 45f70fdfe4c3229f2dfa520a12499ccf41c4bf5d
