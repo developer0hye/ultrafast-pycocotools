@@ -214,6 +214,38 @@ def test_dtypes_and_layouts_read_like_float64_and_int64(data, kind):
                  DetectionMetrics(**config).update(_variant(preds, kind), _variant(targets, kind)))
 
 
+@pytest.mark.parametrize("kind", ["plain", "requires grad", "non-contiguous", "float32", "float16"])
+def test_torch_tensors_read_like_numpy(data, kind):
+    """CPU tensors are read through ``.numpy()``; others fall back to the
+    Python conversion. Both must give what the same NumPy values give."""
+    torch = pytest.importorskip("torch")
+    gt, dets = data
+    ids = sorted(im["id"] for im in gt["images"])[:30]
+    preds, targets = _arrays(gt, dets, ids)
+    if kind == "float32":
+        preds = [{**p, "boxes": p["boxes"].astype(np.float32).astype(np.float64)} for p in preds]
+    if kind == "float16":
+        preds = [{**p, "scores": p["scores"].astype(np.float16).astype(np.float64)} for p in preds]
+
+    def tensor(key, value):
+        t = torch.from_numpy(np.ascontiguousarray(value))
+        if kind == "requires grad" and t.is_floating_point():
+            t = t.clone().requires_grad_(True)
+        if kind == "non-contiguous" and t.ndim == 2:
+            t = t.repeat_interleave(2, dim=0)[::2]
+        if kind == "float32" and key == "boxes":
+            t = t.float()
+        if kind == "float16" and key == "scores":
+            t = t.half()
+        return t
+
+    as_tensors = [[{k: tensor(k, v) if isinstance(v, np.ndarray) else v for k, v in item.items()}
+                   for item in side] for side in (preds, targets)]
+    config = {"iou_thrs": [0.5, 0.75], "box_format": "xywh", "score_thr": "best_f1"}
+    _assert_same(DetectionMetrics(**config).update(preds, targets),
+                 DetectionMetrics(**config).update(*as_tensors))
+
+
 def test_zero_dimensional_labels(data):
     one = {"boxes": np.array([[0.0, 0.0, 10.0, 10.0]]), "scores": np.array([0.9]), "labels": np.array([3])}
     scalar = {**one, "labels": np.array(3)}
@@ -332,6 +364,18 @@ def test_best_f1_when_no_prediction_has_a_ground_truth_label():
     assert r["score_thr"] == 0.5
     assert r["macro"]["f1"] == 0.0
     assert r["per_category"]["fp"].tolist() == [0, 1]
+
+
+def test_batch_results_off_returns_none_and_accumulates_the_same(data):
+    gt, dets = data
+    with_batches = DetectionMetrics(iou_thrs=[0.5, 0.75], score_thr="best_f1", box_format="xywh")
+    without = DetectionMetrics(iou_thrs=[0.5, 0.75], score_thr="best_f1", box_format="xywh",
+                               batch_results=False)
+    for ids in _batches(gt, 50):
+        assert with_batches.update(*_arrays(gt, dets, ids)) is not None
+        assert without.update(*_arrays(gt, dets, ids)) is None
+    assert without.update_coco(*_subset(gt, dets, [])) is None
+    _assert_same(with_batches.compute(), without.compute())
 
 
 def test_detection_metrics_helper():

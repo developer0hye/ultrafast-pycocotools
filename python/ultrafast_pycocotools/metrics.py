@@ -86,6 +86,9 @@ class DetectionMetrics:
             ``None`` filters nothing.
         max_dets: detections kept per (image, category), highest scores first,
             as COCO's ``maxDets``; ``None`` keeps all.
+        batch_results: ``update()`` returns each batch's metrics. ``False``
+            skips computing them (``update()`` returns ``None``) for loops that
+            only read ``compute()``.
 
     Results have the layout of ``COCOeval.detection_metrics``. Each image may
     be added once; the same image twice would be counted twice.
@@ -101,6 +104,7 @@ class DetectionMetrics:
         box_format: str = "xyxy",
         area_range: Sequence[float] | None = None,
         max_dets: int | None = None,
+        batch_results: bool = True,
     ):
         if iou_type not in ("bbox", "segm", "keypoints"):
             raise ValueError(f"iou_type must be 'bbox', 'segm' or 'keypoints', not {iou_type!r}")
@@ -122,6 +126,7 @@ class DetectionMetrics:
         self.box_format = box_format
         self.area_range = area_range
         self.max_dets = None if max_dets is None else int(max_dets)
+        self.batch_results = bool(batch_results)
         self.reset()
 
     def reset(self) -> None:
@@ -138,8 +143,9 @@ class DetectionMetrics:
     # adding batches
     # ------------------------------------------------------------------
 
-    def update(self, preds: Sequence[dict], targets: Sequence[dict]) -> dict:
-        """Add one batch of per-image arrays and return that batch's metrics.
+    def update(self, preds: Sequence[dict], targets: Sequence[dict]) -> dict | None:
+        """Add one batch of per-image arrays and return that batch's metrics
+        (``None`` with ``batch_results=False``).
 
         ``preds[i]`` has ``boxes`` (``(N, 4)``, for bbox), ``masks``
         (``(N, H, W)``, for segm), ``scores`` and ``labels``. ``targets[i]``
@@ -211,8 +217,9 @@ class DetectionMetrics:
         dt = gt.loadRes(dt_anns)
         return self._add(gt, dt, image_ids, sorted(labels))
 
-    def update_coco(self, gt: COCO | dict | str, dt: Any) -> dict:
-        """Add COCO data and return its metrics.
+    def update_coco(self, gt: COCO | dict | str, dt: Any) -> dict | None:
+        """Add COCO data and return its metrics (``None`` with
+        ``batch_results=False``).
 
         ``gt`` is a ``COCO`` object, a dataset dictionary or a path; ``dt`` is
         a result handle from ``gt.loadRes`` or anything ``loadRes`` accepts.
@@ -324,7 +331,7 @@ class DetectionMetrics:
             "gt_cat": slots, "npig": out["npig"].astype(np.int64),
         }, image_ids)
 
-    def _keep(self, batch: dict | None, image_ids: list) -> dict:
+    def _keep(self, batch: dict | None, image_ids: list) -> dict | None:
         """Store a batch's counted outcomes and return its metrics."""
         if batch is not None:
             self._cats.append(batch["det_cat"])
@@ -333,7 +340,7 @@ class DetectionMetrics:
             self._gt_cats.append(batch["gt_cat"])
             self._npig.append(batch["npig"])
         self._seen.update(image_ids)
-        return self._summarize(batch)
+        return self._summarize(batch) if self.batch_results else None
 
     def _summarize(self, batch: dict | None) -> dict:
         if batch is None:
